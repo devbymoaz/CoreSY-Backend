@@ -1,0 +1,10 @@
+{
+  "build": {
+    "buildCommand": "npm install && npm run prisma:generate",
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/api/v1/health"
+  }
+}

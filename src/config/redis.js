@@ -21,11 +21,16 @@ const connectRedis = async () => {
   }
 
   try {
-    redisClient = new Redis({
-      host: config.redis.host,
-      port: config.redis.port,
-      password: config.redis.password || undefined,
-      db: config.redis.db,
+    const redisOptions = config.redis.url 
+      ? config.redis.url
+      : {
+          host: config.redis.host,
+          port: config.redis.port,
+          password: config.redis.password || undefined,
+          db: config.redis.db,
+        };
+
+    redisClient = new Redis(redisOptions, {
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => {
         if (times > 10) {
