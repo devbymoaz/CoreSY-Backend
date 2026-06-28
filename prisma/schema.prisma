@@ -1,0 +1,95 @@
+// Prisma schema for CoreSY backend
+// Defines database models for authentication and user management
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+  ENTERPRISE
+}
+
+// Syrian governorates with unique codes for Pass ID generation
+model Governorate {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  nameAr          String?  @map("name_ar")
+  code            String   @unique
+  passIdSequence  Int      @default(0) @map("pass_id_sequence")
+  isActive        Boolean  @default(true) @map("is_active")
+  users           User[]
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("governorates")
+}
+
+// Application roles for RBAC
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("roles")
+}
+
+// Core user account shared across CoreSY Pass, Care, and Go
+model User {
+  id                 String           @id @default(uuid())
+  passId             String           @unique @map("pass_id")
+  fullName           String           @map("full_name")
+  email              String           @unique
+  phoneNumber        String           @unique @map("phone_number")
+  smartAssistantName String?          @map("smart_assistant_name")
+  password           String
+  emailVerified      Boolean          @default(false) @map("email_verified")
+  phoneVerified      Boolean          @default(false) @map("phone_verified")
+  status             UserStatus       @default(PENDING_VERIFICATION)
+  subscription       SubscriptionTier @default(FREE)
+  acceptTerms        Boolean          @default(true) @map("accept_terms")
+  governorateId      String           @map("governorate_id")
+  governorate        Governorate      @relation(fields: [governorateId], references: [id])
+  roleId             String           @map("role_id")
+  role               Role             @relation(fields: [roleId], references: [id])
+  refreshTokens      RefreshToken[]
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([status])
+  @@map("users")
+}
+
+// Secure refresh token storage with rotation support
+model RefreshToken {
+  id        String   @id @default(uuid())
+  jti       String   @unique
+  tokenHash String   @map("token_hash")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
