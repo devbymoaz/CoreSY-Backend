@@ -4,6 +4,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node prisma/migrate-and-start.js"
+    "startCommand": "npm start"
   }
 }

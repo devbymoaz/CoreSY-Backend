@@ -16,11 +16,21 @@ let server = null;
  */
 const startServer = async () => {
   try {
-    // Initialize database connection
-    await connectDatabase();
+    // Initialize database connection (optional, don't crash if fails)
+    try {
+      await connectDatabase();
+      logger.info('Database connected successfully');
+    } catch (dbError) {
+      logger.warn('Database connection failed, but server will start anyway:', dbError.message);
+    }
 
-    // Initialize Redis connection
-    await connectRedis();
+    // Initialize Redis connection (optional, don't crash if fails)
+    try {
+      await connectRedis();
+      logger.info('Redis connected successfully');
+    } catch (redisError) {
+      logger.warn('Redis connection failed, but server will start anyway:', redisError.message);
+    }
 
     // Start HTTP server
     server = app.listen(config.port, () => {
