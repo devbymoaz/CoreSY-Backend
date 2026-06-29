@@ -3,11 +3,27 @@
  * Ensures a single database connection instance across the application lifecycle.
  */
 
+// Load dotenv FIRST - critical for production!
+require('dotenv').config();
+
 const { PrismaClient } = require('@prisma/client');
 const config = require('./index');
 const logger = require('../utils/logger');
 
+// Log if DATABASE_URL is available
+if (process.env.DATABASE_URL) {
+  logger.info('DATABASE_URL is configured');
+} else {
+  logger.error('❌ DATABASE_URL is NOT configured - database will not work!');
+}
+
+// Explicitly pass DATABASE_URL to Prisma to be 100% sure it's used
 const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
   log:
     config.env === 'development'
       ? [
