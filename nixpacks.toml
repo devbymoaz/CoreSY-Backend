@@ -1,0 +1,15 @@
+# Nixpacks configuration for Railway
+[phases.setup]
+  nixPkgs = ["..."]
+
+[phases.install]
+  cmds = ["npm install"]
+  dependsOn = ["setup"]
+
+[phases.build]
+  cmds = ["prisma generate"]
+  dependsOn = ["install"]
+
+[phases.start]
+  cmd = "node src/server.js"
+  dependsOn = ["build"]

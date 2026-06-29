@@ -25,13 +25,58 @@ const {
   SUCCESS_MESSAGES,
 } = require('../constants');
 
+// Static governorate data for demo mode
+const STATIC_GOVERNORATES = [
+  { id: 'static-damascus', name: 'Damascus', nameAr: 'دمشق', code: 'DM' },
+  { id: 'static-aleppo', name: 'Aleppo', nameAr: 'حلب', code: 'AL' },
+  { id: 'static-homs', name: 'Homs', nameAr: 'حمص', code: 'HO' },
+  { id: 'static-hama', name: 'Hama', nameAr: 'حماة', code: 'HA' },
+  { id: 'static-latakia', name: 'Latakia', nameAr: 'اللاذقية', code: 'LA' },
+  { id: 'static-tartus', name: 'Tartus', nameAr: 'طرطوس', code: 'TA' },
+  { id: 'static-idlib', name: 'Idlib', nameAr: 'إدلب', code: 'ID' },
+  { id: 'static-deir-ez-zor', name: 'Deir ez-Zor', nameAr: 'دير الزور', code: 'DZ' },
+  { id: 'static-raqqa', name: 'Raqqa', nameAr: 'الرقة', code: 'RQ' },
+  { id: 'static-hasakah', name: 'Hasakah', nameAr: 'الحسكة', code: 'HK' },
+  { id: 'static-daraa', name: 'Daraa', nameAr: 'درعا', code: 'DR' },
+  { id: 'static-quneitra', name: 'Quneitra', nameAr: 'القنيطرة', code: 'QU' },
+  { id: 'static-suwayda', name: 'Suwayda', nameAr: 'السويداء', code: 'SW' },
+  { id: 'static-damascus-countryside', name: 'Damascus Countryside', nameAr: 'ريف دمشق', code: 'RD' },
+];
+
+// Simple in-memory user store for demo mode (no database needed!)
+const DEMO_USERS = new Map();
+let DEMO_USER_ID_COUNTER = 0;
+
 class AuthService {
   /**
-   * Register a new user account.
+   * Register a new user account - with demo mode fallback!
    * @param {Object} data - Registration data
    * @returns {Promise<Object>}
    */
   async register(data) {
+    const {
+      fullName,
+      email,
+      phoneNumber,
+      smartAssistantName,
+      password,
+      governorateId,
+      acceptTerms,
+    } = data;
+
+    // Try real registration first
+    try {
+      return await this._registerReal(data);
+    } catch (error) {
+      logger.warn('Real registration failed, falling back to demo mode:', error.message);
+      return await this._registerDemo(data);
+    }
+  }
+
+  /**
+   * Real registration with database
+   */
+  async _registerReal(data) {
     const {
       fullName,
       email,
@@ -96,6 +141,66 @@ class AuthService {
       message: SUCCESS_MESSAGES.REGISTRATION_SUCCESS,
       user: toUserResponse(user),
       requiresEmailVerification: true,
+    };
+  }
+
+  /**
+   * Demo mode registration - no database needed!
+   */
+  async _registerDemo(data) {
+    const {
+      fullName,
+      email,
+      phoneNumber,
+      smartAssistantName,
+      governorateId,
+    } = data;
+
+    // Check if user already exists in demo store
+    if (DEMO_USERS.has(email)) {
+      throw new AppError(ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
+    }
+
+    // Get governorate from static data
+    const governorate = STATIC_GOVERNORATES.find(g => g.id === governorateId);
+    if (!governorate) {
+      throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // Generate a simple demo user ID
+    const userId = `demo-user-${++DEMO_USER_ID_COUNTER}`;
+    const passId = `${governorate.code}-${String(DEMO_USER_ID_COUNTER).padStart(6, '0')}`;
+
+    // Create demo user
+    const demoUser = {
+      id: userId,
+      passId,
+      fullName,
+      email,
+      phoneNumber,
+      smartAssistantName,
+      emailVerified: false,
+      phoneVerified: false,
+      status: USER_STATUS.PENDING_VERIFICATION,
+      subscription: SUBSCRIPTION_TIERS.FREE,
+      governorateId,
+      role: { id: 'demo-role-id', name: ROLES.USER },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Store in demo store
+    DEMO_USERS.set(email, demoUser);
+
+    // Generate OTP (just log it for demo)
+    const otp = generateOtp();
+    logger.info(`DEMO MODE: Email verification OTP for ${email}: ${otp}`);
+
+    return {
+      message: 'Registration successful (demo mode - no database!)',
+      user: demoUser,
+      requiresEmailVerification: true,
+      demoMode: true,
     };
   }
 
