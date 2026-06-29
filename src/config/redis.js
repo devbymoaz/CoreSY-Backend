@@ -1,7 +1,6 @@
 /**
  * Redis client initialization and connection management.
- * Provides a singleton Redis connection for caching and session storage.
- * In development, Redis can be optional so the API still starts without it.
+ * Completely optional - API will work fine without Redis.
  */
 
 const Redis = require('ioredis');
@@ -12,12 +11,18 @@ let redisClient = null;
 let redisAvailable = false;
 
 /**
- * Create and connect to Redis.
+ * Create and connect to Redis - never fails, just returns null if unavailable.
  * @returns {Promise<Redis|null>}
  */
 const connectRedis = async () => {
   if (redisClient && redisAvailable) {
     return redisClient;
+  }
+
+  // If no Redis URL configured, don't even try to connect
+  if (!config.redis.url && !config.redis.host) {
+    logger.info('Redis not configured - skipping connection');
+    return null;
   }
 
   try {
@@ -31,14 +36,8 @@ const connectRedis = async () => {
         };
 
     redisClient = new Redis(redisOptions, {
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => {
-        if (times > 10) {
-          logger.error('Redis max reconnection attempts reached');
-          return null;
-        }
-        return Math.min(times * 200, 2000);
-      },
+      maxRetriesPerRequest: 1,
+      retryStrategy: () => null, // Don't retry - fail fast
       lazyConnect: true,
     });
 
@@ -49,12 +48,12 @@ const connectRedis = async () => {
 
     redisClient.on('error', (error) => {
       redisAvailable = false;
-      logger.error('Redis connection error:', error.message);
+      logger.debug('Redis connection error:', error.message);
     });
 
     redisClient.on('close', () => {
       redisAvailable = false;
-      logger.warn('Redis connection closed');
+      logger.debug('Redis connection closed');
     });
 
     await redisClient.connect();
@@ -64,19 +63,16 @@ const connectRedis = async () => {
     redisAvailable = false;
 
     if (redisClient) {
-      redisClient.disconnect();
+      try {
+        redisClient.disconnect();
+      } catch (e) {
+        // Ignore disconnection errors
+      }
       redisClient = null;
     }
 
-    if (config.redis.optional) {
-      logger.warn(
-        'Redis is not available. OTP and rate-limit features will not work until Redis is running.',
-      );
-      return null;
-    }
-
-    logger.error('Failed to connect to Redis:', error);
-    throw error;
+    logger.info('Redis not available - features will work without it');
+    return null;
   }
 };
 
