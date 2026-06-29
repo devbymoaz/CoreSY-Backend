@@ -82,10 +82,63 @@ const swaggerDefinition = {
           },
         },
       },
+      Governorate: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'static-aleppo' },
+          name: { type: 'string', example: 'Aleppo' },
+          nameAr: { type: 'string', example: 'حلب' },
+          code: { type: 'string', example: 'AL' },
+        },
+      },
+      User: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          passId: { type: 'string', example: 'AL-000001' },
+          fullName: { type: 'string', example: 'Ahmad Al-Hassan' },
+          email: { type: 'string', example: 'ahmad@example.com' },
+          phoneNumber: { type: 'string', example: '+963912345678' },
+          status: { type: 'string', example: 'PENDING_VERIFICATION' },
+        },
+      },
+      LoginRequest: {
+        type: 'object',
+        required: ['identifier', 'password'],
+        properties: {
+          identifier: { type: 'string', example: 'ahmad@example.com' },
+          password: { type: 'string', example: 'SecurePass1!' },
+        },
+      },
+      RegisterRequest: {
+        type: 'object',
+        required: ['fullName', 'email', 'phoneNumber', 'password', 'confirmPassword', 'governorateId', 'acceptTerms'],
+        properties: {
+          fullName: { type: 'string', example: 'Ahmad Al-Hassan' },
+          email: { type: 'string', example: 'ahmad@example.com' },
+          phoneNumber: { type: 'string', example: '+963912345678' },
+          smartAssistantName: { type: 'string', example: 'CoreAssist' },
+          password: { type: 'string', example: 'SecurePass1!' },
+          confirmPassword: { type: 'string', example: 'SecurePass1!' },
+          governorateId: { type: 'string', example: 'static-aleppo' },
+          acceptTerms: { type: 'boolean', example: true },
+        },
+      },
+      AuthResponse: {
+        type: 'object',
+        properties: {
+          accessToken: { type: 'string' },
+          refreshToken: { type: 'string' },
+          expiresIn: { type: 'string', example: '7d' },
+          user: { '$ref': '#/components/schemas/User' },
+        },
+      },
     },
   },
   tags: [
     { name: 'Health', description: 'Health check endpoints' },
+    { name: 'Debug', description: 'Debug and diagnostic endpoints' },
+    { name: 'Governorates', description: 'Syrian governorates endpoints' },
     { name: 'Auth', description: 'Authentication endpoints' },
     { name: 'Users', description: 'User management endpoints' },
   ],
