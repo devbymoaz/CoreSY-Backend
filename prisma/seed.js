@@ -56,11 +56,17 @@ const seed = async () => {
   console.log('Database seed completed successfully.');
 };
 
-seed()
-  .catch((error) => {
-    console.error('Seed failed:', error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// Export seed function for programmatic use
+module.exports = { seed, prisma };
+
+// Only run seed directly if called from CLI
+if (require.main === module) {
+  seed()
+    .catch((error) => {
+      console.error('Seed failed:', error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

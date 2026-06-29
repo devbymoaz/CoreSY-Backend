@@ -6,11 +6,13 @@
 const express = require('express');
 const healthRoutes = require('./health.routes');
 const authRoutes = require('./auth.routes');
+const governorateRoutes = require('./governorate.routes');
 
 const router = express.Router();
 
 // Mount feature routes
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
+router.use('/governorates', governorateRoutes);
 
 module.exports = router;

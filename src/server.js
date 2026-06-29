@@ -1,6 +1,6 @@
 /**
  * Application entry point and HTTP server bootstrap.
- * Initializes database, Redis, and starts the Express server with graceful shutdown.
+ * Initializes database, runs migrations, seeds data, and starts server.
  */
 
 const app = require('./app');
@@ -8,21 +8,42 @@ const config = require('./config');
 const logger = require('./utils/logger');
 const { connectDatabase, disconnectDatabase } = require('./config/database');
 const { connectRedis, disconnectRedis } = require('./config/redis');
+const { execSync } = require('child_process');
+const { seed } = require('../prisma/seed');
 
 let server = null;
+
+/**
+ * Run Prisma migrations and seed data.
+ */
+const runMigrationsAndSeed = async () => {
+  try {
+    logger.info('Running Prisma migrations...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit', env: { ...process.env, DATABASE_URL: config.database.url } });
+    logger.info('Migrations completed successfully!');
+
+    logger.info('Seeding database...');
+    // Run seed function
+    await seed();
+    logger.info('Database seeded successfully!');
+  } catch (error) {
+    logger.warn('Migrations/seed might have already run, continuing:', error.message);
+  }
+};
 
 /**
  * Bootstrap and start the application server.
  */
 const startServer = async () => {
   try {
-    // Initialize database connection (optional, don't crash if fails)
-    try {
-      await connectDatabase();
-      logger.info('Database connected successfully');
-    } catch (dbError) {
-      logger.warn('Database connection failed, but server will start anyway:', dbError.message);
-    }
+    logger.info('Starting CoreSY Backend...');
+
+    // Initialize database connection first
+    await connectDatabase();
+    logger.info('Database connected successfully');
+
+    // Run migrations and seed
+    await runMigrationsAndSeed();
 
     // Initialize Redis connection (optional, don't crash if fails)
     try {
