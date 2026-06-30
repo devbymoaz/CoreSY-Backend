@@ -18,7 +18,7 @@ router.use(authorizeRoles(ROLES.SUPER_ADMIN, ROLES.SUPPORT_ADMIN));
 
 /**
  * @swagger
- * /api/v1/users/{userId}/roles:
+ * /users/{userId}/roles:
  *   get:
  *     summary: Get user's roles
  *     tags: [User Roles]
@@ -40,7 +40,7 @@ router.get('/:userId/roles', getUserRoles);
 
 /**
  * @swagger
- * /api/v1/users/{userId}/roles:
+ * /users/{userId}/roles:
  *   patch:
  *     summary: Assign roles to a user
  *     tags: [User Roles]

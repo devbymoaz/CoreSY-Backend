@@ -28,7 +28,7 @@ router.use(authorizeRoles(ROLES.SUPER_ADMIN, ROLES.SUPPORT_ADMIN));
 
 /**
  * @swagger
- * /api/v1/permissions:
+ * /permissions:
  *   get:
  *     summary: Get all permissions
  *     tags: [Permissions]
@@ -69,7 +69,7 @@ router.get('/', validate({ query: listPermissionsSchema }), getPermissions);
 
 /**
  * @swagger
- * /api/v1/permissions/{id}:
+ * /permissions/{id}:
  *   get:
  *     summary: Get a permission by ID
  *     tags: [Permissions]
@@ -91,7 +91,7 @@ router.get('/:id', getPermissionById);
 
 /**
  * @swagger
- * /api/v1/permissions:
+ * /permissions:
  *   post:
  *     summary: Create a new permission
  *     tags: [Permissions]
@@ -121,7 +121,7 @@ router.post('/', validate({ body: createPermissionSchema }), createPermission);
 
 /**
  * @swagger
- * /api/v1/permissions/{id}:
+ * /permissions/{id}:
  *   patch:
  *     summary: Update a permission
  *     tags: [Permissions]
@@ -157,7 +157,7 @@ router.patch('/:id', validate({ body: updatePermissionSchema }), updatePermissio
 
 /**
  * @swagger
- * /api/v1/permissions/{id}:
+ * /permissions/{id}:
  *   delete:
  *     summary: Delete a permission
  *     tags: [Permissions]

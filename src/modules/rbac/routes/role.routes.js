@@ -34,7 +34,7 @@ router.use(authorizeRoles(ROLES.SUPER_ADMIN, ROLES.SUPPORT_ADMIN));
 
 /**
  * @swagger
- * /api/v1/roles:
+ * /roles:
  *   get:
  *     summary: Get all roles
  *     tags: [Roles]
@@ -85,7 +85,7 @@ router.get('/', validate({ query: listRolesSchema }), getRoles);
 
 /**
  * @swagger
- * /api/v1/roles/{id}:
+ * /roles/{id}:
  *   get:
  *     summary: Get a role by ID
  *     tags: [Roles]
@@ -114,7 +114,7 @@ router.get('/:id', getRoleById);
 
 /**
  * @swagger
- * /api/v1/roles:
+ * /roles:
  *   post:
  *     summary: Create a new role
  *     tags: [Roles]
@@ -136,7 +136,7 @@ router.post('/', validate({ body: createRoleSchema }), createRole);
 
 /**
  * @swagger
- * /api/v1/roles/{id}:
+ * /roles/{id}:
  *   patch:
  *     summary: Update a role
  *     tags: [Roles]
@@ -176,7 +176,7 @@ router.patch('/:id', validate({ body: updateRoleSchema }), updateRole);
 
 /**
  * @swagger
- * /api/v1/roles/{id}/status:
+ * /roles/{id}/status:
  *   patch:
  *     summary: Update role status
  *     tags: [Roles]
@@ -213,7 +213,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/v1/roles/{id}:
+ * /roles/{id}:
  *   delete:
  *     summary: Delete a role
  *     tags: [Roles]
@@ -237,7 +237,7 @@ router.delete('/:id', deleteRole);
 
 /**
  * @swagger
- * /api/v1/roles/{id}/permissions:
+ * /roles/{id}/permissions:
  *   get:
  *     summary: Get permissions for a role
  *     tags: [Roles]
@@ -259,7 +259,7 @@ router.get('/:id/permissions', (req, res) => getRoleById(req, res));
 
 /**
  * @swagger
- * /api/v1/roles/{id}/permissions:
+ * /roles/{id}/permissions:
  *   patch:
  *     summary: Assign permissions to a role
  *     tags: [Roles]
@@ -298,7 +298,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/v1/roles/{id}/permissions:
+ * /roles/{id}/permissions:
  *   post:
  *     summary: Assign permissions to a role
  *     tags: [Roles]
@@ -337,7 +337,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/roles/{id}/permissions/{permissionId}:
+ * /roles/{id}/permissions/{permissionId}:
  *   delete:
  *     summary: Remove a permission from a role
  *     tags: [Roles]
