@@ -133,6 +133,35 @@ const swaggerDefinition = {
           user: { '$ref': '#/components/schemas/User' },
         },
       },
+      Role: {
+        type: 'object',
+        required: ['name', 'displayName'],
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string', example: 'CUSTOM_ROLE' },
+          displayName: { type: 'string', example: 'Custom Role' },
+          description: { type: 'string', example: 'Role description' },
+          priority: { type: 'integer', example: 50 },
+          isSystem: { type: 'boolean', example: false },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      Permission: {
+        type: 'object',
+        required: ['module', 'name', 'slug'],
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          module: { type: 'string', example: 'Users' },
+          name: { type: 'string', example: 'Create User' },
+          slug: { type: 'string', example: 'users.create' },
+          description: { type: 'string', example: 'Create new users' },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
     },
   },
   tags: [
@@ -140,13 +169,20 @@ const swaggerDefinition = {
     { name: 'Debug', description: 'Debug and diagnostic endpoints' },
     { name: 'Governorates', description: 'Syrian governorates endpoints' },
     { name: 'Auth', description: 'Authentication endpoints' },
+    { name: 'Roles', description: 'Role management endpoints' },
+    { name: 'Permissions', description: 'Permission management endpoints' },
+    { name: 'User Roles', description: 'User role assignment endpoints' },
     { name: 'Users', description: 'User management endpoints' },
   ],
 };
 
 const options = {
   swaggerDefinition,
-  apis: ['./src/routes/**/*.js', './src/docs/**/*.js'],
+  apis: [
+    './src/routes/**/*.js',
+    './src/docs/**/*.js',
+    './src/modules/rbac/routes/**/*.js',
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

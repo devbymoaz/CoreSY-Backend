@@ -23,6 +23,16 @@ enum SubscriptionTier {
   ENTERPRISE
 }
 
+enum RoleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PermissionStatus {
+  ACTIVE
+  INACTIVE
+}
+
 // Syrian governorates with unique codes for Pass ID generation
 model Governorate {
   id              String   @id @default(uuid())
@@ -38,16 +48,89 @@ model Governorate {
   @@map("governorates")
 }
 
-// Application roles for RBAC
+// Application roles for RBAC - Enhanced
 model Role {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  users       User[]
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String            @id @default(uuid())
+  name          String            @unique
+  displayName   String            @map("display_name")
+  description   String?
+  priority      Int               @default(10)
+  isSystem      Boolean           @default(false) @map("is_system")
+  status        RoleStatus        @default(ACTIVE)
+  createdBy     String?           @map("created_by")
+  updatedBy     String?           @map("updated_by")
+  deletedAt     DateTime?         @map("deleted_at")
+  users         User[]
+  rolePermissions RolePermission[]
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
+  @@index([name])
+  @@index([status])
+  @@index([priority])
   @@map("roles")
+}
+
+// Permissions for fine-grained access control
+model Permission {
+  id            String            @id @default(uuid())
+  module        String
+  name          String
+  slug          String            @unique
+  description   String?
+  status        PermissionStatus  @default(ACTIVE)
+  deletedAt     DateTime?         @map("deleted_at")
+  rolePermissions RolePermission[]
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@index([module])
+  @@index([slug])
+  @@map("permissions")
+}
+
+// Pivot table for role-permission many-to-many relationship
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String     @map("role_id")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String     @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// Pivot table for user-role many-to-many relationship
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId    String   @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+// Audit logs to track all admin operations
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  module    String
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([module])
+  @@index([action])
+  @@map("audit_logs")
 }
 
 // Core user account shared across CoreSY Pass, Care, and Go
@@ -66,9 +149,12 @@ model User {
   acceptTerms        Boolean          @default(true) @map("accept_terms")
   governorateId      String           @map("governorate_id")
   governorate        Governorate      @relation(fields: [governorateId], references: [id])
+  // Keep for compatibility, but use UserRole for actual roles
   roleId             String           @map("role_id")
   role               Role             @relation(fields: [roleId], references: [id])
+  userRoles          UserRole[]
   refreshTokens      RefreshToken[]
+  auditLogs          AuditLog[]
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
 

@@ -26,8 +26,59 @@ const USER_STATUS = {
 };
 
 const ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  FINANCE_ADMIN: 'FINANCE_ADMIN',
+  SUPPORT_ADMIN: 'SUPPORT_ADMIN',
+  BUSINESS_OWNER: 'BUSINESS_OWNER',
+  BUSINESS_MANAGER: 'BUSINESS_MANAGER',
+  CASHIER: 'CASHIER',
+  DRIVER: 'DRIVER',
   USER: 'USER',
-  ADMIN: 'ADMIN',
+};
+
+const ROLE_PRIORITIES = {
+  SUPER_ADMIN: 100,
+  FINANCE_ADMIN: 90,
+  SUPPORT_ADMIN: 80,
+  BUSINESS_OWNER: 70,
+  BUSINESS_MANAGER: 60,
+  CASHIER: 50,
+  DRIVER: 40,
+  USER: 10,
+};
+
+const ROLE_STATUS = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+};
+
+const PERMISSION_STATUS = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+};
+
+const PERMISSION_MODULES = {
+  USERS: 'Users',
+  BUSINESSES: 'Businesses',
+  BRANCHES: 'Branches',
+  SERVICES: 'Services',
+  BOOKINGS: 'Bookings',
+  DRIVERS: 'Drivers',
+  CASHIERS: 'Cashiers',
+  WALLET: 'Wallet',
+  PAYMENTS: 'Payments',
+  SUBSCRIPTIONS: 'Subscriptions',
+  NOTIFICATIONS: 'Notifications',
+  REPORTS: 'Reports',
+  ANALYTICS: 'Analytics',
+  SETTINGS: 'Settings',
+  ROLES: 'Roles',
+  PERMISSIONS: 'Permissions',
+  CONTENT: 'Content',
+  SUPPORT: 'Support',
+  FINANCE: 'Finance',
+  POINTS: 'Points',
+  QR: 'QR',
 };
 
 const SUBSCRIPTION_TIERS = {
@@ -50,8 +101,12 @@ const ERROR_MESSAGES = {
   VALIDATION_ERROR: 'Validation failed. Please check your input.',
   INVALID_TOKEN: 'Invalid or expired token.',
   USER_NOT_FOUND: 'User not found.',
+  ROLE_NOT_FOUND: 'Role not found.',
+  PERMISSION_NOT_FOUND: 'Permission not found.',
   EMAIL_ALREADY_EXISTS: 'A user with this email already exists.',
   PHONE_ALREADY_EXISTS: 'A user with this phone number already exists.',
+  ROLE_NAME_EXISTS: 'A role with this name already exists.',
+  PERMISSION_SLUG_EXISTS: 'A permission with this slug already exists.',
   INVALID_CREDENTIALS: 'Invalid email/phone or password.',
   EMAIL_NOT_VERIFIED: 'Please verify your email before logging in.',
   ACCOUNT_NOT_ACTIVE: 'Your account is not active. Please contact support.',
@@ -66,7 +121,8 @@ const ERROR_MESSAGES = {
   INVALID_REFRESH_TOKEN: 'Invalid or expired refresh token.',
   CURRENT_PASSWORD_INCORRECT: 'Current password is incorrect.',
   RESEND_RATE_LIMIT: 'Please wait before requesting another verification code.',
-  ROLE_NOT_FOUND: 'Default user role not found. Run database seed.',
+  CANNOT_DELETE_SYSTEM_ROLE: 'System roles cannot be deleted.',
+  CANNOT_MODIFY_SYSTEM_ROLE: 'System roles cannot be modified.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -81,14 +137,34 @@ const SUCCESS_MESSAGES = {
   PASSWORD_RESET_SUCCESS: 'Password reset successfully.',
   PASSWORD_CHANGED: 'Password changed successfully.',
   PROFILE_UPDATED: 'Profile updated successfully.',
+  ROLE_CREATED: 'Role created successfully.',
+  ROLE_UPDATED: 'Role updated successfully.',
+  ROLE_DELETED: 'Role deleted successfully.',
+  ROLE_STATUS_UPDATED: 'Role status updated successfully.',
+  PERMISSION_CREATED: 'Permission created successfully.',
+  PERMISSION_UPDATED: 'Permission updated successfully.',
+  PERMISSION_DELETED: 'Permission deleted successfully.',
+  PERMISSIONS_ASSIGNED: 'Permissions assigned successfully.',
+  ROLES_ASSIGNED: 'Roles assigned successfully.',
+};
+
+const PAGINATION = {
+  DEFAULT_PAGE: 1,
+  DEFAULT_LIMIT: 10,
+  MAX_LIMIT: 100,
 };
 
 module.exports = {
   HTTP_STATUS,
   USER_STATUS,
   ROLES,
+  ROLE_PRIORITIES,
+  ROLE_STATUS,
+  PERMISSION_STATUS,
+  PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
+  PAGINATION,
 };

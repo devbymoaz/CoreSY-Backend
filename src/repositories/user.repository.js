@@ -3,11 +3,22 @@
  * Data access layer for User entity - abstracts Prisma database operations.
  */
 
-const { prisma } = require('../config/database');
+const prisma = require('../prisma');
 
 const USER_INCLUDE = {
   role: true,
   governorate: true,
+  userRoles: {
+    include: {
+      role: {
+        include: {
+          rolePermissions: {
+            include: { permission: true },
+          },
+        },
+      },
+    },
+  },
 };
 
 class UserRepository {
