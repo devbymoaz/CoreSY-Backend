@@ -35,35 +35,36 @@ enum PermissionStatus {
 
 // Syrian governorates with unique codes for Pass ID generation
 model Governorate {
-  id              String   @id @default(uuid())
-  name            String   @unique
-  nameAr          String?  @map("name_ar")
-  code            String   @unique
-  passIdSequence  Int      @default(0) @map("pass_id_sequence")
-  isActive        Boolean  @default(true) @map("is_active")
-  users           User[]
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  name           String   @unique
+  nameAr         String?  @map("name_ar")
+  code           String   @unique
+  passIdSequence Int      @default(0) @map("pass_id_sequence")
+  isActive       Boolean  @default(true) @map("is_active")
+  users          User[]
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("governorates")
 }
 
 // Application roles for RBAC - Enhanced
 model Role {
-  id            String            @id @default(uuid())
-  name          String            @unique
-  displayName   String            @map("display_name")
-  description   String?
-  priority      Int               @default(10)
-  isSystem      Boolean           @default(false) @map("is_system")
-  status        RoleStatus        @default(ACTIVE)
-  createdBy     String?           @map("created_by")
-  updatedBy     String?           @map("updated_by")
-  deletedAt     DateTime?         @map("deleted_at")
-  users         User[]
+  id              String           @id @default(uuid())
+  name            String           @unique
+  displayName     String           @map("display_name")
+  description     String?
+  priority        Int              @default(10)
+  isSystem        Boolean          @default(false) @map("is_system")
+  status          RoleStatus       @default(ACTIVE)
+  createdBy       String?          @map("created_by")
+  updatedBy       String?          @map("updated_by")
+  deletedAt       DateTime?        @map("deleted_at")
+  users           User[]
+  userRoles       UserRole[]
   rolePermissions RolePermission[]
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
 
   @@index([name])
   @@index([status])
@@ -73,16 +74,16 @@ model Role {
 
 // Permissions for fine-grained access control
 model Permission {
-  id            String            @id @default(uuid())
-  module        String
-  name          String
-  slug          String            @unique
-  description   String?
-  status        PermissionStatus  @default(ACTIVE)
-  deletedAt     DateTime?         @map("deleted_at")
+  id              String           @id @default(uuid())
+  module          String
+  name            String
+  slug            String           @unique
+  description     String?
+  status          PermissionStatus @default(ACTIVE)
+  deletedAt       DateTime?        @map("deleted_at")
   rolePermissions RolePermission[]
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
 
   @@index([module])
   @@index([slug])
