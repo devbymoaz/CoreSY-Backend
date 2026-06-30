@@ -26,7 +26,7 @@ const connectRedis = async () => {
   }
 
   try {
-    const redisOptions = config.redis.url 
+    const redisOptions = config.redis.url
       ? config.redis.url
       : {
           host: config.redis.host,

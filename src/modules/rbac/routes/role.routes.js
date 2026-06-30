@@ -205,11 +205,7 @@ router.patch('/:id', validate({ body: updateRoleSchema }), updateRole);
  *       200:
  *         description: Role status updated
  */
-router.patch(
-  '/:id/status',
-  validate({ body: updateRoleStatusSchema }),
-  updateRoleStatus
-);
+router.patch('/:id/status', validate({ body: updateRoleStatusSchema }), updateRoleStatus);
 
 /**
  * @swagger
@@ -290,11 +286,7 @@ router.get('/:id/permissions', (req, res) => getRoleById(req, res));
  *       200:
  *         description: Permissions assigned
  */
-router.patch(
-  '/:id/permissions',
-  validate({ body: assignPermissionsSchema }),
-  assignPermissions
-);
+router.patch('/:id/permissions', validate({ body: assignPermissionsSchema }), assignPermissions);
 
 /**
  * @swagger
@@ -329,11 +321,7 @@ router.patch(
  *       200:
  *         description: Permissions assigned
  */
-router.post(
-  '/:id/permissions',
-  validate({ body: assignPermissionsSchema }),
-  assignPermissions
-);
+router.post('/:id/permissions', validate({ body: assignPermissionsSchema }), assignPermissions);
 
 /**
  * @swagger

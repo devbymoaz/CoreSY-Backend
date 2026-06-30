@@ -146,6 +146,12 @@ const SUCCESS_MESSAGES = {
   PERMISSION_DELETED: 'Permission deleted successfully.',
   PERMISSIONS_ASSIGNED: 'Permissions assigned successfully.',
   ROLES_ASSIGNED: 'Roles assigned successfully.',
+  ADMIN_CREATED: 'Admin created successfully.',
+  ADMIN_UPDATED: 'Admin updated successfully.',
+  ADMIN_DELETED: 'Admin deleted successfully.',
+  ADMIN_STATUS_UPDATED: 'Admin status updated successfully.',
+  ADMIN_PASSWORD_RESET: 'Admin password reset successfully.',
+  PROFILE_IMAGE_UPLOADED: 'Profile image uploaded successfully.',
 };
 
 const PAGINATION = {

@@ -40,7 +40,12 @@ const STATIC_GOVERNORATES = [
   { id: 'static-daraa', name: 'Daraa', nameAr: 'درعا', code: 'DR' },
   { id: 'static-quneitra', name: 'Quneitra', nameAr: 'القنيطرة', code: 'QU' },
   { id: 'static-suwayda', name: 'Suwayda', nameAr: 'السويداء', code: 'SW' },
-  { id: 'static-damascus-countryside', name: 'Damascus Countryside', nameAr: 'ريف دمشق', code: 'RD' },
+  {
+    id: 'static-damascus-countryside',
+    name: 'Damascus Countryside',
+    nameAr: 'ريف دمشق',
+    code: 'RD',
+  },
 ];
 
 // Simple in-memory user store for demo mode (no database needed!)
@@ -148,13 +153,7 @@ class AuthService {
    * Demo mode registration - no database needed!
    */
   async _registerDemo(data) {
-    const {
-      fullName,
-      email,
-      phoneNumber,
-      smartAssistantName,
-      governorateId,
-    } = data;
+    const { fullName, email, phoneNumber, smartAssistantName, governorateId } = data;
 
     // Check if user already exists in demo store
     if (DEMO_USERS.has(email)) {
@@ -162,7 +161,7 @@ class AuthService {
     }
 
     // Get governorate from static data
-    const governorate = STATIC_GOVERNORATES.find(g => g.id === governorateId);
+    const governorate = STATIC_GOVERNORATES.find((g) => g.id === governorateId);
     if (!governorate) {
       throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
     }

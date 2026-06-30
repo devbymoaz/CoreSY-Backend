@@ -40,6 +40,16 @@ class GovernorateRepository {
   }
 
   /**
+   * Get all governorates.
+   * @returns {Promise<Object[]>}
+   */
+  async findAll() {
+    return prisma.governorate.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  /**
    * Atomically increment Pass ID sequence and return formatted Pass ID.
    * @param {string} governorateId - Governorate UUID
    * @returns {Promise<string>} Formatted Pass ID (e.g., DM-000001)

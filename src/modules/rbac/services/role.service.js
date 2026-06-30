@@ -155,19 +155,14 @@ class RoleService {
 
     // Verify all permissions exist
     const permissions = await Promise.all(
-      permissionIds.map(id => permissionRepository.findById(id))
+      permissionIds.map((id) => permissionRepository.findById(id)),
     );
-    const invalidIds = permissionIds.filter(
-      (_, index) => !permissions[index]
-    );
+    const invalidIds = permissionIds.filter((_, index) => !permissions[index]);
     if (invalidIds.length > 0) {
       throw new AppError('Some permissions not found', 404);
     }
 
-    const updatedRole = await roleRepository.assignPermissions(
-      roleId,
-      permissionIds
-    );
+    const updatedRole = await roleRepository.assignPermissions(roleId, permissionIds);
 
     await auditLogService.logAction({
       userId,

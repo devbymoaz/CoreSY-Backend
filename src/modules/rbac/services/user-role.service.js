@@ -15,9 +15,7 @@ class UserRoleService {
    */
   async assignRoles(userId, roleIds, currentUserId, ipAddress, userAgent) {
     // Verify all roles exist
-    const roles = await Promise.all(
-      roleIds.map((id) => roleRepository.findById(id))
-    );
+    const roles = await Promise.all(roleIds.map((id) => roleRepository.findById(id)));
     const invalidIds = roleIds.filter((_, index) => !roles[index]);
     if (invalidIds.length > 0) {
       throw new AppError('Some roles not found', 404);

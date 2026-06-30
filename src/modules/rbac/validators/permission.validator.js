@@ -10,9 +10,14 @@ const { PERMISSION_STATUS, PERMISSION_MODULES } = require('../../../constants');
 const createPermissionSchema = z.object({
   module: z.nativeEnum(PERMISSION_MODULES),
   name: z.string().min(2).max(100).trim(),
-  slug: z.string().min(3).max(100).trim().refine((val) => val.includes('.'), {
-    message: 'Slug must contain a module prefix (e.g., users.create)',
-  }),
+  slug: z
+    .string()
+    .min(3)
+    .max(100)
+    .trim()
+    .refine((val) => val.includes('.'), {
+      message: 'Slug must contain a module prefix (e.g., users.create)',
+    }),
   description: z.string().max(500).nullable().optional(),
 });
 

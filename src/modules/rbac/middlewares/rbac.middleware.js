@@ -15,7 +15,7 @@ const authorizeRoles = (...allowedRoles) => {
       return next(new AppError(ERROR_MESSAGES.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED));
     }
 
-    const hasRole = req.user.roles.some(role => allowedRoles.includes(role));
+    const hasRole = req.user.roles.some((role) => allowedRoles.includes(role));
     if (!hasRole) {
       return next(new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN));
     }
@@ -50,9 +50,7 @@ const checkAnyPermission = (...permissionSlugs) => {
       return next(new AppError(ERROR_MESSAGES.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED));
     }
 
-    const hasPermission = permissionSlugs.some(slug =>
-      req.user.permissions.includes(slug)
-    );
+    const hasPermission = permissionSlugs.some((slug) => req.user.permissions.includes(slug));
     if (!hasPermission) {
       return next(new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN));
     }
@@ -70,9 +68,7 @@ const checkAllPermissions = (...permissionSlugs) => {
       return next(new AppError(ERROR_MESSAGES.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED));
     }
 
-    const hasAllPermissions = permissionSlugs.every(slug =>
-      req.user.permissions.includes(slug)
-    );
+    const hasAllPermissions = permissionSlugs.every((slug) => req.user.permissions.includes(slug));
     if (!hasAllPermissions) {
       return next(new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN));
     }

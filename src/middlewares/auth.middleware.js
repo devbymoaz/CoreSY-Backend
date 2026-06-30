@@ -5,7 +5,13 @@
 
 const { verifyAccessToken } = require('../utils/jwt');
 const userRepository = require('../repositories/user.repository');
-const { HTTP_STATUS, ERROR_MESSAGES, USER_STATUS, ROLE_STATUS, PERMISSION_STATUS } = require('../constants');
+const {
+  HTTP_STATUS,
+  ERROR_MESSAGES,
+  USER_STATUS,
+  ROLE_STATUS,
+  PERMISSION_STATUS,
+} = require('../constants');
 const AppError = require('../utils/AppError');
 
 /**
@@ -45,15 +51,19 @@ const authenticate = async (req, _res, next) => {
 
     // If user has userRoles (many-to-many), use those, else fall back to single role
     if (user.userRoles && user.userRoles.length > 0) {
-      user.userRoles.forEach(userRole => {
+      user.userRoles.forEach((userRole) => {
         const role = userRole.role;
         if (role && role.status === ROLE_STATUS.ACTIVE && !role.deletedAt) {
           userRoles.push(role.name);
-          
+
           if (role.rolePermissions) {
-            role.rolePermissions.forEach(rp => {
+            role.rolePermissions.forEach((rp) => {
               const permission = rp.permission;
-              if (permission && permission.status === PERMISSION_STATUS.ACTIVE && !permission.deletedAt) {
+              if (
+                permission &&
+                permission.status === PERMISSION_STATUS.ACTIVE &&
+                !permission.deletedAt
+              ) {
                 userPermissions.add(permission.slug);
               }
             });

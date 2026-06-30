@@ -23,14 +23,14 @@ const validate = (options) => {
             field: issue.path.join('.'),
             message: issue.message,
           }));
-          const errorMessages = errors.map(e => `${e.field}: ${e.message}`).join(', ');
+          const errorMessages = errors.map((e) => `${e.field}: ${e.message}`).join(', ');
           return next(
             new AppError(
               `${ERROR_MESSAGES.VALIDATION_ERROR}: ${errorMessages}`,
               HTTP_STATUS.UNPROCESSABLE_ENTITY,
               true,
-              errors
-            )
+              errors,
+            ),
           );
         }
         req.body = result.data;
@@ -43,14 +43,14 @@ const validate = (options) => {
             field: issue.path.join('.'),
             message: issue.message,
           }));
-          const errorMessages = errors.map(e => `${e.field}: ${e.message}`).join(', ');
+          const errorMessages = errors.map((e) => `${e.field}: ${e.message}`).join(', ');
           return next(
             new AppError(
               `${ERROR_MESSAGES.VALIDATION_ERROR}: ${errorMessages}`,
               HTTP_STATUS.UNPROCESSABLE_ENTITY,
               true,
-              errors
-            )
+              errors,
+            ),
           );
         }
         req.params = result.data;
@@ -63,14 +63,14 @@ const validate = (options) => {
             field: issue.path.join('.'),
             message: issue.message,
           }));
-          const errorMessages = errors.map(e => `${e.field}: ${e.message}`).join(', ');
+          const errorMessages = errors.map((e) => `${e.field}: ${e.message}`).join(', ');
           return next(
             new AppError(
               `${ERROR_MESSAGES.VALIDATION_ERROR}: ${errorMessages}`,
               HTTP_STATUS.UNPROCESSABLE_ENTITY,
               true,
-              errors
-            )
+              errors,
+            ),
           );
         }
         req.query = result.data;

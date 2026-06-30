@@ -9,6 +9,7 @@ const authRoutes = require('./auth.routes');
 const governorateRoutes = require('./governorate.routes');
 const debugRoutes = require('./debug.routes');
 const rbacRoutes = require('../modules/rbac/routes');
+const adminRoutes = require('../modules/admin/routes/admin.routes');
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.use('/governorates', governorateRoutes);
 router.use('/debug', debugRoutes);
 router.use('/', rbacRoutes.router);
 router.use('/users', rbacRoutes.userRoleRoutes);
+router.use('/admins', adminRoutes);
 
 module.exports = router;

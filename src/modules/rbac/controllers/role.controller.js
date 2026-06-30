@@ -12,12 +12,7 @@ const { SUCCESS_MESSAGES } = require('../../../constants');
  * Create a new role
  */
 const createRole = asyncHandler(async (req, res) => {
-  const role = await roleService.createRole(
-    req.body,
-    req.user.id,
-    req.ip,
-    req.get('user-agent')
-  );
+  const role = await roleService.createRole(req.body, req.user.id, req.ip, req.get('user-agent'));
 
   return sendCreated(res, {
     message: SUCCESS_MESSAGES.ROLE_CREATED,
@@ -60,7 +55,7 @@ const updateRole = asyncHandler(async (req, res) => {
     req.body,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendSuccess(res, {
@@ -78,7 +73,7 @@ const updateRoleStatus = asyncHandler(async (req, res) => {
     req.body.status,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendSuccess(res, {
@@ -91,12 +86,7 @@ const updateRoleStatus = asyncHandler(async (req, res) => {
  * Delete a role
  */
 const deleteRole = asyncHandler(async (req, res) => {
-  await roleService.deleteRole(
-    req.params.id,
-    req.user.id,
-    req.ip,
-    req.get('user-agent')
-  );
+  await roleService.deleteRole(req.params.id, req.user.id, req.ip, req.get('user-agent'));
 
   return sendSuccess(res, {
     message: SUCCESS_MESSAGES.ROLE_DELETED,
@@ -112,7 +102,7 @@ const assignPermissions = asyncHandler(async (req, res) => {
     req.body.permissionIds,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendSuccess(res, {
@@ -130,7 +120,7 @@ const removePermission = asyncHandler(async (req, res) => {
     req.params.permissionId,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendSuccess(res, {

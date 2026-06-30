@@ -32,17 +32,17 @@ const getClient = () => {
  */
 const storeEmailOtp = async (userId, otp) => {
   const client = getClient();
-  
+
   if (client) {
     const key = REDIS_KEYS.EMAIL_OTP(userId);
     await client.setex(key, config.auth.otpExpirySeconds, otp);
   } else {
     // Fallback to in-memory storage
     const key = `email-otp:${userId}`;
-    inMemoryStore.set(key, { otp, expires: Date.now() + (config.auth.otpExpirySeconds * 1000) });
+    inMemoryStore.set(key, { otp, expires: Date.now() + config.auth.otpExpirySeconds * 1000 });
     logger.info(`Stored OTP in memory (Redis unavailable): ${otp}`);
   }
-  
+
   // Always log the OTP for development/testing
   logger.info(`Email verification OTP for user ${userId}: ${otp}`);
 };
@@ -55,7 +55,7 @@ const storeEmailOtp = async (userId, otp) => {
  */
 const verifyEmailOtp = async (userId, otp) => {
   const client = getClient();
-  
+
   if (client) {
     const key = REDIS_KEYS.EMAIL_OTP(userId);
     const storedOtp = await client.get(key);
@@ -69,14 +69,14 @@ const verifyEmailOtp = async (userId, otp) => {
     // Fallback to in-memory storage
     const key = `email-otp:${userId}`;
     const stored = inMemoryStore.get(key);
-    
+
     if (!stored || stored.expires < Date.now()) {
       inMemoryStore.delete(key);
       return false;
     }
-    
+
     if (stored.otp !== otp) return false;
-    
+
     inMemoryStore.delete(key);
     return true;
   }
@@ -90,17 +90,20 @@ const verifyEmailOtp = async (userId, otp) => {
  */
 const storePasswordResetOtp = async (userId, otp) => {
   const client = getClient();
-  
+
   if (client) {
     const key = REDIS_KEYS.PASSWORD_RESET_OTP(userId);
     await client.setex(key, config.auth.passwordResetOtpExpirySeconds, otp);
   } else {
     // Fallback to in-memory storage
     const key = `password-reset-otp:${userId}`;
-    inMemoryStore.set(key, { otp, expires: Date.now() + (config.auth.passwordResetOtpExpirySeconds * 1000) });
+    inMemoryStore.set(key, {
+      otp,
+      expires: Date.now() + config.auth.passwordResetOtpExpirySeconds * 1000,
+    });
     logger.info(`Stored password reset OTP in memory (Redis unavailable): ${otp}`);
   }
-  
+
   logger.info(`Password reset OTP for user ${userId}: ${otp}`);
 };
 
@@ -112,7 +115,7 @@ const storePasswordResetOtp = async (userId, otp) => {
  */
 const verifyPasswordResetOtp = async (userId, otp) => {
   const client = getClient();
-  
+
   if (client) {
     const key = REDIS_KEYS.PASSWORD_RESET_OTP(userId);
     const storedOtp = await client.get(key);
@@ -126,14 +129,14 @@ const verifyPasswordResetOtp = async (userId, otp) => {
     // Fallback to in-memory storage
     const key = `password-reset-otp:${userId}`;
     const stored = inMemoryStore.get(key);
-    
+
     if (!stored || stored.expires < Date.now()) {
       inMemoryStore.delete(key);
       return false;
     }
-    
+
     if (stored.otp !== otp) return false;
-    
+
     inMemoryStore.delete(key);
     return true;
   }
@@ -146,7 +149,7 @@ const verifyPasswordResetOtp = async (userId, otp) => {
  */
 const checkResendRateLimit = async (email) => {
   const client = getClient();
-  
+
   if (client) {
     const key = REDIS_KEYS.RESEND_RATE_LIMIT(email);
     const exists = await client.get(key);

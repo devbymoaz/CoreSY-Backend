@@ -72,11 +72,11 @@ const errorHandler = (err, req, res, _next) => {
 
   // Convert Zod errors (if any)
   if (error.name === 'ZodError') {
-    const errors = error.issues.map(issue => ({
+    const errors = error.issues.map((issue) => ({
       field: issue.path.join('.'),
       message: issue.message,
     }));
-    const errorMessages = errors.map(e => `${e.field}: ${e.message}`).join(', ');
+    const errorMessages = errors.map((e) => `${e.field}: ${e.message}`).join(', ');
     error = new AppError(
       `${ERROR_MESSAGES.VALIDATION_ERROR}: ${errorMessages}`,
       HTTP_STATUS.UNPROCESSABLE_ENTITY,

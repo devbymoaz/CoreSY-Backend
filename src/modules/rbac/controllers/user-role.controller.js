@@ -17,7 +17,7 @@ const assignRoles = asyncHandler(async (req, res) => {
     req.body.roleIds,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendSuccess(res, {

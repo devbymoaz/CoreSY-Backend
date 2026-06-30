@@ -16,7 +16,7 @@ const createPermission = asyncHandler(async (req, res) => {
     req.body,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendCreated(res, {
@@ -59,7 +59,7 @@ const updatePermission = asyncHandler(async (req, res) => {
     req.body,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendSuccess(res, {
@@ -76,7 +76,7 @@ const deletePermission = asyncHandler(async (req, res) => {
     req.params.id,
     req.user.id,
     req.ip,
-    req.get('user-agent')
+    req.get('user-agent'),
   );
 
   return sendSuccess(res, {

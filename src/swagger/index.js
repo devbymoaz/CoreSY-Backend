@@ -112,7 +112,15 @@ const swaggerDefinition = {
       },
       RegisterRequest: {
         type: 'object',
-        required: ['fullName', 'email', 'phoneNumber', 'password', 'confirmPassword', 'governorateId', 'acceptTerms'],
+        required: [
+          'fullName',
+          'email',
+          'phoneNumber',
+          'password',
+          'confirmPassword',
+          'governorateId',
+          'acceptTerms',
+        ],
         properties: {
           fullName: { type: 'string', example: 'Ahmad Al-Hassan' },
           email: { type: 'string', example: 'ahmad@example.com' },
@@ -130,7 +138,7 @@ const swaggerDefinition = {
           accessToken: { type: 'string' },
           refreshToken: { type: 'string' },
           expiresIn: { type: 'string', example: '7d' },
-          user: { '$ref': '#/components/schemas/User' },
+          user: { $ref: '#/components/schemas/User' },
         },
       },
       Role: {
@@ -162,6 +170,26 @@ const swaggerDefinition = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      Admin: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          passId: { type: 'string', example: 'AL-000001' },
+          fullName: { type: 'string', example: 'John Doe' },
+          email: { type: 'string', example: 'admin@example.com' },
+          phoneNumber: { type: 'string', example: '+963912345678' },
+          profileImage: { type: 'string', example: 'https://example.com/profile.jpg' },
+          role: { $ref: '#/components/schemas/Role' },
+          status: {
+            type: 'string',
+            enum: ['PENDING_VERIFICATION', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED'],
+            example: 'ACTIVE',
+          },
+          lastLogin: { type: 'string', format: 'date-time' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
     },
   },
   tags: [
@@ -173,6 +201,7 @@ const swaggerDefinition = {
     { name: 'Permissions', description: 'Permission management endpoints' },
     { name: 'User Roles', description: 'User role assignment endpoints' },
     { name: 'Users', description: 'User management endpoints' },
+    { name: 'Admins', description: 'Admin management endpoints' },
   ],
 };
 
@@ -182,6 +211,7 @@ const options = {
     './src/routes/**/*.js',
     './src/docs/**/*.js',
     './src/modules/rbac/routes/**/*.js',
+    './src/modules/admin/routes/**/*.js',
   ],
 };
 

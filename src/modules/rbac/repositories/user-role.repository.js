@@ -25,7 +25,7 @@ class UserRoleRepository {
               roleId,
             },
           });
-        })
+        }),
       );
 
       return userRoles;

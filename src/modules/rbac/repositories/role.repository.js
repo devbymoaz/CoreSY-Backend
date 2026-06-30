@@ -128,15 +128,15 @@ class RoleRepository {
       where: { roleId },
       select: { permissionId: true },
     });
-    const existingIds = existing.map(p => p.permissionId);
+    const existingIds = existing.map((p) => p.permissionId);
 
-    const toCreate = permissionIds.filter(id => !existingIds.includes(id));
-    const toDelete = existingIds.filter(id => !permissionIds.includes(id));
+    const toCreate = permissionIds.filter((id) => !existingIds.includes(id));
+    const toDelete = existingIds.filter((id) => !permissionIds.includes(id));
 
     return prisma.$transaction(async (tx) => {
       if (toCreate.length > 0) {
         await tx.rolePermission.createMany({
-          data: toCreate.map(permissionId => ({
+          data: toCreate.map((permissionId) => ({
             roleId,
             permissionId,
           })),

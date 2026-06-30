@@ -23,7 +23,12 @@ const STATIC_GOVERNORATES = [
   { id: 'static-daraa', name: 'Daraa', nameAr: 'درعا', code: 'DR' },
   { id: 'static-quneitra', name: 'Quneitra', nameAr: 'القنيطرة', code: 'QU' },
   { id: 'static-suwayda', name: 'Suwayda', nameAr: 'السويداء', code: 'SW' },
-  { id: 'static-damascus-countryside', name: 'Damascus Countryside', nameAr: 'ريف دمشق', code: 'RD' },
+  {
+    id: 'static-damascus-countryside',
+    name: 'Damascus Countryside',
+    nameAr: 'ريف دمشق',
+    code: 'RD',
+  },
 ];
 
 /**
