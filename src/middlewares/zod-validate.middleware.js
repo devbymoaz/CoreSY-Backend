@@ -1,6 +1,6 @@
 /**
  * Zod Validation Middleware
- * Validates request bodies, params, and queries using Zod schemas
+ * Validates request body, params, and queries using Zod schemas
  */
 
 const { HTTP_STATUS, ERROR_MESSAGES } = require('../constants');
@@ -23,8 +23,14 @@ const validate = (options) => {
             field: issue.path.join('.'),
             message: issue.message,
           }));
+          const errorMessages = errors.map(e => `${e.field}: ${e.message}`).join(', ');
           return next(
-            new AppError(ERROR_MESSAGES.VALIDATION_ERROR, HTTP_STATUS.UNPROCESSABLE_ENTITY, errors)
+            new AppError(
+              `${ERROR_MESSAGES.VALIDATION_ERROR}: ${errorMessages}`,
+              HTTP_STATUS.UNPROCESSABLE_ENTITY,
+              true,
+              errors
+            )
           );
         }
         req.body = result.data;
@@ -37,8 +43,14 @@ const validate = (options) => {
             field: issue.path.join('.'),
             message: issue.message,
           }));
+          const errorMessages = errors.map(e => `${e.field}: ${e.message}`).join(', ');
           return next(
-            new AppError(ERROR_MESSAGES.VALIDATION_ERROR, HTTP_STATUS.UNPROCESSABLE_ENTITY, errors)
+            new AppError(
+              `${ERROR_MESSAGES.VALIDATION_ERROR}: ${errorMessages}`,
+              HTTP_STATUS.UNPROCESSABLE_ENTITY,
+              true,
+              errors
+            )
           );
         }
         req.params = result.data;
@@ -51,8 +63,14 @@ const validate = (options) => {
             field: issue.path.join('.'),
             message: issue.message,
           }));
+          const errorMessages = errors.map(e => `${e.field}: ${e.message}`).join(', ');
           return next(
-            new AppError(ERROR_MESSAGES.VALIDATION_ERROR, HTTP_STATUS.UNPROCESSABLE_ENTITY, errors)
+            new AppError(
+              `${ERROR_MESSAGES.VALIDATION_ERROR}: ${errorMessages}`,
+              HTTP_STATUS.UNPROCESSABLE_ENTITY,
+              true,
+              errors
+            )
           );
         }
         req.query = result.data;
