@@ -33,11 +33,7 @@ const getBusinessCashiers = asyncHandler(async (req, res) => {
 });
 
 const getBranchCashiers = asyncHandler(async (req, res) => {
-  const result = await cashierService.getBranchCashiers(
-    req.params.branchId,
-    req.user,
-    req.query,
-  );
+  const result = await cashierService.getBranchCashiers(req.params.branchId, req.user, req.query);
   return sendSuccess(res, result);
 });
 

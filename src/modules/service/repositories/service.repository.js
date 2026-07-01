@@ -228,14 +228,7 @@ class ServiceRepository {
       deletedAt: null,
     };
 
-    const [
-      total,
-      active,
-      inactive,
-      featured,
-      byCategory,
-      byBranch,
-    ] = await Promise.all([
+    const [total, active, inactive, featured, byCategory, byBranch] = await Promise.all([
       prisma.service.count({ where }),
       prisma.service.count({ where: { ...where, status: 'ACTIVE' } }),
       prisma.service.count({ where: { ...where, status: 'INACTIVE' } }),

@@ -4,16 +4,15 @@ const branchRepository = require('../../branch/repositories/branch.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
 const { hashPassword, comparePassword } = require('../../../utils/password');
-const {
-  HTTP_STATUS,
-  ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
-  ROLES,
-} = require('../../../constants');
+const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, ROLES } = require('../../../constants');
 
 class CashierService {
   async generateEmployeeId() {
-    const { cashiers } = await cashierRepository.findAll({ limit: 1, sortBy: 'createdAt', sortOrder: 'desc' });
+    const { cashiers } = await cashierRepository.findAll({
+      limit: 1,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    });
     let nextNumber = 1;
     if (cashiers.length > 0 && cashiers[0].employeeId) {
       const latestCode = cashiers[0].employeeId;
@@ -36,10 +35,7 @@ class CashierService {
       throw new AppError(ERROR_MESSAGES.BRANCH_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -95,10 +91,7 @@ class CashierService {
       throw new AppError(ERROR_MESSAGES.CASHIER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      cashier.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && cashier.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -111,10 +104,7 @@ class CashierService {
       throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -127,10 +117,7 @@ class CashierService {
       throw new AppError(ERROR_MESSAGES.BRANCH_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      branch.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && branch.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -143,10 +130,7 @@ class CashierService {
       throw new AppError(ERROR_MESSAGES.CASHIER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      cashier.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && cashier.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -189,10 +173,7 @@ class CashierService {
       throw new AppError(ERROR_MESSAGES.CASHIER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      cashier.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && cashier.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 

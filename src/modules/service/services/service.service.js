@@ -50,23 +50,14 @@ class ServiceService {
     }
 
     // Check permissions
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
     // Check if service name already exists for this branch
-    const existingService = await serviceRepository.findByNameAndBranchId(
-      data.name,
-      data.branchId,
-    );
+    const existingService = await serviceRepository.findByNameAndBranchId(data.name, data.branchId);
     if (existingService) {
-      throw new AppError(
-        ERROR_MESSAGES.SERVICE_NAME_ALREADY_EXISTS,
-        HTTP_STATUS.CONFLICT,
-      );
+      throw new AppError(ERROR_MESSAGES.SERVICE_NAME_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
     }
 
     // Generate service code
@@ -104,10 +95,7 @@ class ServiceService {
     }
 
     // Check permissions
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      service.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && service.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -121,10 +109,7 @@ class ServiceService {
     }
 
     // Check permissions
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -138,10 +123,7 @@ class ServiceService {
     }
 
     // Check permissions
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      branch.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && branch.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -155,10 +137,7 @@ class ServiceService {
     }
 
     // Check permissions
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      service.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && service.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
@@ -170,10 +149,7 @@ class ServiceService {
         id,
       );
       if (existingService) {
-        throw new AppError(
-          ERROR_MESSAGES.SERVICE_NAME_ALREADY_EXISTS,
-          HTTP_STATUS.CONFLICT,
-        );
+        throw new AppError(ERROR_MESSAGES.SERVICE_NAME_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
       }
     }
 
@@ -201,10 +177,7 @@ class ServiceService {
     }
 
     // Check permissions
-    if (
-      user.roles.includes(ROLES.BUSINESS_OWNER) &&
-      service.business.ownerId !== user.id
-    ) {
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && service.business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 

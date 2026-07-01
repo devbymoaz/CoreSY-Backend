@@ -171,6 +171,33 @@ const GENDER_RESTRICTION = {
   BOTH: 'BOTH',
 };
 
+const BOOKING_STATUS = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CHECKED_IN: 'CHECKED_IN',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED',
+  REJECTED: 'REJECTED',
+  NO_SHOW: 'NO_SHOW',
+};
+
+const PAYMENT_STATUS = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED',
+  CASH: 'CASH',
+  WALLET: 'WALLET',
+};
+
+const BOOKING_SOURCE = {
+  MOBILE_APP: 'MOBILE_APP',
+  WEB: 'WEB',
+  WALK_IN: 'WALK_IN',
+  ADMIN: 'ADMIN',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -253,6 +280,16 @@ const ERROR_MESSAGES = {
   CASHIER_EMPLOYEE_ID_ALREADY_EXISTS: 'A cashier with this employee ID already exists.',
   SLOT_NOT_FOUND: 'Slot not found.',
   SLOT_OVERLAP: 'Slot overlaps with an existing slot.',
+  BOOKING_NOT_FOUND: 'Booking not found.',
+  BOOKING_NUMBER_EXISTS: 'Booking number already exists.',
+  SLOT_NOT_AVAILABLE: 'This slot is not available for booking.',
+  SLOT_FULL: 'This slot is fully booked.',
+  DUPLICATE_BOOKING: 'You have already booked this slot.',
+  INVALID_BOOKING_STATUS: 'Invalid booking status.',
+  INVALID_PAYMENT_STATUS: 'Invalid payment status.',
+  INSUFFICIENT_CAPACITY: 'Insufficient capacity in the slot.',
+  BOOKING_CANNOT_BE_CANCELLED: 'This booking cannot be cancelled.',
+  BOOKING_CANNOT_BE_UPDATED: 'This booking cannot be updated.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -316,6 +353,17 @@ const SUCCESS_MESSAGES = {
   SLOT_STATUS_UPDATED: 'Slot status updated successfully.',
   SLOT_RECURRING_CREATED: 'Recurring slots created successfully.',
   SLOT_DUPLICATED: 'Slot duplicated successfully.',
+  BOOKING_CREATED: 'Booking created successfully.',
+  BOOKING_UPDATED: 'Booking updated successfully.',
+  BOOKING_DELETED: 'Booking deleted successfully.',
+  BOOKING_CONFIRMED: 'Booking confirmed successfully.',
+  BOOKING_REJECTED: 'Booking rejected successfully.',
+  BOOKING_CANCELLED: 'Booking cancelled successfully.',
+  BOOKING_RESCHEDULED: 'Booking rescheduled successfully.',
+  BOOKING_CHECKED_IN: 'Check-in successful.',
+  QR_CODE_GENERATED: 'QR code generated successfully.',
+  FAVORITE_ADDED: 'Business added to favorites.',
+  FAVORITE_REMOVED: 'Business removed from favorites.',
 };
 
 const PAGINATION = {
@@ -342,6 +390,9 @@ module.exports = {
   BOOKING_TYPE,
   RECURRING_TYPE,
   GENDER_RESTRICTION,
+  BOOKING_STATUS,
+  PAYMENT_STATUS,
+  BOOKING_SOURCE,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,

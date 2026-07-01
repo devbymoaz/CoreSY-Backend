@@ -24,20 +24,12 @@ const getSlotById = asyncHandler(async (req, res) => {
 });
 
 const getServiceSlots = asyncHandler(async (req, res) => {
-  const result = await slotService.getServiceSlots(
-    req.params.serviceId,
-    req.user,
-    req.query,
-  );
+  const result = await slotService.getServiceSlots(req.params.serviceId, req.user, req.query);
   return sendSuccess(res, result);
 });
 
 const getBranchSlots = asyncHandler(async (req, res) => {
-  const result = await slotService.getBranchSlots(
-    req.params.branchId,
-    req.user,
-    req.query,
-  );
+  const result = await slotService.getBranchSlots(req.params.branchId, req.user, req.query);
   return sendSuccess(res, result);
 });
 

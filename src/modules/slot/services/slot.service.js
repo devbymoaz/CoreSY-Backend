@@ -4,12 +4,7 @@ const branchRepository = require('../../branch/repositories/branch.repository');
 const serviceRepository = require('../../service/repositories/service.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
-const {
-  HTTP_STATUS,
-  ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
-  ROLES,
-} = require('../../../constants');
+const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, ROLES } = require('../../../constants');
 
 class SlotService {
   async createSlot(data, userId, ipAddress, userAgent, user) {
@@ -27,7 +22,12 @@ class SlotService {
     }
 
     const slotDate = new Date(data.slotDate);
-    const overlappingSlots = await slotRepository.checkForOverlap(data.branchId, slotDate, data.startTime, data.endTime);
+    const overlappingSlots = await slotRepository.checkForOverlap(
+      data.branchId,
+      slotDate,
+      data.startTime,
+      data.endTime,
+    );
     if (overlappingSlots.length > 0) {
       throw new AppError(ERROR_MESSAGES.SLOT_OVERLAP, HTTP_STATUS.CONFLICT);
     }
@@ -88,7 +88,12 @@ class SlotService {
 
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       if (data.daysOfWeek.includes(d.getDay())) {
-        const overlappingSlots = await slotRepository.checkForOverlap(data.branchId, new Date(d), data.startTime, data.endTime);
+        const overlappingSlots = await slotRepository.checkForOverlap(
+          data.branchId,
+          new Date(d),
+          data.startTime,
+          data.endTime,
+        );
         if (overlappingSlots.length === 0) {
           slots.push({
             serviceId: data.serviceId,
@@ -137,7 +142,12 @@ class SlotService {
     }
 
     const slotDate = new Date(newDate);
-    const overlappingSlots = await slotRepository.checkForOverlap(originalSlot.branchId, slotDate, originalSlot.startTime, originalSlot.endTime);
+    const overlappingSlots = await slotRepository.checkForOverlap(
+      originalSlot.branchId,
+      slotDate,
+      originalSlot.startTime,
+      originalSlot.endTime,
+    );
     if (overlappingSlots.length > 0) {
       throw new AppError(ERROR_MESSAGES.SLOT_OVERLAP, HTTP_STATUS.CONFLICT);
     }
@@ -215,7 +225,13 @@ class SlotService {
       const slotDate = data.slotDate ? new Date(data.slotDate) : slot.slotDate;
       const startTime = data.startTime || slot.startTime;
       const endTime = data.endTime || slot.endTime;
-      const overlappingSlots = await slotRepository.checkForOverlap(slot.branchId, slotDate, startTime, endTime, id);
+      const overlappingSlots = await slotRepository.checkForOverlap(
+        slot.branchId,
+        slotDate,
+        startTime,
+        endTime,
+        id,
+      );
       if (overlappingSlots.length > 0) {
         throw new AppError(ERROR_MESSAGES.SLOT_OVERLAP, HTTP_STATUS.CONFLICT);
       }
@@ -224,7 +240,8 @@ class SlotService {
     const updateData = { ...data, updatedBy: userId };
     if (data.slotDate) updateData.dayOfWeek = new Date(data.slotDate).getDay();
     if (data.recurringEndDate) updateData.recurringEndDate = new Date(data.recurringEndDate);
-    if (data.maxCapacity !== undefined) updateData.remainingCapacity = data.maxCapacity - (slot.maxCapacity - slot.remainingCapacity);
+    if (data.maxCapacity !== undefined)
+      updateData.remainingCapacity = data.maxCapacity - (slot.maxCapacity - slot.remainingCapacity);
 
     const updatedSlot = await slotRepository.update(id, updateData);
 

@@ -1,5 +1,10 @@
 const { z } = require('zod');
-const { SLOT_STATUS, BOOKING_TYPE, RECURRING_TYPE, GENDER_RESTRICTION } = require('../../../constants');
+const {
+  SLOT_STATUS,
+  BOOKING_TYPE,
+  RECURRING_TYPE,
+  GENDER_RESTRICTION,
+} = require('../../../constants');
 
 const createSlotSchema = z.object({
   serviceId: z.string().uuid(),
@@ -21,8 +26,14 @@ const createSlotSchema = z.object({
 
 const updateSlotSchema = z.object({
   slotDate: z.string().optional(),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
+  startTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+    .optional(),
+  endTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+    .optional(),
   duration: z.number().int().positive().optional(),
   maxCapacity: z.number().int().positive().optional(),
   bookingType: z.nativeEnum(BOOKING_TYPE).optional(),

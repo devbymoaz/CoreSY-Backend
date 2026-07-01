@@ -90,7 +90,11 @@ router.patch('/profile', validate({ body: updateCashierProfileSchema }), updateC
  *       401:
  *         description: Unauthorized
  */
-router.patch('/change-password', validate({ body: changeCashierPasswordSchema }), changeCashierPassword);
+router.patch(
+  '/change-password',
+  validate({ body: changeCashierPasswordSchema }),
+  changeCashierPassword,
+);
 
 /**
  * @swagger
@@ -350,7 +354,11 @@ router.patch('/:id/status', validate({ body: updateCashierStatusSchema }), updat
  *       403:
  *         description: Forbidden
  */
-router.patch('/:id/reset-password', validate({ body: resetCashierPasswordSchema }), resetCashierPassword);
+router.patch(
+  '/:id/reset-password',
+  validate({ body: resetCashierPasswordSchema }),
+  resetCashierPassword,
+);
 
 /**
  * @swagger

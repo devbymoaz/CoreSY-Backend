@@ -147,6 +147,33 @@ enum GenderRestriction {
   BOTH
 }
 
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  REJECTED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CASH
+  WALLET
+}
+
+enum BookingSource {
+  MOBILE_APP
+  WEB
+  WALK_IN
+  ADMIN
+}
+
 
 // Syrian governorates with unique codes for Pass ID generation
 model Governorate {
@@ -276,6 +303,8 @@ model User {
   auditLogs          AuditLog[]
   notifications      Notification[]
   businesses         Business[]
+  bookings           Booking[]
+  favoriteBusinesses FavoriteBusiness[]
   lastLogin          DateTime?        @map("last_login")
   createdBy          String?          @map("created_by")
   updatedBy          String?          @map("updated_by")
@@ -358,6 +387,8 @@ model Business {
   services           Service[]
   cashiers           Cashier[]
   slots              Slot[]
+  bookings           Booking[]
+  favoriteBusinesses FavoriteBusiness[]
   createdBy          String?        @map("created_by")
   updatedBy          String?        @map("updated_by")
   deletedAt          DateTime?      @map("deleted_at")
@@ -401,6 +432,7 @@ model Branch {
   services         Service[]
   cashiers         Cashier[]
   slots            Slot[]
+  bookings         Booking[]
   createdBy        String?      @map("created_by")
   updatedBy        String?      @map("updated_by")
   deletedAt        DateTime?    @map("deleted_at")
@@ -456,6 +488,7 @@ model Service {
   @@index([type])
   @@index([isFeatured])
   slots            Slot[]
+  bookings         Booking[]
   @@map("services")
 }
 
@@ -495,6 +528,7 @@ model Slot {
   @@index([slotDate])
   @@index([status])
   @@index([bookingType])
+  bookings           Booking[]
   @@map("slots")
 }
 model Cashier {
@@ -526,4 +560,64 @@ model Cashier {
   @@index([branchId])
   @@index([status])
   @@map("cashiers")
+}
+
+// Booking model
+model Booking {
+  id                 String         @id @default(uuid())
+  bookingNumber      String         @unique @map("booking_number")
+  customerId         String         @map("customer_id")
+  customer           User           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  businessId         String         @map("business_id")
+  business           Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId           String         @map("branch_id")
+  branch             Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  serviceId          String         @map("service_id")
+  service            Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  slotId             String         @map("slot_id")
+  slot               Slot           @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  bookingType        BookingType    @map("booking_type")
+  reservationDate    DateTime       @map("reservation_date")
+  startTime          String         @map("start_time")
+  endTime            String         @map("end_time")
+  numberOfGuests     Int            @map("number_of_guests")
+  specialInstructions String?       @map("special_instructions")
+  bookingSource      BookingSource  @default(MOBILE_APP) @map("booking_source")
+  paymentMethod      String?        @map("payment_method")
+  paymentStatus      PaymentStatus  @default(PENDING) @map("payment_status")
+  status             BookingStatus  @default(PENDING)
+  qrCode             String?        @map("qr_code")
+  cancellationReason String?        @map("cancellation_reason")
+  createdBy          String?        @map("created_by")
+  updatedBy          String?        @map("updated_by")
+  deletedAt          DateTime?      @map("deleted_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@index([bookingNumber])
+  @@index([customerId])
+  @@index([businessId])
+  @@index([branchId])
+  @@index([serviceId])
+  @@index([slotId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([reservationDate])
+  @@index([bookingType])
+  @@map("bookings")
+}
+
+// Favorite Business model
+model FavoriteBusiness {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId  String   @map("business_id")
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, businessId])
+  @@index([userId])
+  @@index([businessId])
+  @@map("favorite_businesses")
 }

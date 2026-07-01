@@ -33,11 +33,7 @@ const getBusinessServices = asyncHandler(async (req, res) => {
 });
 
 const getBranchServices = asyncHandler(async (req, res) => {
-  const result = await serviceService.getBranchServices(
-    req.params.branchId,
-    req.user,
-    req.query,
-  );
+  const result = await serviceService.getBranchServices(req.params.branchId, req.user, req.query);
   return sendSuccess(res, result);
 });
 

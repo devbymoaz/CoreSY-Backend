@@ -157,14 +157,7 @@ class CashierRepository {
   async getDashboardStats() {
     const where = { deletedAt: null };
 
-    const [
-      total,
-      active,
-      inactive,
-      suspended,
-      byBusiness,
-      byBranch,
-    ] = await Promise.all([
+    const [total, active, inactive, suspended, byBusiness, byBranch] = await Promise.all([
       prisma.cashier.count({ where }),
       prisma.cashier.count({ where: { ...where, status: 'ACTIVE' } }),
       prisma.cashier.count({ where: { ...where, status: 'INACTIVE' } }),

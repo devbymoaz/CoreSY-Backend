@@ -44,11 +44,7 @@ router.use(authenticate);
  *       403:
  *         description: Forbidden
  */
-router.get(
-  '/dashboard',
-  authorizeRoles(ROLES.SUPER_ADMIN),
-  getDashboardStats,
-);
+router.get('/dashboard', authorizeRoles(ROLES.SUPER_ADMIN), getDashboardStats);
 
 /**
  * @swagger
@@ -72,10 +68,7 @@ router.get(
  *       401:
  *         description: Unauthorized
  */
-router.get(
-  '/business/:businessId',
-  getBusinessServices,
-);
+router.get('/business/:businessId', getBusinessServices);
 
 /**
  * @swagger
@@ -99,10 +92,7 @@ router.get(
  *       401:
  *         description: Unauthorized
  */
-router.get(
-  '/branch/:branchId',
-  getBranchServices,
-);
+router.get('/branch/:branchId', getBranchServices);
 
 /**
  * @swagger
@@ -116,11 +106,7 @@ router.get(
  *       200:
  *         description: List of services
  */
-router.get(
-  '/',
-  validate({ query: listServicesSchema }),
-  getServices,
-);
+router.get('/', validate({ query: listServicesSchema }), getServices);
 
 /**
  * @swagger
@@ -142,10 +128,7 @@ router.get(
  *       200:
  *         description: Service details
  */
-router.get(
-  '/:id',
-  getServiceById,
-);
+router.get('/:id', getServiceById);
 
 /**
  * @swagger
@@ -165,11 +148,7 @@ router.get(
  *       201:
  *         description: Service created
  */
-router.post(
-  '/',
-  validate({ body: createServiceSchema }),
-  createService,
-);
+router.post('/', validate({ body: createServiceSchema }), createService);
 
 /**
  * @swagger
@@ -197,11 +176,7 @@ router.post(
  *       200:
  *         description: Service updated
  */
-router.patch(
-  '/:id',
-  validate({ body: updateServiceSchema }),
-  updateService,
-);
+router.patch('/:id', validate({ body: updateServiceSchema }), updateService);
 
 /**
  * @swagger
@@ -223,10 +198,7 @@ router.patch(
  *       200:
  *         description: Service deleted
  */
-router.delete(
-  '/:id',
-  deleteService,
-);
+router.delete('/:id', deleteService);
 
 /**
  * @swagger
@@ -289,10 +261,7 @@ router.patch(
  *       200:
  *         description: Featured status updated
  */
-router.patch(
-  '/:id/feature',
-  updateServiceFeatured,
-);
+router.patch('/:id/feature', updateServiceFeatured);
 
 // File upload endpoints (TODO)
 router.post('/image', uploadServiceImage);

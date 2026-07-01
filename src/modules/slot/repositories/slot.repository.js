@@ -166,39 +166,32 @@ class SlotRepository {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [
-      total,
-      available,
-      full,
-      bookedCapacity,
-      remainingCapacity,
-      todaySlots,
-      upcomingSlots,
-    ] = await Promise.all([
-      prisma.slot.count({ where: baseWhere }),
-      prisma.slot.count({ where: { ...baseWhere, status: 'AVAILABLE' } }),
-      prisma.slot.count({ where: { ...baseWhere, status: 'FULL' } }),
-      prisma.slot.aggregate({
-        where: baseWhere,
-        _sum: { maxCapacity: true },
-      }),
-      prisma.slot.aggregate({
-        where: baseWhere,
-        _sum: { remainingCapacity: true },
-      }),
-      prisma.slot.count({
-        where: {
-          ...baseWhere,
-          slotDate: { gte: today, lt: tomorrow },
-        },
-      }),
-      prisma.slot.count({
-        where: {
-          ...baseWhere,
-          slotDate: { gte: today },
-        },
-      }),
-    ]);
+    const [total, available, full, bookedCapacity, remainingCapacity, todaySlots, upcomingSlots] =
+      await Promise.all([
+        prisma.slot.count({ where: baseWhere }),
+        prisma.slot.count({ where: { ...baseWhere, status: 'AVAILABLE' } }),
+        prisma.slot.count({ where: { ...baseWhere, status: 'FULL' } }),
+        prisma.slot.aggregate({
+          where: baseWhere,
+          _sum: { maxCapacity: true },
+        }),
+        prisma.slot.aggregate({
+          where: baseWhere,
+          _sum: { remainingCapacity: true },
+        }),
+        prisma.slot.count({
+          where: {
+            ...baseWhere,
+            slotDate: { gte: today, lt: tomorrow },
+          },
+        }),
+        prisma.slot.count({
+          where: {
+            ...baseWhere,
+            slotDate: { gte: today },
+          },
+        }),
+      ]);
 
     return {
       totalSlots: total,
