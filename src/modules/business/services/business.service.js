@@ -51,7 +51,7 @@ class BusinessService {
   }
 
   async getBusinesses(query, user) {
-    let where = { ...query };
+    const where = { ...query };
 
     // If user is Business Owner, only their businesses
     if (user.roles.includes(ROLES.BUSINESS_OWNER)) {

@@ -216,6 +216,37 @@ const swaggerDefinition = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      Branch: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string', example: 'Main Branch' },
+          code: { type: 'string', example: 'REST-001' },
+          businessId: { type: 'string', format: 'uuid' },
+          business: { $ref: '#/components/schemas/Business' },
+          type: { type: 'string', example: 'Restaurant' },
+          description: { type: 'string', example: 'Branch description' },
+          governorate: { $ref: '#/components/schemas/Governorate' },
+          city: { type: 'string', example: 'Damascus' },
+          address: { type: 'string', example: 'Main Street, 456' },
+          latitude: { type: 'number', example: 33.514 },
+          longitude: { type: 'number', example: 36.277 },
+          googleMapLink: { type: 'string', example: 'https://maps.google.com' },
+          contactEmail: { type: 'string', example: 'branch@example.com' },
+          contactPhone: { type: 'string', example: '+963987654321' },
+          whatsAppNumber: { type: 'string', example: '+963987654321' },
+          workingDays: { type: 'array', items: { type: 'string' } },
+          openingTime: { type: 'string', example: '09:00' },
+          closingTime: { type: 'string', example: '21:00' },
+          emergencyContact: { type: 'string', example: '+963912345678' },
+          image: { type: 'string', example: 'https://example.com/branch.jpg' },
+          coverImage: { type: 'string', example: 'https://example.com/cover.jpg' },
+          status: { type: 'string', example: 'PENDING' },
+          isMain: { type: 'boolean', example: false },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
     },
   },
   tags: [
@@ -229,6 +260,7 @@ const swaggerDefinition = {
     { name: 'Users', description: 'User management endpoints' },
     { name: 'Admins', description: 'Admin management endpoints' },
     { name: 'Businesses', description: 'Business management endpoints' },
+    { name: 'Branches', description: 'Branch management endpoints' },
   ],
 };
 
@@ -240,6 +272,7 @@ const options = {
     './src/modules/rbac/routes/**/*.js',
     './src/modules/admin/routes/**/*.js',
     './src/modules/business/routes/**/*.js',
+    './src/modules/branch/routes/**/*.js',
   ],
 };
 

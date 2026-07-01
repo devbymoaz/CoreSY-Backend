@@ -87,6 +87,14 @@ const BUSINESS_TYPE = {
   OTHER: 'OTHER',
 };
 
+const BRANCH_STATUS = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  CLOSED: 'CLOSED',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -156,6 +164,9 @@ const ERROR_MESSAGES = {
   BUSINESS_NOT_FOUND: 'Business not found.',
   BUSINESS_EMAIL_ALREADY_EXISTS: 'A business with this email already exists.',
   REGISTRATION_NUMBER_ALREADY_EXISTS: 'A business with this registration number already exists.',
+  BRANCH_NOT_FOUND: 'Branch not found.',
+  BRANCH_NAME_ALREADY_EXISTS: 'A branch with this name already exists for this business.',
+  BRANCH_CODE_ALREADY_EXISTS: 'A branch with this code already exists.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -193,6 +204,13 @@ const SUCCESS_MESSAGES = {
   BUSINESS_REJECTED: 'Business rejected successfully.',
   BUSINESS_LOGO_UPLOADED: 'Business logo uploaded successfully.',
   BUSINESS_COVER_UPLOADED: 'Business cover image uploaded successfully.',
+  BRANCH_CREATED: 'Branch created successfully.',
+  BRANCH_UPDATED: 'Branch updated successfully.',
+  BRANCH_DELETED: 'Branch deleted successfully.',
+  BRANCH_STATUS_UPDATED: 'Branch status updated successfully.',
+  BRANCH_MAIN_UPDATED: 'Main branch updated successfully.',
+  BRANCH_IMAGE_UPLOADED: 'Branch image uploaded successfully.',
+  BRANCH_COVER_UPLOADED: 'Branch cover image uploaded successfully.',
 };
 
 const PAGINATION = {
@@ -210,6 +228,7 @@ module.exports = {
   PERMISSION_STATUS,
   BUSINESS_STATUS,
   BUSINESS_TYPE,
+  BRANCH_STATUS,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,
