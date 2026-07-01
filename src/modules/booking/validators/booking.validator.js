@@ -1,10 +1,5 @@
 const { z } = require('zod');
-const {
-  BOOKING_TYPE,
-  BOOKING_STATUS,
-  PAYMENT_STATUS,
-  BOOKING_SOURCE,
-} = require('../../../constants');
+const { BOOKING_TYPE, BOOKING_STATUS, PAYMENT_STATUS } = require('../../../constants');
 
 const createBookingSchema = z.object({
   slotId: z.string().uuid(),

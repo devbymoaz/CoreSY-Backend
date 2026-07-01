@@ -154,6 +154,28 @@ const getBusinessDashboard = asyncHandler(async (req, res) => {
   return sendSuccess(res, { stats: result });
 });
 
+const checkInBooking = asyncHandler(async (req, res) => {
+  const result = await bookingService.checkInBooking(
+    req.params.id,
+    req.user.id,
+    req.ip,
+    req.headers['user-agent'],
+    req.user,
+  );
+  return sendSuccess(res, result);
+});
+
+const checkOutBooking = asyncHandler(async (req, res) => {
+  const result = await bookingService.checkOutBooking(
+    req.params.id,
+    req.user.id,
+    req.ip,
+    req.headers['user-agent'],
+    req.user,
+  );
+  return sendSuccess(res, result);
+});
+
 module.exports = {
   createBooking,
   getBookings,
@@ -168,6 +190,8 @@ module.exports = {
   getBusinessUpcomingBookings,
   confirmBooking,
   rejectBooking,
+  checkInBooking,
+  checkOutBooking,
   generateQRCode,
   addFavorite,
   removeFavorite,

@@ -25,7 +25,7 @@ function generateBookingNumber() {
 }
 
 class BookingService {
-  async createBooking(data, userId, ipAddress, userAgent, user) {
+  async createBooking(data, userId, ipAddress, userAgent, _user) {
     const slot = await slotRepository.findById(data.slotId);
     if (!slot) throw new AppError(ERROR_MESSAGES.SLOT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
@@ -41,10 +41,6 @@ class BookingService {
     if (duplicateBooking) {
       throw new AppError(ERROR_MESSAGES.DUPLICATE_BOOKING, HTTP_STATUS.CONFLICT);
     }
-
-    const business = await businessRepository.findById(slot.businessId);
-    const branch = await branchRepository.findById(slot.branchId);
-    const service = await serviceRepository.findById(slot.serviceId);
 
     const bookingData = {
       bookingNumber: generateBookingNumber(),
@@ -380,8 +376,18 @@ class BookingService {
       throw new AppError(ERROR_MESSAGES.INVALID_BOOKING_STATUS, HTTP_STATUS.BAD_REQUEST);
     }
 
+    // Generate QR code when confirming booking
+    const qrData = JSON.stringify({
+      bookingId: booking.id,
+      bookingNumber: booking.bookingNumber,
+      customerId: booking.customerId,
+      businessId: booking.businessId,
+      branchId: booking.branchId,
+    });
+
     const updatedBooking = await bookingRepository.update(id, {
       status: BOOKING_STATUS.CONFIRMED,
+      qrCode: qrData,
       updatedBy: userId,
     });
 
@@ -395,6 +401,79 @@ class BookingService {
     });
 
     return { message: SUCCESS_MESSAGES.BOOKING_CONFIRMED, booking: updatedBooking };
+  }
+
+  async checkInBooking(id, userId, ipAddress, userAgent, user) {
+    const booking = await bookingRepository.findById(id);
+    if (!booking) throw new AppError(ERROR_MESSAGES.BOOKING_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    const isBusinessOwner = booking.business.ownerId === user.id;
+    const isCashier = await prisma.cashier.findUnique({
+      where: { id: user.id, branchId: booking.branchId },
+    });
+
+    if (!isBusinessOwner && !isCashier && !user.roles.includes(ROLES.SUPER_ADMIN)) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (booking.status !== BOOKING_STATUS.CONFIRMED) {
+      throw new AppError(ERROR_MESSAGES.INVALID_BOOKING_STATUS, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const updatedBooking = await bookingRepository.update(id, {
+      status: BOOKING_STATUS.CHECKED_IN,
+      checkInTime: new Date(),
+      updatedBy: userId,
+    });
+
+    await auditLogService.create({
+      userId,
+      action: 'BOOKING_CHECKED_IN',
+      module: 'Bookings',
+      ipAddress,
+      userAgent,
+      payload: { bookingId: id },
+    });
+
+    return { message: SUCCESS_MESSAGES.BOOKING_CHECKED_IN, booking: updatedBooking };
+  }
+
+  async checkOutBooking(id, userId, ipAddress, userAgent, user) {
+    const booking = await bookingRepository.findById(id);
+    if (!booking) throw new AppError(ERROR_MESSAGES.BOOKING_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    const isBusinessOwner = booking.business.ownerId === user.id;
+    const isCashier = await prisma.cashier.findUnique({
+      where: { id: user.id, branchId: booking.branchId },
+    });
+
+    if (!isBusinessOwner && !isCashier && !user.roles.includes(ROLES.SUPER_ADMIN)) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (
+      booking.status !== BOOKING_STATUS.CHECKED_IN &&
+      booking.status !== BOOKING_STATUS.IN_PROGRESS
+    ) {
+      throw new AppError(ERROR_MESSAGES.INVALID_BOOKING_STATUS, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const updatedBooking = await bookingRepository.update(id, {
+      status: BOOKING_STATUS.COMPLETED,
+      checkOutTime: new Date(),
+      updatedBy: userId,
+    });
+
+    await auditLogService.create({
+      userId,
+      action: 'BOOKING_COMPLETED',
+      module: 'Bookings',
+      ipAddress,
+      userAgent,
+      payload: { bookingId: id },
+    });
+
+    return { message: SUCCESS_MESSAGES.BOOKING_CHECKED_OUT, booking: updatedBooking };
   }
 
   async rejectBooking(id, userId, ipAddress, userAgent, user) {

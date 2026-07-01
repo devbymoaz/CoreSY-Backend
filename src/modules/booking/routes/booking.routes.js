@@ -16,6 +16,8 @@ const {
   getBusinessUpcomingBookings,
   confirmBooking,
   rejectBooking,
+  checkInBooking,
+  checkOutBooking,
   generateQRCode,
   addFavorite,
   removeFavorite,
@@ -29,7 +31,6 @@ const {
   cancelBookingSchema,
   rescheduleBookingSchema,
   listBookingsSchema,
-  addFavoriteSchema,
 } = require('../validators/booking.validator');
 
 router.use(authenticate);
@@ -410,5 +411,47 @@ router.patch('/business/:id/confirm', confirmBooking);
  *         description: Booking rejected
  */
 router.patch('/business/:id/reject', rejectBooking);
+
+/**
+ * @swagger
+ * /bookings/business/{id}/check-in:
+ *   patch:
+ *     summary: Check-in a booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Check-in successful
+ */
+router.patch('/business/:id/check-in', checkInBooking);
+
+/**
+ * @swagger
+ * /bookings/business/{id}/check-out:
+ *   patch:
+ *     summary: Check-out a booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Check-out successful
+ */
+router.patch('/business/:id/check-out', checkOutBooking);
 
 module.exports = router;

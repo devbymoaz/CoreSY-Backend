@@ -151,6 +151,7 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CHECKED_IN
+  IN_PROGRESS
   COMPLETED
   CANCELLED
   EXPIRED
@@ -587,6 +588,8 @@ model Booking {
   paymentStatus      PaymentStatus  @default(PENDING) @map("payment_status")
   status             BookingStatus  @default(PENDING)
   qrCode             String?        @map("qr_code")
+  checkInTime        DateTime?      @map("check_in_time")
+  checkOutTime       DateTime?      @map("check_out_time")
   cancellationReason String?        @map("cancellation_reason")
   createdBy          String?        @map("created_by")
   updatedBy          String?        @map("updated_by")
