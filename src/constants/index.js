@@ -95,6 +95,46 @@ const BRANCH_STATUS = {
   CLOSED: 'CLOSED',
 };
 
+const SERVICE_STATUS = {
+  DRAFT: 'DRAFT',
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  ARCHIVED: 'ARCHIVED',
+};
+
+const SERVICE_TYPE = {
+  RESTAURANT: 'RESTAURANT',
+  CAFE: 'CAFE',
+  BAR: 'BAR',
+  MEDICAL_CONSULTATION: 'MEDICAL_CONSULTATION',
+  DENTAL_CONSULTATION: 'DENTAL_CONSULTATION',
+  LABORATORY: 'LABORATORY',
+  PHARMACY: 'PHARMACY',
+  BEAUTY_SERVICE: 'BEAUTY_SERVICE',
+  SPA_TREATMENT: 'SPA_TREATMENT',
+  GYM_MEMBERSHIP: 'GYM_MEMBERSHIP',
+  SPORTS_ACTIVITY: 'SPORTS_ACTIVITY',
+  ENTERTAINMENT_ACTIVITY: 'ENTERTAINMENT_ACTIVITY',
+  DELIVERY_PRODUCT: 'DELIVERY_PRODUCT',
+  RETAIL_PRODUCT: 'RETAIL_PRODUCT',
+  OTHER: 'OTHER',
+};
+
+const SERVICE_CATEGORY = {
+  FOOD_AND_DRINKS: 'FOOD_AND_DRINKS',
+  MEDICAL: 'MEDICAL',
+  HEALTHCARE: 'HEALTHCARE',
+  BEAUTY: 'BEAUTY',
+  FITNESS: 'FITNESS',
+  SPORTS: 'SPORTS',
+  ENTERTAINMENT: 'ENTERTAINMENT',
+  RETAIL: 'RETAIL',
+  DELIVERY: 'DELIVERY',
+  OTHER: 'OTHER',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -167,6 +207,9 @@ const ERROR_MESSAGES = {
   BRANCH_NOT_FOUND: 'Branch not found.',
   BRANCH_NAME_ALREADY_EXISTS: 'A branch with this name already exists for this business.',
   BRANCH_CODE_ALREADY_EXISTS: 'A branch with this code already exists.',
+  SERVICE_NOT_FOUND: 'Service not found.',
+  SERVICE_NAME_ALREADY_EXISTS: 'A service with this name already exists for this branch.',
+  SERVICE_CODE_ALREADY_EXISTS: 'A service with this code already exists.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -211,6 +254,13 @@ const SUCCESS_MESSAGES = {
   BRANCH_MAIN_UPDATED: 'Main branch updated successfully.',
   BRANCH_IMAGE_UPLOADED: 'Branch image uploaded successfully.',
   BRANCH_COVER_UPLOADED: 'Branch cover image uploaded successfully.',
+  SERVICE_CREATED: 'Service created successfully.',
+  SERVICE_UPDATED: 'Service updated successfully.',
+  SERVICE_DELETED: 'Service deleted successfully.',
+  SERVICE_STATUS_UPDATED: 'Service status updated successfully.',
+  SERVICE_FEATURED_UPDATED: 'Service featured status updated successfully.',
+  SERVICE_IMAGE_UPLOADED: 'Service image uploaded successfully.',
+  SERVICE_GALLERY_UPLOADED: 'Service gallery uploaded successfully.',
 };
 
 const PAGINATION = {
@@ -229,6 +279,9 @@ module.exports = {
   BUSINESS_STATUS,
   BUSINESS_TYPE,
   BRANCH_STATUS,
+  SERVICE_STATUS,
+  SERVICE_TYPE,
+  SERVICE_CATEGORY,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,

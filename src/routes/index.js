@@ -12,6 +12,7 @@ const rbacRoutes = require('../modules/rbac/routes');
 const adminRoutes = require('../modules/admin/routes/admin.routes');
 const businessRoutes = require('../modules/business/routes/business.routes');
 const branchRoutes = require('../modules/branch/routes/branch.routes');
+const serviceRoutes = require('../modules/service/routes/service.routes');
 
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.use('/users', rbacRoutes.userRoleRoutes);
 router.use('/admins', adminRoutes);
 router.use('/businesses', businessRoutes);
 router.use('/branches', branchRoutes);
+router.use('/services', serviceRoutes);
 
 module.exports = router;

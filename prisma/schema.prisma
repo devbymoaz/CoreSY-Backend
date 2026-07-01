@@ -71,6 +71,46 @@ enum BranchStatus {
   CLOSED
 }
 
+enum ServiceStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum ServiceType {
+  RESTAURANT
+  CAFE
+  BAR
+  MEDICAL_CONSULTATION
+  DENTAL_CONSULTATION
+  LABORATORY
+  PHARMACY
+  BEAUTY_SERVICE
+  SPA_TREATMENT
+  GYM_MEMBERSHIP
+  SPORTS_ACTIVITY
+  ENTERTAINMENT_ACTIVITY
+  DELIVERY_PRODUCT
+  RETAIL_PRODUCT
+  OTHER
+}
+
+enum ServiceCategory {
+  FOOD_AND_DRINKS
+  MEDICAL
+  HEALTHCARE
+  BEAUTY
+  FITNESS
+  SPORTS
+  ENTERTAINMENT
+  RETAIL
+  DELIVERY
+  OTHER
+}
+
 // Syrian governorates with unique codes for Pass ID generation
 model Governorate {
   id             String     @id @default(uuid())
@@ -278,6 +318,7 @@ model Business {
   ownerId            String         @map("owner_id")
   owner              User           @relation(fields: [ownerId], references: [id])
   branches           Branch[]
+  services           Service[]
   createdBy          String?        @map("created_by")
   updatedBy          String?        @map("updated_by")
   deletedAt          DateTime?      @map("deleted_at")
@@ -318,6 +359,7 @@ model Branch {
   coverImage       String?      @map("cover_image")
   status           BranchStatus @default(PENDING) @map("status")
   isMain           Boolean      @default(false) @map("is_main")
+  services         Service[]
   createdBy        String?      @map("created_by")
   updatedBy        String?      @map("updated_by")
   deletedAt        DateTime?    @map("deleted_at")
@@ -330,4 +372,47 @@ model Branch {
   @@index([status])
   @@index([governorateId])
   @@map("branches")
+}
+
+// Business Service model
+model Service {
+  id                  String         @id @default(uuid())
+  name                String       @map("name")
+  code                String       @unique @map("code")
+  businessId          String       @map("business_id")
+  business            Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId            String       @map("branch_id")
+  branch              Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  category            ServiceCategory @map("category")
+  type                ServiceType   @map("type")
+  description         String       @map("description")
+  shortDescription    String?      @map("short_description")
+  price               Decimal      @db.Decimal(10, 2) @map("price")
+  discountPercentage   Decimal?     @db.Decimal(5, 2) @map("discount_percentage")
+  coresyDiscount      Decimal?     @db.Decimal(5, 2) @map("coresy_discount")
+  platformFee         Decimal?     @db.Decimal(5, 2) @map("platform_fee")
+  duration            Int?         @map("duration") // In minutes
+  maxCapacity         Int?         @map("max_capacity")
+  bookingRequired     Boolean      @default(false) @map("booking_required")
+  appointmentRequired Boolean      @default(false) @map("appointment_required")
+  deliveryAvailable    Boolean      @default(false) @map("delivery_available")
+  isFeatured          Boolean      @default(false) @map("is_featured")
+  serviceImage         String?      @map("service_image")
+  galleryImages       String[]     @map("gallery_images")
+  status              ServiceStatus @default(DRAFT) @map("status")
+  createdBy           String?      @map("created_by")
+  updatedBy           String?      @map("updated_by")
+  deletedAt           DateTime?    @map("deleted_at")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  @@index([name])
+  @@index([code])
+  @@index([businessId])
+  @@index([branchId])
+  @@index([status])
+  @@index([category])
+  @@index([type])
+  @@index([isFeatured])
+  @@map("services")
 }
