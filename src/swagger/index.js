@@ -280,6 +280,32 @@ const swaggerDefinition = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      Cashier: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          fullName: { type: 'string', example: 'Mohammad Ali' },
+          employeeId: { type: 'string', example: 'CSH-000001' },
+          email: { type: 'string', example: 'mohammad@example.com' },
+          phoneNumber: { type: 'string', example: '+963912345678' },
+          businessId: { type: 'string', format: 'uuid' },
+          business: { $ref: '#/components/schemas/Business' },
+          branchId: { type: 'string', format: 'uuid' },
+          branch: { $ref: '#/components/schemas/Branch' },
+          profileImage: { type: 'string', example: 'https://example.com/cashier.jpg' },
+          status: {
+            type: 'string',
+            enum: ['PENDING', 'ACTIVE', 'INACTIVE', 'SUSPENDED', 'RESIGNED', 'DELETED'],
+            example: 'ACTIVE',
+          },
+          joiningDate: { type: 'string', format: 'date-time' },
+          lastLogin: { type: 'string', format: 'date-time' },
+          createdBy: { type: 'string', format: 'uuid' },
+          updatedBy: { type: 'string', format: 'uuid' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
     },
   },
   tags: [
@@ -295,6 +321,7 @@ const swaggerDefinition = {
     { name: 'Businesses', description: 'Business management endpoints' },
     { name: 'Branches', description: 'Branch management endpoints' },
     { name: 'Services', description: 'Business service management endpoints' },
+    { name: 'Cashiers', description: 'Cashier management endpoints' },
   ],
 };
 
@@ -308,6 +335,7 @@ const options = {
     './src/modules/business/routes/**/*.js',
     './src/modules/branch/routes/**/*.js',
     './src/modules/service/routes/**/*.js',
+    './src/modules/cashier/routes/**/*.js',
   ],
 };
 

@@ -135,6 +135,15 @@ const SERVICE_CATEGORY = {
   OTHER: 'OTHER',
 };
 
+const CASHIER_STATUS = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  RESIGNED: 'RESIGNED',
+  DELETED: 'DELETED',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -210,6 +219,10 @@ const ERROR_MESSAGES = {
   SERVICE_NOT_FOUND: 'Service not found.',
   SERVICE_NAME_ALREADY_EXISTS: 'A service with this name already exists for this branch.',
   SERVICE_CODE_ALREADY_EXISTS: 'A service with this code already exists.',
+  CASHIER_NOT_FOUND: 'Cashier not found.',
+  CASHIER_EMAIL_ALREADY_EXISTS: 'A cashier with this email already exists.',
+  CASHIER_PHONE_ALREADY_EXISTS: 'A cashier with this phone number already exists.',
+  CASHIER_EMPLOYEE_ID_ALREADY_EXISTS: 'A cashier with this employee ID already exists.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -261,6 +274,12 @@ const SUCCESS_MESSAGES = {
   SERVICE_FEATURED_UPDATED: 'Service featured status updated successfully.',
   SERVICE_IMAGE_UPLOADED: 'Service image uploaded successfully.',
   SERVICE_GALLERY_UPLOADED: 'Service gallery uploaded successfully.',
+  CASHIER_CREATED: 'Cashier created successfully.',
+  CASHIER_UPDATED: 'Cashier updated successfully.',
+  CASHIER_DELETED: 'Cashier deleted successfully.',
+  CASHIER_STATUS_UPDATED: 'Cashier status updated successfully.',
+  CASHIER_PASSWORD_RESET: 'Cashier password reset successfully.',
+  CASHIER_PROFILE_IMAGE_UPLOADED: 'Cashier profile image uploaded successfully.',
 };
 
 const PAGINATION = {
@@ -282,6 +301,7 @@ module.exports = {
   SERVICE_STATUS,
   SERVICE_TYPE,
   SERVICE_CATEGORY,
+  CASHIER_STATUS,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,
