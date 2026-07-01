@@ -1,14 +1,14 @@
 const businessRepository = require('../repositories/business.repository');
-const governorateRepository = require('../../../../src/repositories/governorate.repository');
+const governorateRepository = require('../../../repositories/governorate.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
-const AppError = require('../../../../src/utils/AppError');
+const AppError = require('../../../utils/AppError');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
   ROLES,
   BUSINESS_STATUS,
-} = require('../../../../src/constants');
+} = require('../../../constants');
 
 class BusinessService {
   async createBusiness(data, userId, ipAddress, userAgent) {

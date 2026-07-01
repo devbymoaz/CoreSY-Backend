@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const { BRANCH_STATUS } = require('../../../../src/constants');
+const { BRANCH_STATUS } = require('../../../constants');
 
 const createBranchSchema = z.object({
   name: z.string().min(2).max(255).trim(),

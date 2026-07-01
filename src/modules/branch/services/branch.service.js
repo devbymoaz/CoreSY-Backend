@@ -1,15 +1,15 @@
 const branchRepository = require('../repositories/branch.repository');
 const businessRepository = require('../../business/repositories/business.repository');
-const governorateRepository = require('../../../../src/repositories/governorate.repository');
+const governorateRepository = require('../../../repositories/governorate.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
-const AppError = require('../../../../src/utils/AppError');
+const AppError = require('../../../utils/AppError');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
   ROLES,
   BUSINESS_TYPE,
-} = require('../../../../src/constants');
+} = require('../../../constants');
 
 class BranchService {
   async generateBranchCode(businessType) {

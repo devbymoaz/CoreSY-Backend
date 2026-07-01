@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const { BUSINESS_TYPE, BUSINESS_STATUS } = require('../../../../constants');
+const { BUSINESS_TYPE, BUSINESS_STATUS } = require('../../../constants');
 
 const createBusinessSchema = z.object({
   name: z.string().min(2).max(255).trim(),

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const authenticate = require('../../../../src/middlewares/auth.middleware');
-const validate = require('../../../../src/middlewares/zod-validate.middleware');
+const authenticate = require('../../../middlewares/auth.middleware');
+const validate = require('../../../middlewares/zod-validate.middleware');
 const { authorizeRoles } = require('../../rbac/middlewares/rbac.middleware');
 const {
   createBusiness,
@@ -23,7 +23,7 @@ const {
   updateBusinessStatusSchema,
   listBusinessesSchema,
 } = require('../validators/business.validator');
-const { ROLES } = require('../../../../src/constants');
+const { ROLES } = require('../../../constants');
 
 // All business routes require authentication
 router.use(authenticate);

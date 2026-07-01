@@ -1,6 +1,6 @@
 const branchService = require('../services/branch.service');
-const { sendSuccess, sendCreated } = require('../../../../src/helpers/response.helper');
-const asyncHandler = require('../../../../src/utils/asyncHandler');
+const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
+const asyncHandler = require('../../../utils/asyncHandler');
 
 const createBranch = asyncHandler(async (req, res) => {
   const result = await branchService.createBranch(

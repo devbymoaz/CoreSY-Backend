@@ -1,6 +1,6 @@
 const businessService = require('../services/business.service');
-const { sendSuccess, sendCreated } = require('../../../../src/helpers/response.helper');
-const asyncHandler = require('../../../../src/utils/asyncHandler');
+const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
+const asyncHandler = require('../../../utils/asyncHandler');
 
 const createBusiness = asyncHandler(async (req, res) => {
   const result = await businessService.createBusiness(
