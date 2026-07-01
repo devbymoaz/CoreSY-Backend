@@ -190,6 +190,32 @@ const swaggerDefinition = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      Business: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string', example: 'Business Name' },
+          type: { type: 'string', example: 'RESTAURANT' },
+          category: { type: 'string', example: 'Food & Beverage' },
+          description: { type: 'string', example: 'Business description' },
+          ownerName: { type: 'string', example: 'Owner Name' },
+          ownerEmail: { type: 'string', example: 'owner@example.com' },
+          ownerPhone: { type: 'string', example: '+963912345678' },
+          businessEmail: { type: 'string', example: 'business@example.com' },
+          businessPhone: { type: 'string', example: '+963987654321' },
+          registrationNumber: { type: 'string', example: '123456789' },
+          taxNumber: { type: 'string', example: '987654321' },
+          website: { type: 'string', example: 'https://example.com' },
+          governorate: { $ref: '#/components/schemas/Governorate' },
+          city: { type: 'string', example: 'Damascus' },
+          address: { type: 'string', example: 'Main Street, 123' },
+          latitude: { type: 'number', example: 33.5138 },
+          longitude: { type: 'number', example: 36.2765 },
+          status: { type: 'string', example: 'PENDING' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
     },
   },
   tags: [
@@ -202,6 +228,7 @@ const swaggerDefinition = {
     { name: 'User Roles', description: 'User role assignment endpoints' },
     { name: 'Users', description: 'User management endpoints' },
     { name: 'Admins', description: 'Admin management endpoints' },
+    { name: 'Businesses', description: 'Business management endpoints' },
   ],
 };
 
@@ -212,6 +239,7 @@ const options = {
     './src/docs/**/*.js',
     './src/modules/rbac/routes/**/*.js',
     './src/modules/admin/routes/**/*.js',
+    './src/modules/business/routes/**/*.js',
   ],
 };
 

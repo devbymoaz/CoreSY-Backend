@@ -57,6 +57,36 @@ const PERMISSION_STATUS = {
   INACTIVE: 'INACTIVE',
 };
 
+const BUSINESS_STATUS = {
+  PENDING: 'PENDING',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+  INACTIVE: 'INACTIVE',
+  ACTIVE: 'ACTIVE',
+};
+
+const BUSINESS_TYPE = {
+  RESTAURANT: 'RESTAURANT',
+  CAFE: 'CAFE',
+  BAR: 'BAR',
+  MEDICAL_CLINIC: 'MEDICAL_CLINIC',
+  HOSPITAL: 'HOSPITAL',
+  DENTAL_CLINIC: 'DENTAL_CLINIC',
+  PHARMACY: 'PHARMACY',
+  BEAUTY_SALON: 'BEAUTY_SALON',
+  SPA: 'SPA',
+  GYM: 'GYM',
+  SPORTS_CLUB: 'SPORTS_CLUB',
+  ENTERTAINMENT_CENTER: 'ENTERTAINMENT_CENTER',
+  JUICE_SHOP: 'JUICE_SHOP',
+  SWEET_SHOP: 'SWEET_SHOP',
+  SUPERMARKET: 'SUPERMARKET',
+  RETAIL_STORE: 'RETAIL_STORE',
+  OTHER: 'OTHER',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -123,6 +153,9 @@ const ERROR_MESSAGES = {
   RESEND_RATE_LIMIT: 'Please wait before requesting another verification code.',
   CANNOT_DELETE_SYSTEM_ROLE: 'System roles cannot be deleted.',
   CANNOT_MODIFY_SYSTEM_ROLE: 'System roles cannot be modified.',
+  BUSINESS_NOT_FOUND: 'Business not found.',
+  BUSINESS_EMAIL_ALREADY_EXISTS: 'A business with this email already exists.',
+  REGISTRATION_NUMBER_ALREADY_EXISTS: 'A business with this registration number already exists.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -152,6 +185,14 @@ const SUCCESS_MESSAGES = {
   ADMIN_STATUS_UPDATED: 'Admin status updated successfully.',
   ADMIN_PASSWORD_RESET: 'Admin password reset successfully.',
   PROFILE_IMAGE_UPLOADED: 'Profile image uploaded successfully.',
+  BUSINESS_CREATED: 'Business registered successfully.',
+  BUSINESS_UPDATED: 'Business updated successfully.',
+  BUSINESS_DELETED: 'Business deleted successfully.',
+  BUSINESS_STATUS_UPDATED: 'Business status updated successfully.',
+  BUSINESS_APPROVED: 'Business approved successfully.',
+  BUSINESS_REJECTED: 'Business rejected successfully.',
+  BUSINESS_LOGO_UPLOADED: 'Business logo uploaded successfully.',
+  BUSINESS_COVER_UPLOADED: 'Business cover image uploaded successfully.',
 };
 
 const PAGINATION = {
@@ -167,6 +208,8 @@ module.exports = {
   ROLE_PRIORITIES,
   ROLE_STATUS,
   PERMISSION_STATUS,
+  BUSINESS_STATUS,
+  BUSINESS_TYPE,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,
