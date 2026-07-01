@@ -1,5 +1,5 @@
-const { prisma } = require('../../../../prisma');
-const { PAGINATION } = require('../../../../src/constants');
+const { prisma } = require('../../../prisma');
+const { PAGINATION } = require('../../../constants');
 
 const BRANCH_INCLUDE = {
   business: true,
