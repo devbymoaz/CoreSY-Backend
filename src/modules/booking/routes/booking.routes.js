@@ -388,6 +388,16 @@ router.get('/business/:businessId/dashboard', getBusinessDashboard);
  *     responses:
  *       200:
  *         description: Booking confirmed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Booking not found
+ *       422:
+ *         description: Invalid booking status
+ *       500:
+ *         description: Internal server error
  */
 router.patch('/business/:id/confirm', confirmBooking);
 
@@ -409,6 +419,16 @@ router.patch('/business/:id/confirm', confirmBooking);
  *     responses:
  *       200:
  *         description: Booking rejected
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Booking not found
+ *       422:
+ *         description: Invalid booking status
+ *       500:
+ *         description: Internal server error
  */
 router.patch('/business/:id/reject', rejectBooking);
 
@@ -430,6 +450,16 @@ router.patch('/business/:id/reject', rejectBooking);
  *     responses:
  *       200:
  *         description: Check-in successful
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Booking not found
+ *       422:
+ *         description: Invalid booking status
+ *       500:
+ *         description: Internal server error
  */
 router.patch('/business/:id/check-in', checkInBooking);
 
@@ -451,6 +481,16 @@ router.patch('/business/:id/check-in', checkInBooking);
  *     responses:
  *       200:
  *         description: Check-out successful
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Booking not found
+ *       422:
+ *         description: Invalid booking status
+ *       500:
+ *         description: Internal server error
  */
 router.patch('/business/:id/check-out', checkOutBooking);
 
