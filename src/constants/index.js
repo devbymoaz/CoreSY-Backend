@@ -144,11 +144,39 @@ const CASHIER_STATUS = {
   DELETED: 'DELETED',
 };
 
+const SLOT_STATUS = {
+  AVAILABLE: 'AVAILABLE',
+  FULL: 'FULL',
+  CLOSED: 'CLOSED',
+  CANCELLED: 'CANCELLED',
+  INACTIVE: 'INACTIVE',
+};
+
+const BOOKING_TYPE = {
+  RESERVATION: 'RESERVATION',
+  APPOINTMENT: 'APPOINTMENT',
+  WALK_IN: 'WALK_IN',
+};
+
+const RECURRING_TYPE = {
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY',
+  NONE: 'NONE',
+};
+
+const GENDER_RESTRICTION = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  BOTH: 'BOTH',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
   BRANCHES: 'Branches',
   SERVICES: 'Services',
+  SLOTS: 'Slots',
   BOOKINGS: 'Bookings',
   DRIVERS: 'Drivers',
   CASHIERS: 'Cashiers',
@@ -223,6 +251,8 @@ const ERROR_MESSAGES = {
   CASHIER_EMAIL_ALREADY_EXISTS: 'A cashier with this email already exists.',
   CASHIER_PHONE_ALREADY_EXISTS: 'A cashier with this phone number already exists.',
   CASHIER_EMPLOYEE_ID_ALREADY_EXISTS: 'A cashier with this employee ID already exists.',
+  SLOT_NOT_FOUND: 'Slot not found.',
+  SLOT_OVERLAP: 'Slot overlaps with an existing slot.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -280,6 +310,12 @@ const SUCCESS_MESSAGES = {
   CASHIER_STATUS_UPDATED: 'Cashier status updated successfully.',
   CASHIER_PASSWORD_RESET: 'Cashier password reset successfully.',
   CASHIER_PROFILE_IMAGE_UPLOADED: 'Cashier profile image uploaded successfully.',
+  SLOT_CREATED: 'Slot created successfully.',
+  SLOT_UPDATED: 'Slot updated successfully.',
+  SLOT_DELETED: 'Slot deleted successfully.',
+  SLOT_STATUS_UPDATED: 'Slot status updated successfully.',
+  SLOT_RECURRING_CREATED: 'Recurring slots created successfully.',
+  SLOT_DUPLICATED: 'Slot duplicated successfully.',
 };
 
 const PAGINATION = {
@@ -302,6 +338,10 @@ module.exports = {
   SERVICE_TYPE,
   SERVICE_CATEGORY,
   CASHIER_STATUS,
+  SLOT_STATUS,
+  BOOKING_TYPE,
+  RECURRING_TYPE,
+  GENDER_RESTRICTION,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,

@@ -120,6 +120,33 @@ enum CashierStatus {
   DELETED
 }
 
+enum SlotStatus {
+  AVAILABLE
+  FULL
+  CLOSED
+  CANCELLED
+  INACTIVE
+}
+
+enum BookingType {
+  RESERVATION
+  APPOINTMENT
+  WALK_IN
+}
+
+enum RecurringType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  NONE
+}
+
+enum GenderRestriction {
+  MALE
+  FEMALE
+  BOTH
+}
+
 
 // Syrian governorates with unique codes for Pass ID generation
 model Governorate {
@@ -330,6 +357,7 @@ model Business {
   branches           Branch[]
   services           Service[]
   cashiers           Cashier[]
+  slots              Slot[]
   createdBy          String?        @map("created_by")
   updatedBy          String?        @map("updated_by")
   deletedAt          DateTime?      @map("deleted_at")
@@ -372,6 +400,7 @@ model Branch {
   isMain           Boolean      @default(false) @map("is_main")
   services         Service[]
   cashiers         Cashier[]
+  slots            Slot[]
   createdBy        String?      @map("created_by")
   updatedBy        String?      @map("updated_by")
   deletedAt        DateTime?    @map("deleted_at")
@@ -426,10 +455,48 @@ model Service {
   @@index([category])
   @@index([type])
   @@index([isFeatured])
+  slots            Slot[]
   @@map("services")
 }
 
-// Cashier model
+// Slot model
+model Slot {
+  id                 String          @id @default(uuid())
+  serviceId          String          @map("service_id")
+  service            Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  businessId         String          @map("business_id")
+  business           Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branchId           String          @map("branch_id")
+  branch             Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  slotDate           DateTime        @map("slot_date")
+  dayOfWeek          Int             @map("day_of_week") // 0 = Sunday, 6 = Saturday
+  startTime          String          @map("start_time") // "HH:MM"
+  endTime            String          @map("end_time") // "HH:MM"
+  duration           Int             @map("duration") // in minutes
+  maxCapacity        Int             @map("max_capacity")
+  remainingCapacity  Int             @map("remaining_capacity")
+  bookingType        BookingType     @map("booking_type")
+  genderRestriction  GenderRestriction? @map("gender_restriction")
+  minAge             Int?            @map("min_age")
+  maxAge             Int?            @map("max_age")
+  isRecurring        Boolean         @default(false) @map("is_recurring")
+  recurringType      RecurringType   @default(NONE) @map("recurring_type")
+  recurringEndDate   DateTime?       @map("recurring_end_date")
+  status             SlotStatus      @default(AVAILABLE) @map("status")
+  createdBy          String?         @map("created_by")
+  updatedBy          String?         @map("updated_by")
+  deletedAt          DateTime?       @map("deleted_at")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  @@index([serviceId])
+  @@index([businessId])
+  @@index([branchId])
+  @@index([slotDate])
+  @@index([status])
+  @@index([bookingType])
+  @@map("slots")
+}
 model Cashier {
   id               String       @id @default(uuid())
   fullName         String       @map("full_name")

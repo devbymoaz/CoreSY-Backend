@@ -306,6 +306,36 @@ const swaggerDefinition = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      Slot: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          serviceId: { type: 'string', format: 'uuid' },
+          service: { $ref: '#/components/schemas/Service' },
+          businessId: { type: 'string', format: 'uuid' },
+          business: { $ref: '#/components/schemas/Business' },
+          branchId: { type: 'string', format: 'uuid' },
+          branch: { $ref: '#/components/schemas/Branch' },
+          slotDate: { type: 'string', format: 'date-time' },
+          dayOfWeek: { type: 'integer', example: 1 },
+          startTime: { type: 'string', example: '09:00' },
+          endTime: { type: 'string', example: '10:00' },
+          duration: { type: 'integer', example: 60 },
+          maxCapacity: { type: 'integer', example: 20 },
+          remainingCapacity: { type: 'integer', example: 20 },
+          bookingType: { type: 'string', enum: ['RESERVATION', 'APPOINTMENT', 'WALK_IN'] },
+          genderRestriction: { type: 'string', enum: ['MALE', 'FEMALE', 'BOTH'] },
+          minAge: { type: 'integer', example: 18 },
+          maxAge: { type: 'integer', example: 65 },
+          isRecurring: { type: 'boolean', example: false },
+          recurringType: { type: 'string', enum: ['DAILY', 'WEEKLY', 'MONTHLY', 'NONE'] },
+          status: { type: 'string', enum: ['AVAILABLE', 'FULL', 'CLOSED', 'CANCELLED', 'INACTIVE'] },
+          createdBy: { type: 'string', format: 'uuid' },
+          updatedBy: { type: 'string', format: 'uuid' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
     },
   },
   tags: [
@@ -322,6 +352,7 @@ const swaggerDefinition = {
     { name: 'Branches', description: 'Branch management endpoints' },
     { name: 'Services', description: 'Business service management endpoints' },
     { name: 'Cashiers', description: 'Cashier management endpoints' },
+    { name: 'Slots', description: 'Slot management endpoints' },
   ],
 };
 
@@ -336,6 +367,7 @@ const options = {
     './src/modules/branch/routes/**/*.js',
     './src/modules/service/routes/**/*.js',
     './src/modules/cashier/routes/**/*.js',
+    './src/modules/slot/routes/**/*.js',
   ],
 };
 
