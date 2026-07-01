@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const authenticate = require('../../../../middlewares/auth.middleware');
-const validate = require('../../../../middlewares/zod-validate.middleware');
+const authenticate = require('../../../middlewares/auth.middleware');
+const validate = require('../../../middlewares/zod-validate.middleware');
 const {
   createCashier,
   getCashiers,
@@ -27,14 +27,14 @@ const {
   listCashiersSchema,
   updateCashierProfileSchema,
 } = require('../validators/cashier.validator');
-const { ROLES } = require('../../../../constants');
+const { ROLES } = require('../../../constants');
 
 router.use(authenticate);
 
 // Profile routes (only for Cashier)
 router.get('/profile', getCashierProfile);
 router.patch('/profile', validate({ body: updateCashierProfileSchema }), updateCashierProfile);
-router.patch('/change-password', validate({ body: changeCashierPasswordSchema }), changeCashierPassword;
+router.patch('/change-password', validate({ body: changeCashierPasswordSchema }), changeCashierPassword);
 
 // Dashboard
 router.get('/dashboard', getDashboardStats);
