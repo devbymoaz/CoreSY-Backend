@@ -199,6 +199,16 @@ const BOOKING_SOURCE = {
   ADMIN: 'ADMIN',
 };
 
+const QR_STATUS = {
+  GENERATED: 'GENERATED',
+  ACTIVE: 'ACTIVE',
+  SCANNED: 'SCANNED',
+  COMPLETED: 'COMPLETED',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+  INVALID: 'INVALID',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -291,6 +301,14 @@ const ERROR_MESSAGES = {
   INSUFFICIENT_CAPACITY: 'Insufficient capacity in the slot.',
   BOOKING_CANNOT_BE_CANCELLED: 'This booking cannot be cancelled.',
   BOOKING_CANNOT_BE_UPDATED: 'This booking cannot be updated.',
+  QR_NOT_FOUND: 'QR code not found.',
+  QR_ALREADY_EXISTS: 'QR code already exists for this booking.',
+  QR_INVALID: 'Invalid QR code.',
+  QR_EXPIRED: 'QR code has expired.',
+  QR_CANCELLED: 'QR code has been cancelled.',
+  QR_ALREADY_SCANNED: 'QR code has already been scanned.',
+  QR_NOT_ACTIVE: 'QR code is not active.',
+  INVALID_QR_TOKEN: 'Invalid QR token.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -366,6 +384,13 @@ const SUCCESS_MESSAGES = {
   QR_CODE_GENERATED: 'QR code generated successfully.',
   FAVORITE_ADDED: 'Business added to favorites.',
   FAVORITE_REMOVED: 'Business removed from favorites.',
+  QR_VALIDATED: 'QR code validated successfully.',
+  QR_SCANNED: 'QR code scanned successfully.',
+  QR_CHECKED_IN: 'Customer checked in successfully.',
+  QR_CHECKED_OUT: 'Customer checked out successfully.',
+  QR_CANCELLED: 'QR code cancelled successfully.',
+  QR_EXPIRED: 'QR code marked as expired.',
+  QR_DOWNLOADED: 'QR code downloaded successfully.',
 };
 
 const PAGINATION = {
@@ -395,6 +420,7 @@ module.exports = {
   BOOKING_STATUS,
   PAYMENT_STATUS,
   BOOKING_SOURCE,
+  QR_STATUS,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,

@@ -16,6 +16,7 @@ const serviceRoutes = require('../modules/service/routes/service.routes');
 const cashierRoutes = require('../modules/cashier/routes/cashier.routes');
 const slotRoutes = require('../modules/slot/routes/slot.routes');
 const bookingRoutes = require('../modules/booking/routes/booking.routes');
+const qrRoutes = require('../modules/qr/routes/qr.routes');
 
 const router = express.Router();
 
@@ -33,5 +34,6 @@ router.use('/services', serviceRoutes);
 router.use('/cashiers', cashierRoutes);
 router.use('/slots', slotRoutes);
 router.use('/bookings', bookingRoutes);
+router.use('/qr', qrRoutes);
 
 module.exports = router;

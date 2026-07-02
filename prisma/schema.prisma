@@ -175,6 +175,56 @@ enum BookingSource {
   ADMIN
 }
 
+enum QRStatus {
+  GENERATED
+  ACTIVE
+  SCANNED
+  COMPLETED
+  EXPIRED
+  CANCELLED
+  INVALID
+}
+
+model QRCode {
+  id              String    @id @default(uuid())
+  qrId            String    @unique
+  token           String    @unique
+  bookingId       String    @unique
+  bookingNumber   String
+  customerId      String
+  customerName    String
+  businessId      String
+  branchId        String
+  serviceId       String
+  bookingType     BookingType
+  bookingDate     DateTime
+  slotTime        String
+  status          QRStatus  @default(GENERATED)
+  generatedAt     DateTime  @default(now())
+  expiryTime      DateTime
+  scannedAt       DateTime?
+  checkedInAt     DateTime?
+  checkedOutAt    DateTime?
+  scannedBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  booking         Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer        User      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  business        Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch          Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  service         Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  cashier         Cashier?  @relation(fields: [scannedBy], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([customerId])
+  @@index([businessId])
+  @@index([branchId])
+  @@index([status])
+  @@index([qrId])
+  @@map("qr_codes")
+}
+
 
 // Syrian governorates with unique codes for Pass ID generation
 model Governorate {
@@ -305,6 +355,7 @@ model User {
   notifications      Notification[]
   businesses         Business[]
   bookings           Booking[]
+  qrCodes            QRCode[]
   favoriteBusinesses FavoriteBusiness[]
   lastLogin          DateTime?        @map("last_login")
   createdBy          String?          @map("created_by")
@@ -389,6 +440,7 @@ model Business {
   cashiers           Cashier[]
   slots              Slot[]
   bookings           Booking[]
+  qrCodes            QRCode[]
   favoriteBusinesses FavoriteBusiness[]
   createdBy          String?        @map("created_by")
   updatedBy          String?        @map("updated_by")
@@ -434,6 +486,7 @@ model Branch {
   cashiers         Cashier[]
   slots            Slot[]
   bookings         Booking[]
+  qrCodes          QRCode[]
   createdBy        String?      @map("created_by")
   updatedBy        String?      @map("updated_by")
   deletedAt        DateTime?    @map("deleted_at")
@@ -490,6 +543,7 @@ model Service {
   @@index([isFeatured])
   slots            Slot[]
   bookings         Booking[]
+  qrCodes          QRCode[]
   @@map("services")
 }
 
@@ -552,6 +606,7 @@ model Cashier {
   deletedAt        DateTime?    @map("deleted_at")
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
+  scannedQrCodes   QRCode[]
 
   @@index([fullName])
   @@index([employeeId])
@@ -596,6 +651,7 @@ model Booking {
   deletedAt          DateTime?      @map("deleted_at")
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
+  qrCodeRecord       QRCode?
 
   @@index([bookingNumber])
   @@index([customerId])

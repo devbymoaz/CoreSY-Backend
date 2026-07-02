@@ -3,6 +3,7 @@ const slotRepository = require('../../slot/repositories/slot.repository');
 const businessRepository = require('../../business/repositories/business.repository');
 const branchRepository = require('../../branch/repositories/branch.repository');
 const serviceRepository = require('../../service/repositories/service.repository');
+const qrRepository = require('../../qr/repositories/qr.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
 const {
@@ -13,8 +14,25 @@ const {
   BOOKING_STATUS,
   PAYMENT_STATUS,
   BOOKING_SOURCE,
+  QR_STATUS,
 } = require('../../../constants');
 const { prisma } = require('../../../prisma');
+const crypto = require('crypto');
+
+function generateQrId() {
+  return `QR-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+}
+
+function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function calculateExpiry(bookingDate, startTime) {
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const expiry = new Date(bookingDate);
+  expiry.setHours(hours + 2, minutes); // Expire 2 hours after slot start
+  return expiry;
+}
 
 function generateBookingNumber() {
   const timestamp = Date.now().toString();
@@ -376,19 +394,48 @@ class BookingService {
       throw new AppError(ERROR_MESSAGES.INVALID_BOOKING_STATUS, HTTP_STATUS.BAD_REQUEST);
     }
 
-    // Generate QR code when confirming booking
-    const qrData = JSON.stringify({
-      bookingId: booking.id,
-      bookingNumber: booking.bookingNumber,
-      customerId: booking.customerId,
-      businessId: booking.businessId,
-      branchId: booking.branchId,
-    });
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      // Update booking status
+      const updated = await tx.booking.update({
+        where: { id },
+        data: {
+          status: BOOKING_STATUS.CONFIRMED,
+          updatedBy: userId,
+        },
+        include: {
+          customer: true,
+          business: true,
+          branch: true,
+          service: true,
+          slot: true,
+        },
+      });
 
-    const updatedBooking = await bookingRepository.update(id, {
-      status: BOOKING_STATUS.CONFIRMED,
-      qrCode: qrData,
-      updatedBy: userId,
+      // Generate QR code
+      const qrId = generateQrId();
+      const token = generateToken();
+      const expiryTime = calculateExpiry(booking.reservationDate, booking.startTime);
+
+      await tx.qRCode.create({
+        data: {
+          qrId,
+          token,
+          bookingId: booking.id,
+          bookingNumber: booking.bookingNumber,
+          customerId: booking.customerId,
+          customerName: booking.customer.fullName,
+          businessId: booking.businessId,
+          branchId: booking.branchId,
+          serviceId: booking.serviceId,
+          bookingType: booking.bookingType,
+          bookingDate: booking.reservationDate,
+          slotTime: booking.startTime,
+          status: QR_STATUS.ACTIVE,
+          expiryTime,
+        },
+      });
+
+      return updated;
     });
 
     await auditLogService.create({
