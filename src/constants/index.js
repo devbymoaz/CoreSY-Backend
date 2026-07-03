@@ -334,6 +334,46 @@ const WALLET_TRANSACTION_STATUS = {
   REFUNDED: 'REFUNDED',
 };
 
+const LOYALTY_TIER = {
+  BRONZE: 'BRONZE',
+  SILVER: 'SILVER',
+  GOLD: 'GOLD',
+  PLATINUM: 'PLATINUM',
+};
+
+const POINT_TRANSACTION_TYPE = {
+  EARN: 'EARN',
+  REDEEM: 'REDEEM',
+  EXPIRE: 'EXPIRE',
+  REFUND: 'REFUND',
+  ADJUSTMENT: 'ADJUSTMENT',
+  BONUS: 'BONUS',
+};
+
+const POINT_TRANSACTION_STATUS = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+};
+
+const POINT_RULE_TYPE = {
+  PAYMENT: 'PAYMENT',
+  BOOKING: 'BOOKING',
+  ORDER: 'ORDER',
+  REFERRAL: 'REFERRAL',
+  BIRTHDAY: 'BIRTHDAY',
+  CAMPAIGN: 'CAMPAIGN',
+};
+
+const REVIEW_STATUS = {
+  PENDING: 'PENDING',
+  PUBLISHED: 'PUBLISHED',
+  HIDDEN: 'HIDDEN',
+  REPORTED: 'REPORTED',
+  DELETED: 'DELETED',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -358,6 +398,7 @@ const PERMISSION_MODULES = {
   SUPPORT: 'Support',
   FINANCE: 'Finance',
   POINTS: 'Points',
+  REVIEWS: 'Reviews',
   QR: 'QR',
 };
 
@@ -480,6 +521,17 @@ const ERROR_MESSAGES = {
   WALLET_INSUFFICIENT_BALANCE: 'Insufficient wallet balance.',
   WALLET_INVALID_AMOUNT: 'Wallet amount must be greater than zero.',
   WALLET_TRANSFER_SAME: 'Cannot transfer to the same wallet.',
+  POINTS_NOT_FOUND: 'Point account not found.',
+  POINTS_INSUFFICIENT: 'Insufficient reward points.',
+  POINTS_INVALID_AMOUNT: 'Points amount must be greater than zero.',
+  POINTS_ALREADY_AWARDED: 'Points already awarded for this reference.',
+  POINTS_RULE_NOT_FOUND: 'Point rule not found.',
+  REVIEW_NOT_FOUND: 'Review not found.',
+  REVIEW_ALREADY_EXISTS: 'A review already exists for this booking or order.',
+  REVIEW_NOT_ALLOWED: 'Review is only allowed after successful completion.',
+  REVIEW_ALREADY_LIKED: 'You have already liked this review.',
+  REVIEW_ALREADY_REPORTED: 'You have already reported this review.',
+  REVIEW_REPLY_EXISTS: 'A business reply already exists for this review.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -611,6 +663,19 @@ const SUCCESS_MESSAGES = {
   WALLET_FROZEN: 'Wallet frozen successfully.',
   WALLET_UNFROZEN: 'Wallet unfrozen successfully.',
   WALLET_ADJUSTED: 'Wallet balance adjusted successfully.',
+  POINTS_EARNED: 'Points earned successfully.',
+  POINTS_REDEEMED: 'Points redeemed successfully.',
+  POINTS_ADJUSTED: 'Points adjusted successfully.',
+  POINTS_EXPIRED: 'Points expired successfully.',
+  POINTS_RULES_UPDATED: 'Point rules updated successfully.',
+  REVIEW_CREATED: 'Review submitted successfully.',
+  REVIEW_UPDATED: 'Review updated successfully.',
+  REVIEW_DELETED: 'Review deleted successfully.',
+  REVIEW_REPORTED: 'Review reported successfully.',
+  REVIEW_LIKED: 'Review liked successfully.',
+  REVIEW_UNLIKED: 'Review like removed successfully.',
+  REVIEW_REPLIED: 'Reply posted successfully.',
+  REVIEW_STATUS_UPDATED: 'Review status updated successfully.',
 };
 
 const PAGINATION = {
@@ -655,6 +720,11 @@ module.exports = {
   WALLET_STATUS,
   WALLET_TRANSACTION_TYPE,
   WALLET_TRANSACTION_STATUS,
+  LOYALTY_TIER,
+  POINT_TRANSACTION_TYPE,
+  POINT_TRANSACTION_STATUS,
+  POINT_RULE_TYPE,
+  REVIEW_STATUS,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,

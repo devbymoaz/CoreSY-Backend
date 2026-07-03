@@ -419,6 +419,11 @@ const swaggerDefinition = {
     { name: 'Admin Payments', description: 'Admin payment and refund endpoints' },
     { name: 'Wallet', description: 'Customer wallet management endpoints' },
     { name: 'Admin Wallets', description: 'Admin wallet management endpoints' },
+    { name: 'Points', description: 'Customer reward points and loyalty endpoints' },
+    { name: 'Admin Points', description: 'Admin reward points management endpoints' },
+    { name: 'Reviews', description: 'Customer ratings and reviews endpoints' },
+    { name: 'Business Reviews', description: 'Business review management endpoints' },
+    { name: 'Admin Reviews', description: 'Admin review moderation endpoints' },
   ],
 };
 
@@ -441,6 +446,8 @@ const options = {
     './src/modules/driver/routes/**/*.js',
     './src/modules/payment/routes/**/*.js',
     './src/modules/wallet/routes/**/*.js',
+    './src/modules/points/routes/**/*.js',
+    './src/modules/review/routes/**/*.js',
   ],
 };
 

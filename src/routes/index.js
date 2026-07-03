@@ -28,6 +28,11 @@ const businessTransactionRoutes = require('../modules/payment/routes/business-tr
 const adminPaymentRoutes = require('../modules/payment/routes/admin-payment.routes');
 const walletRoutes = require('../modules/wallet/routes/wallet.routes');
 const adminWalletRoutes = require('../modules/wallet/routes/admin-wallet.routes');
+const pointsRoutes = require('../modules/points/routes/points.routes');
+const adminPointsRoutes = require('../modules/points/routes/admin-points.routes');
+const reviewRoutes = require('../modules/review/routes/review.routes');
+const businessReviewRoutes = require('../modules/review/routes/business-review.routes');
+const adminReviewRoutes = require('../modules/review/routes/admin-review.routes');
 
 const router = express.Router();
 
@@ -58,5 +63,10 @@ router.use('/admin/payments', adminPaymentRoutes);
 router.use('/admin/transactions', adminPaymentRoutes);
 router.use('/wallet', walletRoutes);
 router.use('/admin/wallets', adminWalletRoutes);
+router.use('/points', pointsRoutes);
+router.use('/admin/points', adminPointsRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/business/reviews', businessReviewRoutes);
+router.use('/admin/reviews', adminReviewRoutes);
 
 module.exports = router;
