@@ -408,6 +408,11 @@ const swaggerDefinition = {
     { name: 'Cashiers', description: 'Cashier management endpoints' },
     { name: 'Slots', description: 'Slot management endpoints' },
     { name: 'Bookings', description: 'Booking management endpoints' },
+    { name: 'QR Codes', description: 'QR code management endpoints' },
+    { name: 'Products', description: 'CoreSY Go product management endpoints' },
+    { name: 'Product Categories', description: 'Product category management endpoints' },
+    { name: 'Orders', description: 'CoreSY Go multi-vendor order management endpoints' },
+    { name: 'Business Orders', description: 'Business-facing order management endpoints' },
   ],
 };
 
@@ -424,6 +429,9 @@ const options = {
     './src/modules/cashier/routes/**/*.js',
     './src/modules/slot/routes/**/*.js',
     './src/modules/booking/routes/**/*.js',
+    './src/modules/qr/routes/**/*.js',
+    './src/modules/product/routes/**/*.js',
+    './src/modules/order/routes/**/*.js',
   ],
 };
 

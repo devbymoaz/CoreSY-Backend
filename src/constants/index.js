@@ -209,11 +209,55 @@ const QR_STATUS = {
   INVALID: 'INVALID',
 };
 
+const PRODUCT_STATUS = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  OUT_OF_STOCK: 'OUT_OF_STOCK',
+  HIDDEN: 'HIDDEN',
+  DELETED: 'DELETED',
+};
+
+const PRODUCT_UNIT = {
+  PIECE: 'PIECE',
+  KG: 'KG',
+  GRAM: 'GRAM',
+  LITER: 'LITER',
+  ML: 'ML',
+  PACK: 'PACK',
+  BOX: 'BOX',
+  BOTTLE: 'BOTTLE',
+  PORTION: 'PORTION',
+  OTHER: 'OTHER',
+};
+
+const ORDER_STATUS = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  PREPARING: 'PREPARING',
+  READY: 'READY',
+  ASSIGNED: 'ASSIGNED',
+  PICKED_UP: 'PICKED_UP',
+  ON_THE_WAY: 'ON_THE_WAY',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED',
+  REJECTED: 'REJECTED',
+  REFUNDED: 'REFUNDED',
+};
+
+const ORDER_PAYMENT_METHOD = {
+  CASH: 'CASH',
+  WALLET: 'WALLET',
+  CARD: 'CARD',
+  ONLINE: 'ONLINE',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
   BRANCHES: 'Branches',
   SERVICES: 'Services',
+  PRODUCTS: 'Products',
+  ORDERS: 'Orders',
   SLOTS: 'Slots',
   BOOKINGS: 'Bookings',
   DRIVERS: 'Drivers',
@@ -309,6 +353,25 @@ const ERROR_MESSAGES = {
   QR_ALREADY_SCANNED: 'QR code has already been scanned.',
   QR_NOT_ACTIVE: 'QR code is not active.',
   INVALID_QR_TOKEN: 'Invalid QR token.',
+  PRODUCT_NOT_FOUND: 'Product not found.',
+  PRODUCT_SKU_ALREADY_EXISTS: 'A product with this SKU already exists for this business.',
+  PRODUCT_CODE_ALREADY_EXISTS: 'A product with this code already exists.',
+  PRODUCT_CATEGORY_NOT_FOUND: 'Product category not found.',
+  PRODUCT_CATEGORY_SLUG_EXISTS: 'A product category with this slug already exists.',
+  PRODUCT_INVALID_PRICE: 'Product prices must be positive numbers.',
+  PRODUCT_INVALID_STOCK: 'Stock quantity must be a non-negative number.',
+  PRODUCT_INVALID_IMAGE: 'Invalid product image URL.',
+  PRODUCT_INVALID_STATUS: 'Invalid product status.',
+  PRODUCT_READ_ONLY: 'You have read-only access to products.',
+  ORDER_NOT_FOUND: 'Order not found.',
+  BUSINESS_ORDER_NOT_FOUND: 'Business order not found.',
+  ORDER_CANNOT_BE_CANCELLED: 'This order cannot be cancelled.',
+  ORDER_CANNOT_BE_UPDATED: 'This order cannot be updated.',
+  ORDER_INVALID_STATUS_TRANSITION: 'Invalid order status transition.',
+  ORDER_EMPTY_ITEMS: 'Order must contain at least one item.',
+  ORDER_PRODUCT_INACTIVE: 'One or more products are not active.',
+  ORDER_INSUFFICIENT_STOCK: 'Insufficient stock for one or more products.',
+  ORDER_ALREADY_CANCELLED: 'Order is already cancelled.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -391,6 +454,30 @@ const SUCCESS_MESSAGES = {
   QR_CANCELLED: 'QR code cancelled successfully.',
   QR_EXPIRED: 'QR code marked as expired.',
   QR_DOWNLOADED: 'QR code downloaded successfully.',
+  PRODUCT_CREATED: 'Product created successfully.',
+  PRODUCT_UPDATED: 'Product updated successfully.',
+  PRODUCT_DELETED: 'Product deleted successfully.',
+  PRODUCT_STATUS_UPDATED: 'Product status updated successfully.',
+  PRODUCT_STOCK_UPDATED: 'Product stock updated successfully.',
+  PRODUCT_DUPLICATED: 'Product duplicated successfully.',
+  PRODUCT_IMAGES_UPDATED: 'Product images updated successfully.',
+  PRODUCT_IMAGES_REMOVED: 'Product images removed successfully.',
+  PRODUCT_BULK_UPDATED: 'Products updated successfully.',
+  PRODUCT_IMPORTED: 'Products imported successfully.',
+  PRODUCT_EXPORTED: 'Products exported successfully.',
+  PRODUCT_CATEGORY_CREATED: 'Product category created successfully.',
+  PRODUCT_CATEGORY_UPDATED: 'Product category updated successfully.',
+  PRODUCT_CATEGORY_DELETED: 'Product category deleted successfully.',
+  ORDER_CREATED: 'Order created successfully.',
+  ORDER_UPDATED: 'Order updated successfully.',
+  ORDER_CANCELLED: 'Order cancelled successfully.',
+  ORDER_REORDERED: 'Order recreated successfully.',
+  ORDER_ACCEPTED: 'Order accepted successfully.',
+  ORDER_REJECTED: 'Order rejected successfully.',
+  ORDER_PREPARING: 'Order marked as preparing.',
+  ORDER_READY: 'Order marked as ready.',
+  ORDER_STATUS_UPDATED: 'Order status updated successfully.',
+  ORDER_INVOICE_GENERATED: 'Invoice generated successfully.',
 };
 
 const PAGINATION = {
@@ -421,6 +508,10 @@ module.exports = {
   PAYMENT_STATUS,
   BOOKING_SOURCE,
   QR_STATUS,
+  PRODUCT_STATUS,
+  PRODUCT_UNIT,
+  ORDER_STATUS,
+  ORDER_PAYMENT_METHOD,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,
