@@ -374,6 +374,30 @@ const REVIEW_STATUS = {
   DELETED: 'DELETED',
 };
 
+const NOTIFICATION_CHANNEL = {
+  PUSH: 'PUSH',
+  EMAIL: 'EMAIL',
+  SMS: 'SMS',
+  WHATSAPP: 'WHATSAPP',
+  IN_APP: 'IN_APP',
+};
+
+const NOTIFICATION_PRIORITY = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+};
+
+const NOTIFICATION_DELIVERY_STATUS = {
+  PENDING: 'PENDING',
+  QUEUED: 'QUEUED',
+  SENT: 'SENT',
+  DELIVERED: 'DELIVERED',
+  FAILED: 'FAILED',
+  READ: 'READ',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -532,6 +556,8 @@ const ERROR_MESSAGES = {
   REVIEW_ALREADY_LIKED: 'You have already liked this review.',
   REVIEW_ALREADY_REPORTED: 'You have already reported this review.',
   REVIEW_REPLY_EXISTS: 'A business reply already exists for this review.',
+  NOTIFICATION_NOT_FOUND: 'Notification not found.',
+  NOTIFICATION_CANNOT_RETRY: 'Only failed notifications can be retried.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -676,6 +702,14 @@ const SUCCESS_MESSAGES = {
   REVIEW_UNLIKED: 'Review like removed successfully.',
   REVIEW_REPLIED: 'Reply posted successfully.',
   REVIEW_STATUS_UPDATED: 'Review status updated successfully.',
+  NOTIFICATION_SENT: 'Notification sent successfully.',
+  NOTIFICATION_BROADCAST: 'Broadcast notification sent successfully.',
+  NOTIFICATION_READ: 'Notification marked as read.',
+  NOTIFICATION_READ_ALL: 'All notifications marked as read.',
+  NOTIFICATION_DELETED: 'Notification deleted successfully.',
+  NOTIFICATION_RETRIED: 'Failed notifications retried successfully.',
+  REPORT_GENERATED: 'Report generated successfully.',
+  REPORT_EXPORTED: 'Report exported successfully.',
 };
 
 const PAGINATION = {
@@ -725,6 +759,9 @@ module.exports = {
   POINT_TRANSACTION_STATUS,
   POINT_RULE_TYPE,
   REVIEW_STATUS,
+  NOTIFICATION_CHANNEL,
+  NOTIFICATION_PRIORITY,
+  NOTIFICATION_DELIVERY_STATUS,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,

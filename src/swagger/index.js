@@ -424,6 +424,8 @@ const swaggerDefinition = {
     { name: 'Reviews', description: 'Customer ratings and reviews endpoints' },
     { name: 'Business Reviews', description: 'Business review management endpoints' },
     { name: 'Admin Reviews', description: 'Admin review moderation endpoints' },
+    { name: 'Notifications', description: 'Multi-channel notification management endpoints' },
+    { name: 'Reports', description: 'Analytics and reporting endpoints' },
   ],
 };
 
@@ -448,6 +450,8 @@ const options = {
     './src/modules/wallet/routes/**/*.js',
     './src/modules/points/routes/**/*.js',
     './src/modules/review/routes/**/*.js',
+    './src/modules/notification/routes/**/*.js',
+    './src/modules/report/routes/**/*.js',
   ],
 };
 

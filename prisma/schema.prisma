@@ -562,19 +562,63 @@ model RefreshToken {
 }
 
 // Notifications for admins
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  SMS
+  WHATSAPP
+  IN_APP
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String
-  message   String
-  isRead    Boolean  @default(false) @map("is_read")
-  type      String
-  data      Json?
-  createdAt DateTime @default(now()) @map("created_at")
+  id               String                     @id @default(uuid())
+  notificationId   String?                    @unique @map("notification_id")
+  userId           String                     @map("user_id")
+  user             User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  senderId         String?                    @map("sender_id")
+  title            String
+  message          String
+  type             String
+  channel          NotificationChannel        @default(IN_APP)
+  priority         NotificationPriority       @default(MEDIUM)
+  module           String?
+  referenceId      String?                    @map("reference_id")
+  isRead           Boolean                    @default(false) @map("is_read")
+  deliveryStatus   NotificationDeliveryStatus @default(DELIVERED) @map("delivery_status")
+  failureReason    String?                    @map("failure_reason")
+  retryCount       Int                        @default(0) @map("retry_count")
+  data             Json?
+  readAt           DateTime?                  @map("read_at")
+  sentAt           DateTime?                  @map("sent_at")
+  deliveredAt      DateTime?                  @map("delivered_at")
+  createdAt        DateTime                   @default(now()) @map("created_at")
+  updatedAt        DateTime                   @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([isRead])
+  @@index([channel])
+  @@index([priority])
+  @@index([deliveryStatus])
+  @@index([module])
+  @@index([referenceId])
+  @@index([type])
+  @@index([createdAt])
   @@map("notifications")
 }
 

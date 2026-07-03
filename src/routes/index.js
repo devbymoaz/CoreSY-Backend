@@ -33,6 +33,8 @@ const adminPointsRoutes = require('../modules/points/routes/admin-points.routes'
 const reviewRoutes = require('../modules/review/routes/review.routes');
 const businessReviewRoutes = require('../modules/review/routes/business-review.routes');
 const adminReviewRoutes = require('../modules/review/routes/admin-review.routes');
+const notificationRoutes = require('../modules/notification/routes/notification.routes');
+const reportRoutes = require('../modules/report/routes/report.routes');
 
 const router = express.Router();
 
@@ -68,5 +70,7 @@ router.use('/admin/points', adminPointsRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/business/reviews', businessReviewRoutes);
 router.use('/admin/reviews', adminReviewRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/reports', reportRoutes);
 
 module.exports = router;
