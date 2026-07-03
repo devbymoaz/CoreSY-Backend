@@ -426,6 +426,10 @@ const swaggerDefinition = {
     { name: 'Admin Reviews', description: 'Admin review moderation endpoints' },
     { name: 'Notifications', description: 'Multi-channel notification management endpoints' },
     { name: 'Reports', description: 'Analytics and reporting endpoints' },
+    {
+      name: 'Admin Dashboard',
+      description: 'Platform admin dashboard and system overview endpoints',
+    },
   ],
 };
 
@@ -452,6 +456,7 @@ const options = {
     './src/modules/review/routes/**/*.js',
     './src/modules/notification/routes/**/*.js',
     './src/modules/report/routes/**/*.js',
+    './src/modules/dashboard/routes/**/*.js',
   ],
 };
 

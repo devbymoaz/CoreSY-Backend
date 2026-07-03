@@ -710,6 +710,7 @@ const SUCCESS_MESSAGES = {
   NOTIFICATION_RETRIED: 'Failed notifications retried successfully.',
   REPORT_GENERATED: 'Report generated successfully.',
   REPORT_EXPORTED: 'Report exported successfully.',
+  DASHBOARD_LOADED: 'Dashboard data loaded successfully.',
 };
 
 const PAGINATION = {
