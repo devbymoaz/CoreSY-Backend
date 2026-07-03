@@ -22,6 +22,12 @@ const productCategoryRoutes = require('../modules/product/routes/product-categor
 const orderRoutes = require('../modules/order/routes/order.routes');
 const businessOrderRoutes = require('../modules/order/routes/business-order.routes');
 const driverRoutes = require('../modules/driver/routes/driver.routes');
+const paymentRoutes = require('../modules/payment/routes/payment.routes');
+const businessPaymentRoutes = require('../modules/payment/routes/business-payment.routes');
+const businessTransactionRoutes = require('../modules/payment/routes/business-transaction.routes');
+const adminPaymentRoutes = require('../modules/payment/routes/admin-payment.routes');
+const walletRoutes = require('../modules/wallet/routes/wallet.routes');
+const adminWalletRoutes = require('../modules/wallet/routes/admin-wallet.routes');
 
 const router = express.Router();
 
@@ -45,5 +51,12 @@ router.use('/product-categories', productCategoryRoutes);
 router.use('/orders', orderRoutes);
 router.use('/business/orders', businessOrderRoutes);
 router.use('/drivers', driverRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/business/payments', businessPaymentRoutes);
+router.use('/business/transactions', businessTransactionRoutes);
+router.use('/admin/payments', adminPaymentRoutes);
+router.use('/admin/transactions', adminPaymentRoutes);
+router.use('/wallet', walletRoutes);
+router.use('/admin/wallets', adminWalletRoutes);
 
 module.exports = router;

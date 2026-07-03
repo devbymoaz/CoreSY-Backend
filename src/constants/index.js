@@ -279,6 +279,61 @@ const DRIVER_GENDER = {
   OTHER: 'OTHER',
 };
 
+const PAYMENT_METHOD_TYPE = {
+  CASH: 'CASH',
+  WALLET: 'WALLET',
+  CREDIT_CARD: 'CREDIT_CARD',
+  DEBIT_CARD: 'DEBIT_CARD',
+  APPLE_PAY: 'APPLE_PAY',
+  GOOGLE_PAY: 'GOOGLE_PAY',
+  STRIPE: 'STRIPE',
+  PAYPAL: 'PAYPAL',
+};
+
+const PAYMENT_RECORD_STATUS = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SUCCESSFUL: 'SUCCESSFUL',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED',
+  PARTIALLY_REFUNDED: 'PARTIALLY_REFUNDED',
+};
+
+const PAYMENT_TYPE = {
+  BOOKING: 'BOOKING',
+  ORDER: 'ORDER',
+  TOP_UP: 'TOP_UP',
+  OTHER: 'OTHER',
+};
+
+const WALLET_STATUS = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  CLOSED: 'CLOSED',
+};
+
+const WALLET_TRANSACTION_TYPE = {
+  CREDIT: 'CREDIT',
+  DEBIT: 'DEBIT',
+  REFUND: 'REFUND',
+  TOP_UP: 'TOP_UP',
+  CASHBACK: 'CASHBACK',
+  REWARD_CREDIT: 'REWARD_CREDIT',
+  REWARD_REDEMPTION: 'REWARD_REDEMPTION',
+  ADMIN_ADJUSTMENT: 'ADMIN_ADJUSTMENT',
+  PLATFORM_REFUND: 'PLATFORM_REFUND',
+};
+
+const WALLET_TRANSACTION_STATUS = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -414,6 +469,17 @@ const ERROR_MESSAGES = {
   DRIVER_SUSPENDED: 'Driver account has been suspended.',
   DRIVER_REJECTED: 'Driver account has been rejected.',
   DRIVER_DOCUMENTS_REQUIRED: 'Required driver documents are missing.',
+  PAYMENT_NOT_FOUND: 'Payment not found.',
+  PAYMENT_ALREADY_EXISTS: 'A successful payment already exists for this booking or order.',
+  PAYMENT_CANNOT_BE_CANCELLED: 'This payment cannot be cancelled.',
+  PAYMENT_CANNOT_BE_REFUNDED: 'This payment cannot be refunded.',
+  PAYMENT_INVALID_AMOUNT: 'Payment amount must be greater than zero.',
+  PAYMENT_INVALID_REFUND_AMOUNT: 'Refund amount is invalid.',
+  WALLET_NOT_FOUND: 'Wallet not found.',
+  WALLET_NOT_ACTIVE: 'Wallet is not active.',
+  WALLET_INSUFFICIENT_BALANCE: 'Insufficient wallet balance.',
+  WALLET_INVALID_AMOUNT: 'Wallet amount must be greater than zero.',
+  WALLET_TRANSFER_SAME: 'Cannot transfer to the same wallet.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -533,6 +599,18 @@ const SUCCESS_MESSAGES = {
   DRIVER_DELETED: 'Driver deleted successfully.',
   DRIVER_AVAILABILITY_UPDATED: 'Driver availability updated successfully.',
   DRIVER_LOCATION_UPDATED: 'Driver location updated successfully.',
+  PAYMENT_CREATED: 'Payment created successfully.',
+  PAYMENT_VERIFIED: 'Payment verified successfully.',
+  PAYMENT_CANCELLED: 'Payment cancelled successfully.',
+  PAYMENT_REFUNDED: 'Payment refunded successfully.',
+  PAYMENT_FAILED: 'Payment failed.',
+  WALLET_CREATED: 'Wallet created successfully.',
+  WALLET_TOPPED_UP: 'Wallet topped up successfully.',
+  WALLET_WITHDRAWN: 'Wallet withdrawal completed successfully.',
+  WALLET_TRANSFERRED: 'Wallet transfer completed successfully.',
+  WALLET_FROZEN: 'Wallet frozen successfully.',
+  WALLET_UNFROZEN: 'Wallet unfrozen successfully.',
+  WALLET_ADJUSTED: 'Wallet balance adjusted successfully.',
 };
 
 const PAGINATION = {
@@ -571,6 +649,12 @@ module.exports = {
   DRIVER_STATUS,
   DRIVER_AVAILABILITY_STATUS,
   DRIVER_GENDER,
+  PAYMENT_METHOD_TYPE,
+  PAYMENT_RECORD_STATUS,
+  PAYMENT_TYPE,
+  WALLET_STATUS,
+  WALLET_TRANSACTION_TYPE,
+  WALLET_TRANSACTION_STATUS,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,

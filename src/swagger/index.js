@@ -414,6 +414,11 @@ const swaggerDefinition = {
     { name: 'Orders', description: 'CoreSY Go multi-vendor order management endpoints' },
     { name: 'Business Orders', description: 'Business-facing order management endpoints' },
     { name: 'Drivers', description: 'CoreSY Go driver management endpoints' },
+    { name: 'Payments', description: 'Customer payment management endpoints' },
+    { name: 'Business Payments', description: 'Business payment and transaction endpoints' },
+    { name: 'Admin Payments', description: 'Admin payment and refund endpoints' },
+    { name: 'Wallet', description: 'Customer wallet management endpoints' },
+    { name: 'Admin Wallets', description: 'Admin wallet management endpoints' },
   ],
 };
 
@@ -434,6 +439,8 @@ const options = {
     './src/modules/product/routes/**/*.js',
     './src/modules/order/routes/**/*.js',
     './src/modules/driver/routes/**/*.js',
+    './src/modules/payment/routes/**/*.js',
+    './src/modules/wallet/routes/**/*.js',
   ],
 };
 
