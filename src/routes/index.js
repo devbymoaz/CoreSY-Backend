@@ -21,6 +21,7 @@ const productRoutes = require('../modules/product/routes/product.routes');
 const productCategoryRoutes = require('../modules/product/routes/product-category.routes');
 const orderRoutes = require('../modules/order/routes/order.routes');
 const businessOrderRoutes = require('../modules/order/routes/business-order.routes');
+const driverRoutes = require('../modules/driver/routes/driver.routes');
 
 const router = express.Router();
 
@@ -43,5 +44,6 @@ router.use('/products', productRoutes);
 router.use('/product-categories', productCategoryRoutes);
 router.use('/orders', orderRoutes);
 router.use('/business/orders', businessOrderRoutes);
+router.use('/drivers', driverRoutes);
 
 module.exports = router;

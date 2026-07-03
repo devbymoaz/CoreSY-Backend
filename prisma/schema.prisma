@@ -227,6 +227,34 @@ enum OrderPaymentMethod {
   ONLINE
 }
 
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+  BICYCLE
+  VAN
+}
+
+enum DriverStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum DriverAvailabilityStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+  ON_DELIVERY
+}
+
+enum DriverGender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 model QRCode {
   id              String    @id @default(uuid())
   qrId            String    @unique
@@ -280,6 +308,7 @@ model Governorate {
   businesses         Business[]
   branches           Branch[]
   orderDeliveryAddresses OrderDeliveryAddress[]
+  drivers            Driver[]
   createdAt          DateTime   @default(now()) @map("created_at")
   updatedAt          DateTime   @updatedAt @map("updated_at")
 
@@ -977,4 +1006,60 @@ model OrderDeliveryAddress {
 
   @@index([governorateId])
   @@map("order_delivery_addresses")
+}
+
+// CoreSY Go driver profile and vehicle information
+model Driver {
+  id                        String                   @id @default(uuid())
+  driverId                  String                   @unique @map("driver_id")
+  fullName                  String                   @map("full_name")
+  email                     String                   @unique
+  phoneNumber               String                   @unique @map("phone_number")
+  password                  String
+  profilePhoto              String?                  @map("profile_photo")
+  dateOfBirth               DateTime?                @map("date_of_birth")
+  gender                    DriverGender?
+  nationalId                String                   @unique @map("national_id")
+  drivingLicense            String                   @unique @map("driving_license")
+  nationalIdDocument        String?                  @map("national_id_document")
+  drivingLicenseDocument    String?                  @map("driving_license_document")
+  insuranceDocument         String?                  @map("insurance_document")
+  vehicleType               VehicleType              @map("vehicle_type")
+  vehicleBrand              String?                  @map("vehicle_brand")
+  vehicleModel              String?                  @map("vehicle_model")
+  vehicleRegistrationNumber String                   @unique @map("vehicle_registration_number")
+  vehiclePlateNumber        String                   @unique @map("vehicle_plate_number")
+  vehicleImages             String[]                 @map("vehicle_images")
+  status                    DriverStatus             @default(PENDING_VERIFICATION)
+  availabilityStatus        DriverAvailabilityStatus @default(OFFLINE) @map("availability_status")
+  isOnline                  Boolean                  @default(false) @map("is_online")
+  rating                    Decimal                  @default(0) @db.Decimal(3, 2)
+  totalDeliveries           Int                      @default(0) @map("total_deliveries")
+  completedDeliveries       Int                      @default(0) @map("completed_deliveries")
+  cancelledDeliveries       Int                      @default(0) @map("cancelled_deliveries")
+  currentLatitude           Decimal?                 @db.Decimal(10, 7) @map("current_latitude")
+  currentLongitude          Decimal?                 @db.Decimal(10, 7) @map("current_longitude")
+  locationUpdatedAt         DateTime?                @map("location_updated_at")
+  governorateId             String                   @map("governorate_id")
+  governorate               Governorate              @relation(fields: [governorateId], references: [id])
+  rejectionReason           String?                  @map("rejection_reason")
+  approvedAt                DateTime?                @map("approved_at")
+  approvedBy                String?                  @map("approved_by")
+  lastLogin                 DateTime?                @map("last_login")
+  createdBy                 String?                  @map("created_by")
+  updatedBy                 String?                  @map("updated_by")
+  deletedAt                 DateTime?                @map("deleted_at")
+  createdAt                 DateTime                 @default(now()) @map("created_at")
+  updatedAt                 DateTime                 @updatedAt @map("updated_at")
+
+  @@index([driverId])
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([status])
+  @@index([availabilityStatus])
+  @@index([vehicleType])
+  @@index([governorateId])
+  @@index([rating])
+  @@index([isOnline])
+  @@map("drivers")
 }

@@ -413,6 +413,7 @@ const swaggerDefinition = {
     { name: 'Product Categories', description: 'Product category management endpoints' },
     { name: 'Orders', description: 'CoreSY Go multi-vendor order management endpoints' },
     { name: 'Business Orders', description: 'Business-facing order management endpoints' },
+    { name: 'Drivers', description: 'CoreSY Go driver management endpoints' },
   ],
 };
 
@@ -432,6 +433,7 @@ const options = {
     './src/modules/qr/routes/**/*.js',
     './src/modules/product/routes/**/*.js',
     './src/modules/order/routes/**/*.js',
+    './src/modules/driver/routes/**/*.js',
   ],
 };
 

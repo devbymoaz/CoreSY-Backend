@@ -16,65 +16,65 @@ const optionalPrice = positivePrice.optional().nullable();
 
 const imageUrlSchema = z.string().url('Image must be a valid URL').or(z.string().min(1).max(500));
 
-const createProductSchema = z
-  .object({
-    name: z.string().min(2).max(255).trim(),
-    sku: z.string().min(2).max(100).trim(),
-    description: z.string().max(5000).trim().optional().nullable(),
-    businessId: z.string().uuid(),
-    branchId: z.string().uuid(),
-    categoryId: z.string().uuid(),
-    subCategoryId: z.string().uuid().optional().nullable(),
-    images: z.array(imageUrlSchema).max(20).optional().default([]),
-    basePrice: positivePrice,
-    discountPrice: optionalPrice,
-    subscriberPrice: optionalPrice,
-    stockQuantity: z
-      .union([z.number().int(), z.string().transform(Number)])
-      .refine((val) => !Number.isNaN(val) && val >= 0, {
-        message: 'Stock quantity must be a non-negative integer',
-      })
-      .optional()
-      .default(0),
-    unlimitedStock: z.boolean().optional().default(false),
-    lowStockThreshold: z
-      .union([z.number().int(), z.string().transform(Number)])
-      .refine((val) => !Number.isNaN(val) && val >= 0)
-      .optional()
-      .default(10),
-    preparationTime: z
-      .union([z.number().int(), z.string().transform(Number)])
-      .refine((val) => val === null || val === undefined || (!Number.isNaN(val) && val >= 0))
-      .optional()
-      .nullable(),
-    unit: z.nativeEnum(PRODUCT_UNIT).optional().default(PRODUCT_UNIT.PIECE),
-    weight: z
-      .union([z.number(), z.string().transform(Number)])
-      .refine((val) => val === null || val === undefined || (!Number.isNaN(val) && val >= 0))
-      .optional()
-      .nullable(),
-    tags: z.array(z.string().trim().min(1).max(50)).max(30).optional().default([]),
-    barcode: z.string().trim().max(100).optional().nullable(),
-    status: z.nativeEnum(PRODUCT_STATUS).optional().default(PRODUCT_STATUS.ACTIVE),
-    isFeatured: z.boolean().optional().default(false),
-    isRecommended: z.boolean().optional().default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (data.discountPrice != null && data.discountPrice > data.basePrice) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['discountPrice'],
-        message: 'Discount price cannot be greater than base price',
-      });
-    }
-    if (!data.unlimitedStock && data.stockQuantity < 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['stockQuantity'],
-        message: 'Stock quantity must be non-negative',
-      });
-    }
-  });
+const createProductBaseSchema = z.object({
+  name: z.string().min(2).max(255).trim(),
+  sku: z.string().min(2).max(100).trim(),
+  description: z.string().max(5000).trim().optional().nullable(),
+  businessId: z.string().uuid(),
+  branchId: z.string().uuid(),
+  categoryId: z.string().uuid(),
+  subCategoryId: z.string().uuid().optional().nullable(),
+  images: z.array(imageUrlSchema).max(20).optional().default([]),
+  basePrice: positivePrice,
+  discountPrice: optionalPrice,
+  subscriberPrice: optionalPrice,
+  stockQuantity: z
+    .union([z.number().int(), z.string().transform(Number)])
+    .refine((val) => !Number.isNaN(val) && val >= 0, {
+      message: 'Stock quantity must be a non-negative integer',
+    })
+    .optional()
+    .default(0),
+  unlimitedStock: z.boolean().optional().default(false),
+  lowStockThreshold: z
+    .union([z.number().int(), z.string().transform(Number)])
+    .refine((val) => !Number.isNaN(val) && val >= 0)
+    .optional()
+    .default(10),
+  preparationTime: z
+    .union([z.number().int(), z.string().transform(Number)])
+    .refine((val) => val === null || val === undefined || (!Number.isNaN(val) && val >= 0))
+    .optional()
+    .nullable(),
+  unit: z.nativeEnum(PRODUCT_UNIT).optional().default(PRODUCT_UNIT.PIECE),
+  weight: z
+    .union([z.number(), z.string().transform(Number)])
+    .refine((val) => val === null || val === undefined || (!Number.isNaN(val) && val >= 0))
+    .optional()
+    .nullable(),
+  tags: z.array(z.string().trim().min(1).max(50)).max(30).optional().default([]),
+  barcode: z.string().trim().max(100).optional().nullable(),
+  status: z.nativeEnum(PRODUCT_STATUS).optional().default(PRODUCT_STATUS.ACTIVE),
+  isFeatured: z.boolean().optional().default(false),
+  isRecommended: z.boolean().optional().default(false),
+});
+
+const createProductSchema = createProductBaseSchema.superRefine((data, ctx) => {
+  if (data.discountPrice != null && data.discountPrice > data.basePrice) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['discountPrice'],
+      message: 'Discount price cannot be greater than base price',
+    });
+  }
+  if (!data.unlimitedStock && data.stockQuantity < 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['stockQuantity'],
+      message: 'Stock quantity must be non-negative',
+    });
+  }
+});
 
 const updateProductSchema = z
   .object({
@@ -183,7 +183,7 @@ const bulkUpdateProductsSchema = z.object({
 const importProductsSchema = z.object({
   products: z
     .array(
-      createProductSchema.omit({ images: true }).extend({
+      createProductBaseSchema.omit({ images: true }).extend({
         images: z.array(imageUrlSchema).max(20).optional().default([]),
       }),
     )

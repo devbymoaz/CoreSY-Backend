@@ -251,6 +251,34 @@ const ORDER_PAYMENT_METHOD = {
   ONLINE: 'ONLINE',
 };
 
+const VEHICLE_TYPE = {
+  MOTORCYCLE: 'MOTORCYCLE',
+  CAR: 'CAR',
+  BICYCLE: 'BICYCLE',
+  VAN: 'VAN',
+};
+
+const DRIVER_STATUS = {
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  REJECTED: 'REJECTED',
+};
+
+const DRIVER_AVAILABILITY_STATUS = {
+  ONLINE: 'ONLINE',
+  OFFLINE: 'OFFLINE',
+  BUSY: 'BUSY',
+  ON_DELIVERY: 'ON_DELIVERY',
+};
+
+const DRIVER_GENDER = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  OTHER: 'OTHER',
+};
+
 const PERMISSION_MODULES = {
   USERS: 'Users',
   BUSINESSES: 'Businesses',
@@ -372,6 +400,20 @@ const ERROR_MESSAGES = {
   ORDER_PRODUCT_INACTIVE: 'One or more products are not active.',
   ORDER_INSUFFICIENT_STOCK: 'Insufficient stock for one or more products.',
   ORDER_ALREADY_CANCELLED: 'Order is already cancelled.',
+  DRIVER_NOT_FOUND: 'Driver not found.',
+  DRIVER_EMAIL_ALREADY_EXISTS: 'A driver with this email already exists.',
+  DRIVER_PHONE_ALREADY_EXISTS: 'A driver with this phone number already exists.',
+  DRIVER_NATIONAL_ID_EXISTS: 'A driver with this national ID already exists.',
+  DRIVER_LICENSE_EXISTS: 'A driver with this driving license already exists.',
+  DRIVER_VEHICLE_REGISTRATION_EXISTS:
+    'A driver with this vehicle registration number already exists.',
+  DRIVER_VEHICLE_PLATE_EXISTS: 'A driver with this vehicle plate number already exists.',
+  DRIVER_INVALID_CREDENTIALS: 'Invalid email/phone or password.',
+  DRIVER_NOT_ACTIVE: 'Driver account is not active.',
+  DRIVER_PENDING_VERIFICATION: 'Driver account is pending verification.',
+  DRIVER_SUSPENDED: 'Driver account has been suspended.',
+  DRIVER_REJECTED: 'Driver account has been rejected.',
+  DRIVER_DOCUMENTS_REQUIRED: 'Required driver documents are missing.',
 };
 
 const SUCCESS_MESSAGES = {
@@ -478,6 +520,19 @@ const SUCCESS_MESSAGES = {
   ORDER_READY: 'Order marked as ready.',
   ORDER_STATUS_UPDATED: 'Order status updated successfully.',
   ORDER_INVOICE_GENERATED: 'Invoice generated successfully.',
+  DRIVER_REGISTERED: 'Driver registered successfully. Pending verification.',
+  DRIVER_LOGIN_SUCCESS: 'Driver login successful.',
+  DRIVER_PROFILE_UPDATED: 'Driver profile updated successfully.',
+  DRIVER_DOCUMENTS_UPLOADED: 'Driver documents uploaded successfully.',
+  DRIVER_VEHICLE_UPLOADED: 'Vehicle images uploaded successfully.',
+  DRIVER_STATUS_UPDATED: 'Driver status updated successfully.',
+  DRIVER_APPROVED: 'Driver approved successfully.',
+  DRIVER_REJECTED: 'Driver rejected successfully.',
+  DRIVER_SUSPENDED: 'Driver suspended successfully.',
+  DRIVER_ACTIVATED: 'Driver activated successfully.',
+  DRIVER_DELETED: 'Driver deleted successfully.',
+  DRIVER_AVAILABILITY_UPDATED: 'Driver availability updated successfully.',
+  DRIVER_LOCATION_UPDATED: 'Driver location updated successfully.',
 };
 
 const PAGINATION = {
@@ -512,6 +567,10 @@ module.exports = {
   PRODUCT_UNIT,
   ORDER_STATUS,
   ORDER_PAYMENT_METHOD,
+  VEHICLE_TYPE,
+  DRIVER_STATUS,
+  DRIVER_AVAILABILITY_STATUS,
+  DRIVER_GENDER,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
   REDIS_KEYS,
