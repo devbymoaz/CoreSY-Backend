@@ -183,7 +183,7 @@ router.get('/booking/:bookingId', getQRByBookingId);
  *         required: true
  *         schema:
  *           type: string
- *         description: Unique QR ID (format: QR-XXXXXXXXX)
+ *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
  *         description: QR code details retrieved successfully
@@ -386,7 +386,7 @@ router.post('/scan', validate({ body: scanQRSchema }), scanQR);
  *         required: true
  *         schema:
  *           type: string
- *         description: Unique QR ID (format: QR-XXXXXXXXX)
+ *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
  *         description: Check-in successful
@@ -434,7 +434,7 @@ router.patch('/:qrId/check-in', checkIn);
  *         required: true
  *         schema:
  *           type: string
- *         description: Unique QR ID (format: QR-XXXXXXXXX)
+ *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
  *         description: Check-out successful
@@ -482,7 +482,7 @@ router.patch('/:qrId/check-out', checkOut);
  *         required: true
  *         schema:
  *           type: string
- *         description: Unique QR ID (format: QR-XXXXXXXXX)
+ *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
  *         description: QR code cancelled successfully

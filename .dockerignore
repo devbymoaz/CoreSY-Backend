@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.git
+.github
+.env
+.env.*
+coverage
+.jest-cache
+src/logs
+*.log
+tests
+README.md
+BACKEND_ARCHITECTURE.md
+FRONTEND_DEVELOPER_GUIDE.md
+SWAGGER_REPORT.md
+.idea
+.vscode

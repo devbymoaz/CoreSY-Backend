@@ -16,8 +16,8 @@ describe('Health API', () => {
       expect(response.body).toHaveProperty('data');
       expect(response.body.data).toHaveProperty('status', 'healthy');
       expect(response.body.data).toHaveProperty('timestamp');
-      expect(response.body.data).toHaveProperty('uptime');
       expect(response.body.data).toHaveProperty('environment');
+      expect(response.body.data).toHaveProperty('appName');
     });
   });
 
