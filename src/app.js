@@ -4,6 +4,7 @@
  * Separated from server.js for testability.
  */
 
+const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -11,6 +12,7 @@ const compression = require('compression');
 const swaggerUi = require('swagger-ui-express');
 
 const config = require('./config');
+const { createCorsOriginValidator } = require('./config/cors');
 const routes = require('./routes');
 const swaggerSpec = require('./swagger');
 const morganMiddleware = require('./middlewares/morgan.middleware');
@@ -21,12 +23,17 @@ const notFoundHandler = require('./middlewares/notFound.middleware');
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 
-// CORS configuration
+// CORS configuration - supports localhost with any port
 app.use(
   cors({
-    origin: config.cors.origin,
+    origin: createCorsOriginValidator(config.cors.origin),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -67,6 +74,13 @@ app.get('/api-docs.json', (_req, res) => {
 
 // API routes
 app.use(config.apiPrefix, routes);
+
+// Admin panel static files (upload your frontend build to public/admin)
+const adminPanelPath = path.join(__dirname, '..', 'public', 'admin');
+app.use('/admin', express.static(adminPanelPath, { index: 'index.html' }));
+app.get(/^\/admin(\/.*)?$/, (_req, res) => {
+  res.sendFile(path.join(adminPanelPath, 'index.html'));
+});
 
 // 404 handler for undefined routes
 app.use(notFoundHandler);

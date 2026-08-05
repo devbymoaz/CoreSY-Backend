@@ -34,6 +34,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY prisma ./prisma
 COPY src ./src
+COPY public ./public
 
 RUN npx prisma generate
 

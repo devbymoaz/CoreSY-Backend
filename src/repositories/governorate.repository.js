@@ -4,6 +4,10 @@
  */
 
 const { prisma } = require('../config/database');
+const {
+  findStaticGovernorate,
+  isStaticGovernorateId,
+} = require('../constants/governorates');
 
 class GovernorateRepository {
   /**
@@ -47,6 +51,28 @@ class GovernorateRepository {
     return prisma.governorate.findMany({
       orderBy: { name: 'asc' },
     });
+  }
+
+  /**
+   * Resolve a governorate by UUID or legacy static ID (e.g. static-damascus).
+   * @param {string} idOrStaticId
+   * @returns {Promise<Object|null>}
+   */
+  async resolveByIdOrStatic(idOrStaticId) {
+    if (!idOrStaticId) {
+      return null;
+    }
+
+    if (isStaticGovernorateId(idOrStaticId)) {
+      const staticGovernorate = findStaticGovernorate(idOrStaticId);
+      if (!staticGovernorate) {
+        return null;
+      }
+
+      return this.findByCode(staticGovernorate.code);
+    }
+
+    return this.findById(idOrStaticId);
   }
 
   /**

@@ -25,28 +25,10 @@ const {
   SUCCESS_MESSAGES,
 } = require('../constants');
 
-// Static governorate data for demo mode
-const STATIC_GOVERNORATES = [
-  { id: 'static-damascus', name: 'Damascus', nameAr: 'دمشق', code: 'DM' },
-  { id: 'static-aleppo', name: 'Aleppo', nameAr: 'حلب', code: 'AL' },
-  { id: 'static-homs', name: 'Homs', nameAr: 'حمص', code: 'HO' },
-  { id: 'static-hama', name: 'Hama', nameAr: 'حماة', code: 'HA' },
-  { id: 'static-latakia', name: 'Latakia', nameAr: 'اللاذقية', code: 'LA' },
-  { id: 'static-tartus', name: 'Tartus', nameAr: 'طرطوس', code: 'TA' },
-  { id: 'static-idlib', name: 'Idlib', nameAr: 'إدلب', code: 'ID' },
-  { id: 'static-deir-ez-zor', name: 'Deir ez-Zor', nameAr: 'دير الزور', code: 'DZ' },
-  { id: 'static-raqqa', name: 'Raqqa', nameAr: 'الرقة', code: 'RQ' },
-  { id: 'static-hasakah', name: 'Hasakah', nameAr: 'الحسكة', code: 'HK' },
-  { id: 'static-daraa', name: 'Daraa', nameAr: 'درعا', code: 'DR' },
-  { id: 'static-quneitra', name: 'Quneitra', nameAr: 'القنيطرة', code: 'QU' },
-  { id: 'static-suwayda', name: 'Suwayda', nameAr: 'السويداء', code: 'SW' },
-  {
-    id: 'static-damascus-countryside',
-    name: 'Damascus Countryside',
-    nameAr: 'ريف دمشق',
-    code: 'RD',
-  },
-];
+const {
+  SYRIAN_GOVERNORATES,
+  findStaticGovernorate,
+} = require('../constants/governorates');
 
 // Simple in-memory user store for demo mode (no database needed!)
 const DEMO_USERS = new Map();
@@ -92,11 +74,13 @@ class AuthService {
       acceptTerms,
     } = data;
 
-    // Validate governorate exists
-    const governorate = await governorateRepository.findById(governorateId);
+    // Validate governorate exists (supports UUID or static-damascus style IDs)
+    const governorate = await governorateRepository.resolveByIdOrStatic(governorateId);
     if (!governorate || !governorate.isActive) {
       throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
     }
+
+    const resolvedGovernorateId = governorate.id;
 
     // Check uniqueness
     if (await userRepository.emailExists(email)) {
@@ -114,7 +98,7 @@ class AuthService {
     }
 
     // Generate Pass ID and hash password
-    const passId = await governorateRepository.generatePassId(governorateId);
+    const passId = await governorateRepository.generatePassId(resolvedGovernorateId);
     const hashedPassword = await hashPassword(password);
 
     const user = await userRepository.create({
@@ -129,7 +113,7 @@ class AuthService {
       status: USER_STATUS.PENDING_VERIFICATION,
       subscription: SUBSCRIPTION_TIERS.FREE,
       acceptTerms,
-      governorateId,
+      governorateId: resolvedGovernorateId,
       roleId: userRole.id,
     });
 
@@ -137,10 +121,8 @@ class AuthService {
     const otp = generateOtp();
     await redisService.storeEmailOtp(user.id, otp);
 
-    // In production, send OTP via email service
-    if (config.env === 'development') {
-      logger.info(`Email verification OTP for ${email}: ${otp}`);
-    }
+    // In production, send OTP via email service. Log OTP for testing when email is not configured.
+    logger.info(`Email verification OTP for ${email}: ${otp}`);
 
     return {
       message: SUCCESS_MESSAGES.REGISTRATION_SUCCESS,
@@ -161,7 +143,7 @@ class AuthService {
     }
 
     // Get governorate from static data
-    const governorate = STATIC_GOVERNORATES.find((g) => g.id === governorateId);
+    const governorate = SYRIAN_GOVERNORATES.find((g) => g.id === governorateId);
     if (!governorate) {
       throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
     }

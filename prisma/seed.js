@@ -306,38 +306,45 @@ async function main() {
   console.log('✅ Permissions assigned successfully');
 
   // ------------------------------
-  // 4. Seed Governorates if needed
+  // 4. Seed Governorates (always upsert)
   // ------------------------------
-  console.log('🏛️ Checking governorates...');
+  console.log('🏛️ Seeding governorates...');
 
-  const existingGovernorates = await prisma.governorate.count();
-  if (existingGovernorates === 0) {
-    const governorates = [
-      { name: 'Damascus', nameAr: 'دمشق', code: 'DM' },
-      { name: 'Aleppo', nameAr: 'حلب', code: 'AL' },
-      { name: 'Homs', nameAr: 'حمص', code: 'HO' },
-      { name: 'Hama', nameAr: 'حماة', code: 'HA' },
-      { name: 'Latakia', nameAr: 'اللاذقية', code: 'LA' },
-      { name: 'Tartus', nameAr: 'طرطوس', code: 'TA' },
-      { name: 'Idlib', nameAr: 'إدلب', code: 'ID' },
-      { name: 'Deir ez-Zor', nameAr: 'دير الزور', code: 'DZ' },
-      { name: 'Raqqa', nameAr: 'الرقة', code: 'RQ' },
-      { name: 'Hasakah', nameAr: 'الحسكة', code: 'HK' },
-      { name: 'Daraa', nameAr: 'درعا', code: 'DR' },
-      { name: 'Quneitra', nameAr: 'القنيطرة', code: 'QU' },
-      { name: 'Suwayda', nameAr: 'السويداء', code: 'SW' },
-      { name: 'Damascus Countryside', nameAr: 'ريف دمشق', code: 'RD' },
-    ];
+  const governorates = [
+    { name: 'Damascus', nameAr: 'دمشق', code: 'DM' },
+    { name: 'Aleppo', nameAr: 'حلب', code: 'AL' },
+    { name: 'Homs', nameAr: 'حمص', code: 'HO' },
+    { name: 'Hama', nameAr: 'حماة', code: 'HA' },
+    { name: 'Latakia', nameAr: 'اللاذقية', code: 'LA' },
+    { name: 'Tartus', nameAr: 'طرطوس', code: 'TA' },
+    { name: 'Idlib', nameAr: 'إدلب', code: 'ID' },
+    { name: 'Deir ez-Zor', nameAr: 'دير الزور', code: 'DZ' },
+    { name: 'Raqqa', nameAr: 'الرقة', code: 'RQ' },
+    { name: 'Hasakah', nameAr: 'الحسكة', code: 'HK' },
+    { name: 'Daraa', nameAr: 'درعا', code: 'DR' },
+    { name: 'Quneitra', nameAr: 'القنيطرة', code: 'QU' },
+    { name: 'Suwayda', nameAr: 'السويداء', code: 'SW' },
+    { name: 'Damascus Countryside', nameAr: 'ريف دمشق', code: 'RD' },
+  ];
 
-    for (const gov of governorates) {
-      await prisma.governorate.create({
-        data: gov,
-      });
-    }
-    console.log(`✅ Created ${governorates.length} governorates`);
-  } else {
-    console.log('ℹ️ Governorates already exist');
+  for (const gov of governorates) {
+    await prisma.governorate.upsert({
+      where: { code: gov.code },
+      update: {
+        name: gov.name,
+        nameAr: gov.nameAr,
+        isActive: true,
+      },
+      create: gov,
+    });
   }
+  console.log(`✅ Upserted ${governorates.length} governorates`);
+
+  // ------------------------------
+  // 5. Seed demo businesses, products, and test accounts
+  // ------------------------------
+  const { seedDemoData } = require('./seed-demo');
+  await seedDemoData(prisma);
 
   console.log('🎉 Seeding completed successfully!');
 }
