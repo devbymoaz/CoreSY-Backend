@@ -132,7 +132,13 @@ const validateResendVerification = (data) => {
 const validateLogin = (data) => {
   const errors = [];
 
-  if (!data.identifier || typeof data.identifier !== 'string') {
+  const rawIdentifier =
+    (typeof data.identifier === 'string' && data.identifier.trim()) ||
+    (typeof data.email === 'string' && data.email.trim()) ||
+    (typeof data.phoneNumber === 'string' && data.phoneNumber.trim()) ||
+    '';
+
+  if (!rawIdentifier) {
     addError(errors, 'identifier', 'Email or phone number is required');
   }
 
@@ -144,9 +150,10 @@ const validateLogin = (data) => {
     return validationFailure(errors);
   }
 
-  const identifier = data.identifier.trim();
-  const isEmail = identifier.includes('@');
-  const normalizedIdentifier = isEmail ? identifier.toLowerCase() : normalizePhone(identifier);
+  const isEmail = rawIdentifier.includes('@');
+  const normalizedIdentifier = isEmail
+    ? rawIdentifier.toLowerCase()
+    : normalizePhone(rawIdentifier);
 
   return validationSuccess({
     identifier: normalizedIdentifier,

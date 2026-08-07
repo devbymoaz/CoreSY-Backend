@@ -46,10 +46,21 @@ const registerDriverSchema = z
     path: ['confirmPassword'],
   });
 
-const loginDriverSchema = z.object({
-  identifier: z.string().min(3).trim(),
-  password: z.string().min(1),
-});
+const loginDriverSchema = z
+  .object({
+    identifier: z.string().min(3).trim().optional(),
+    email: z.string().email().trim().toLowerCase().optional(),
+    phoneNumber: z.string().min(8).max(20).trim().optional(),
+    password: z.string().min(1),
+  })
+  .refine((data) => data.identifier || data.email || data.phoneNumber, {
+    message: 'Email or phone number is required',
+    path: ['identifier'],
+  })
+  .transform((data) => ({
+    identifier: data.identifier || data.email || data.phoneNumber,
+    password: data.password,
+  }));
 
 const updateProfileSchema = z
   .object({

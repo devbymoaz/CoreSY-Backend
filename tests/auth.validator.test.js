@@ -74,6 +74,15 @@ describe('Auth Validators', () => {
       expect(result.value.identifier).toBe('+963912345678');
     });
 
+    it('should pass when email field is used instead of identifier', () => {
+      const result = validateLogin({
+        email: 'business@coresy.sy',
+        password: 'CoreSY@123',
+      });
+      expect(result.error).toBeNull();
+      expect(result.value.identifier).toBe('business@coresy.sy');
+    });
+
     it('should fail without password', () => {
       const result = validateLogin({ identifier: 'ahmad@example.com' });
       expect(result.error).not.toBeNull();
