@@ -5,10 +5,22 @@
 
 require('dotenv').config();
 
+const port = parseInt(process.env.PORT, 10) || 3000;
+const apiPrefix = process.env.API_PREFIX || '/api/v1';
+
+const buildApiBaseUrl = () => {
+  if (process.env.API_BASE_URL) {
+    return process.env.API_BASE_URL.replace(/\/$/, '');
+  }
+
+  return `http://localhost:${port}${apiPrefix}`;
+};
+
 const config = {
   env: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT, 10) || 3000,
-  apiPrefix: process.env.API_PREFIX || '/api/v1',
+  port,
+  apiPrefix,
+  apiBaseUrl: buildApiBaseUrl(),
   appName: process.env.APP_NAME || 'CoreSY',
 
   database: {

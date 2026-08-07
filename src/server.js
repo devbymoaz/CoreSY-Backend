@@ -6,7 +6,8 @@
 const app = require('./app');
 const config = require('./config');
 const logger = require('./utils/logger');
-const { connectDatabase } = require('./config/database');
+const { connectDatabase, disconnectDatabase } = require('./config/database');
+const { disconnectRedis } = require('./config/redis');
 
 let server = null;
 
@@ -29,7 +30,7 @@ const startServer = async () => {
     server = app.listen(config.port, () => {
       logger.info(`${config.appName} server running on port ${config.port}`);
       logger.info(`Environment: ${config.env}`);
-      logger.info(`API: http://localhost:${config.port}${config.apiPrefix}`);
+      logger.info(`API: ${config.apiBaseUrl}`);
       logger.info(`Swagger Docs: http://localhost:${config.port}/api-docs`);
     });
   } catch (error) {

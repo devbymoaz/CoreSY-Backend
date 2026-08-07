@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "start:prod": "node prisma/migrate-and-start.js",
     "vercel-build": "prisma generate ; prisma migrate deploy",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "lint": "eslint src tests",

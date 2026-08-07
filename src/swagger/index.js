@@ -23,13 +23,18 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: `https://coresy-backend-production.up.railway.app${config.apiPrefix}`,
-      description: 'Production server (Railway)',
+      url: config.apiBaseUrl,
+      description:
+        config.env === 'production' ? 'Production server' : 'API server (current environment)',
     },
-    {
-      url: `http://localhost:${config.port}${config.apiPrefix}`,
-      description: 'Development server',
-    },
+    ...(config.apiBaseUrl !== `http://localhost:${config.port}${config.apiPrefix}`
+      ? [
+          {
+            url: `http://localhost:${config.port}${config.apiPrefix}`,
+            description: 'Local development server',
+          },
+        ]
+      : []),
   ],
   components: {
     securitySchemes: {

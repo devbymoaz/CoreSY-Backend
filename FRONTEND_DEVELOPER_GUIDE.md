@@ -13,13 +13,13 @@
 ---
 
 ## 🌐 Base URL
-**Production**: `https://coresy-backend-production.up.railway.app/api/v1`
+**Production**: Set `API_BASE_URL` in `.env` (e.g. `http://100.54.21.155:3000/api/v1`)
 **Local Development**: `http://localhost:3000/api/v1`
 
 ---
 
 ## 📖 Swagger Documentation
-**Live Swagger UI**: `https://coresy-backend-production.up.railway.app/api-docs`
+**Live Swagger UI**: `http://YOUR_SERVER_IP:3000/api-docs` (or your `API_BASE_URL` host + `/api-docs`)
 
 This is your interactive documentation! You can:
 - Test all endpoints directly in the browser
@@ -34,7 +34,7 @@ This is your interactive documentation! You can:
 ```javascript
 // Example config for frontend
 const API_CONFIG = {
-  baseUrl: process.env.REACT_APP_API_URL || 'https://coresy-backend-production.up.railway.app/api/v1',
+  baseUrl: process.env.REACT_APP_API_URL || process.env.API_BASE_URL || 'http://localhost:3000/api/v1',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -237,20 +237,20 @@ Use these for testing registration:
 - ✅ Governorates endpoint
 - ✅ Demo mode with in-memory storage
 - ✅ Swagger documentation
-- ✅ Railway deployment
+- ✅ AWS EC2 deployment
 
 ---
 
 ## 📞 Support
 For any issues:
-1. Check Swagger first: `https://coresy-backend-production.up.railway.app/api-docs`
-2. Check debug endpoint: `https://coresy-backend-production.up.railway.app/api/v1/debug`
-3. Look at server logs in Railway
+1. Check Swagger first: `http://YOUR_SERVER_IP:3000/api-docs`
+2. Check debug endpoint: `http://YOUR_SERVER_IP:3000/api/v1/debug`
+3. Look at server logs on your EC2 instance (PM2: `pm2 logs coresy-api`)
 
 ---
 
 ## 🎯 Quick Start for Frontend Developers
-1. Read Swagger docs: `https://coresy-backend-production.up.railway.app/api-docs`
+1. Read Swagger docs: `http://YOUR_SERVER_IP:3000/api-docs`
 2. Get governorates list: `GET /api/v1/governorates`
 3. Register a test user: `POST /api/v1/auth/register`
 4. Verify email with OTP (check server logs!)

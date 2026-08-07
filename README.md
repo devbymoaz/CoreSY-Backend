@@ -217,7 +217,46 @@ npm run test
 npm run test -- --coverage
 ```
 
-## Production Deployment
+## Production Deployment (AWS EC2 + PM2)
+
+1. Set environment variables in `.env` (see `.env.example`):
+
+   ```env
+   NODE_ENV=production
+   PORT=3000
+   API_PREFIX=/api/v1
+   API_BASE_URL=http://YOUR_EC2_IP:3000/api/v1
+   DATABASE_URL=postgresql://...
+   JWT_SECRET=...
+   JWT_REFRESH_SECRET=...
+   CORS_ORIGIN=http://YOUR_EC2_IP:3000,http://localhost:,http://127.0.0.1:
+   SEED_ON_START=true
+   ```
+
+2. Install dependencies and prepare the database:
+
+   ```bash
+   npm install
+   npm run prisma:generate
+   npm run prisma:deploy
+   npm run prisma:seed
+   ```
+
+3. Start with PM2:
+
+   ```bash
+   pm2 start ecosystem.config.js
+   pm2 save
+   pm2 startup
+   ```
+
+4. Verify:
+
+   - Health: `http://YOUR_EC2_IP:3000/api/v1/health`
+   - Swagger: `http://YOUR_EC2_IP:3000/api-docs`
+   - Debug: `http://YOUR_EC2_IP:3000/api/v1/debug`
+
+### Docker (alternative)
 
 1. Set `NODE_ENV=production` in environment
 2. Configure all required environment variables (see `.env.example`)

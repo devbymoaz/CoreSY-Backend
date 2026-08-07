@@ -468,7 +468,7 @@ CoreSY is a comprehensive multi-module platform covering:
 - **Documentation**: Swagger/OpenAPI 3.0
 - **Logging**: Winston
 - **Validation**: Custom validator
-- **Deployment**: Railway
+- **Deployment**: AWS EC2 (PM2)
 - **Package Manager**: npm
 
 ---
@@ -526,5 +526,5 @@ For each phase to be considered complete:
 
 ## 📞 Support & Questions
 Refer to:
-- Swagger UI: `https://coresy-backend-production.up.railway.app/api-docs
+- Swagger UI: `http://YOUR_SERVER_IP:3000/api-docs` (set `API_BASE_URL` in `.env`)
 - Frontend Developer Guide: `FRONTEND_DEVELOPER_GUIDE.md
