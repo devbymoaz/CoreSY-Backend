@@ -44,6 +44,208 @@ const TEST_ACCOUNTS = {
   },
 };
 
+async function resolveAvailablePassId(prisma, desiredPassId, excludeUserId = null) {
+  const passIdOwner = await prisma.user.findUnique({
+    where: { passId: desiredPassId },
+    select: { id: true },
+  });
+
+  if (!passIdOwner || (excludeUserId && passIdOwner.id === excludeUserId)) {
+    return desiredPassId;
+  }
+
+  let attempt = 1;
+  while (attempt < 1000) {
+    const candidate = `SEED-${desiredPassId}-${attempt}`;
+    const candidateOwner = await prisma.user.findUnique({
+      where: { passId: candidate },
+      select: { id: true },
+    });
+
+    if (!candidateOwner || (excludeUserId && candidateOwner.id === excludeUserId)) {
+      return candidate;
+    }
+
+    attempt += 1;
+  }
+
+  throw new Error(`Unable to resolve an available passId for ${desiredPassId}`);
+}
+
+async function resolveAvailablePhone(prisma, desiredPhone, excludeUserId = null) {
+  const phoneOwner = await prisma.user.findUnique({
+    where: { phoneNumber: desiredPhone },
+    select: { id: true },
+  });
+
+  if (!phoneOwner || (excludeUserId && phoneOwner.id === excludeUserId)) {
+    return desiredPhone;
+  }
+
+  let attempt = 1;
+  while (attempt < 1000) {
+    const candidate = `+9639118${String(attempt).padStart(5, '0')}`;
+    const candidateOwner = await prisma.user.findUnique({
+      where: { phoneNumber: candidate },
+      select: { id: true },
+    });
+
+    if (!candidateOwner || (excludeUserId && candidateOwner.id === excludeUserId)) {
+      return candidate;
+    }
+
+    attempt += 1;
+  }
+
+  throw new Error(`Unable to resolve an available phone number for ${desiredPhone}`);
+}
+
+async function upsertTestUser(prisma, account, roleName, roleMap, damascus, passwordHash) {
+  const roleId = roleMap[roleName];
+  if (!roleId) {
+    throw new Error(`Role ${roleName} not found`);
+  }
+
+  const userData = {
+    fullName: account.fullName,
+    password: passwordHash,
+    emailVerified: true,
+    phoneVerified: true,
+    status: 'ACTIVE',
+    governorateId: damascus.id,
+    roleId,
+    smartAssistantName: account.smartAssistantName,
+  };
+
+  const existingByEmail = await prisma.user.findUnique({
+    where: { email: account.email },
+  });
+
+  if (existingByEmail) {
+    const phoneOwner = await prisma.user.findUnique({
+      where: { phoneNumber: account.phoneNumber },
+      select: { id: true },
+    });
+
+    return prisma.user.update({
+      where: { email: account.email },
+      data: {
+        ...userData,
+        ...(phoneOwner && phoneOwner.id !== existingByEmail.id
+          ? {}
+          : { phoneNumber: account.phoneNumber }),
+      },
+    });
+  }
+
+  const passId = await resolveAvailablePassId(prisma, account.passId);
+  if (passId !== account.passId) {
+    console.log(
+      `ℹ️ passId ${account.passId} already assigned; using ${passId} for ${account.email}`,
+    );
+  }
+
+  const phoneNumber = await resolveAvailablePhone(prisma, account.phoneNumber);
+  if (phoneNumber !== account.phoneNumber) {
+    console.log(
+      `ℹ️ phone ${account.phoneNumber} already assigned; using ${phoneNumber} for ${account.email}`,
+    );
+  }
+
+  try {
+    return await prisma.user.create({
+      data: {
+        passId,
+        email: account.email,
+        phoneNumber,
+        subscription: 'FREE',
+        acceptTerms: true,
+        ...userData,
+      },
+    });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      const existing = await prisma.user.findUnique({ where: { email: account.email } });
+      if (existing) {
+        return prisma.user.update({
+          where: { email: account.email },
+          data: userData,
+        });
+      }
+    }
+
+    throw error;
+  }
+}
+
+async function upsertTestDriver(prisma, account, damascus, passwordHash, adminUserId) {
+  const existingByEmail = await prisma.driver.findUnique({
+    where: { email: account.email },
+  });
+
+  const driverData = {
+    fullName: account.fullName,
+    password: passwordHash,
+    status: 'ACTIVE',
+    availabilityStatus: 'ONLINE',
+    isOnline: true,
+    governorateId: damascus.id,
+    approvedAt: new Date(),
+    approvedBy: adminUserId,
+  };
+
+  if (existingByEmail) {
+    return prisma.driver.update({
+      where: { email: account.email },
+      data: driverData,
+    });
+  }
+
+  const createData = {
+    ...driverData,
+    email: account.email,
+    phoneNumber: account.phoneNumber,
+    driverId: account.driverId,
+    nationalId: account.nationalId,
+    drivingLicense: account.drivingLicense,
+    vehicleType: 'MOTORCYCLE',
+    vehicleBrand: 'Honda',
+    vehicleModel: 'CB150',
+    vehicleRegistrationNumber: account.vehicleRegistrationNumber,
+    vehiclePlateNumber: account.vehiclePlateNumber,
+    vehicleImages: [],
+  };
+
+  try {
+    return await prisma.driver.create({ data: createData });
+  } catch (error) {
+    if (error.code !== 'P2002') {
+      throw error;
+    }
+
+    const existing = await prisma.driver.findUnique({ where: { email: account.email } });
+    if (existing) {
+      return prisma.driver.update({
+        where: { email: account.email },
+        data: driverData,
+      });
+    }
+
+    console.log(
+      `ℹ️ Driver unique field conflict for ${account.email}; preserving existing driver record`,
+    );
+    return prisma.driver.findFirst({
+      where: {
+        OR: [
+          { driverId: account.driverId },
+          { nationalId: account.nationalId },
+          { phoneNumber: account.phoneNumber },
+        ],
+      },
+    });
+  }
+}
+
 async function seedDemoData(prisma) {
   console.log('🧪 Seeding demo data and test accounts...');
 
@@ -56,42 +258,8 @@ async function seedDemoData(prisma) {
   const roles = await prisma.role.findMany();
   const roleMap = Object.fromEntries(roles.map((role) => [role.name, role.id]));
 
-  const upsertUser = async (account, roleName) => {
-    const roleId = roleMap[roleName];
-    if (!roleId) {
-      throw new Error(`Role ${roleName} not found`);
-    }
-
-    return prisma.user.upsert({
-      where: { email: account.email },
-      update: {
-        fullName: account.fullName,
-        phoneNumber: account.phoneNumber,
-        password: passwordHash,
-        emailVerified: true,
-        phoneVerified: true,
-        status: 'ACTIVE',
-        governorateId: damascus.id,
-        roleId,
-        smartAssistantName: account.smartAssistantName,
-      },
-      create: {
-        passId: account.passId,
-        fullName: account.fullName,
-        email: account.email,
-        phoneNumber: account.phoneNumber,
-        smartAssistantName: account.smartAssistantName,
-        password: passwordHash,
-        emailVerified: true,
-        phoneVerified: true,
-        status: 'ACTIVE',
-        subscription: 'FREE',
-        acceptTerms: true,
-        governorateId: damascus.id,
-        roleId,
-      },
-    });
-  };
+  const upsertUser = (account, roleName) =>
+    upsertTestUser(prisma, account, roleName, roleMap, damascus, passwordHash);
 
   const adminUser = await upsertUser(TEST_ACCOUNTS.admin, TEST_ACCOUNTS.admin.role);
   const customerUser = await upsertUser(TEST_ACCOUNTS.customer, TEST_ACCOUNTS.customer.role);
@@ -401,37 +569,7 @@ async function seedDemoData(prisma) {
     },
   });
 
-  await prisma.driver.upsert({
-    where: { email: TEST_ACCOUNTS.driver.email },
-    update: {
-      status: 'ACTIVE',
-      availabilityStatus: 'ONLINE',
-      isOnline: true,
-      approvedAt: new Date(),
-      approvedBy: adminUser.id,
-    },
-    create: {
-      driverId: TEST_ACCOUNTS.driver.driverId,
-      fullName: TEST_ACCOUNTS.driver.fullName,
-      email: TEST_ACCOUNTS.driver.email,
-      phoneNumber: TEST_ACCOUNTS.driver.phoneNumber,
-      password: passwordHash,
-      nationalId: TEST_ACCOUNTS.driver.nationalId,
-      drivingLicense: TEST_ACCOUNTS.driver.drivingLicense,
-      vehicleType: 'MOTORCYCLE',
-      vehicleBrand: 'Honda',
-      vehicleModel: 'CB150',
-      vehicleRegistrationNumber: TEST_ACCOUNTS.driver.vehicleRegistrationNumber,
-      vehiclePlateNumber: TEST_ACCOUNTS.driver.vehiclePlateNumber,
-      vehicleImages: [],
-      status: 'ACTIVE',
-      availabilityStatus: 'ONLINE',
-      isOnline: true,
-      governorateId: damascus.id,
-      approvedAt: new Date(),
-      approvedBy: adminUser.id,
-    },
-  });
+  await upsertTestDriver(prisma, TEST_ACCOUNTS.driver, damascus, passwordHash, adminUser.id);
 
   console.log('✅ Demo data seeded successfully');
   console.log('');
