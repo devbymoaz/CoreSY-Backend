@@ -44,69 +44,110 @@ const TEST_ACCOUNTS = {
   },
 };
 
-async function resolveAvailablePassId(prisma, desiredPassId, excludeUserId = null) {
-  const passIdOwner = await prisma.user.findUnique({
-    where: { passId: desiredPassId },
-    select: { id: true },
-  });
+const isUniqueConstraintError = (error) => error?.code === 'P2002';
 
-  if (!passIdOwner || (excludeUserId && passIdOwner.id === excludeUserId)) {
-    return desiredPassId;
+const getConflictFields = (error) => {
+  const target = error?.meta?.target;
+  return Array.isArray(target) ? target : [];
+};
+
+async function resolveAvailablePassId(
+  prisma,
+  desiredPassId,
+  excludeUserId = null,
+  skipPassIds = new Set(),
+) {
+  const candidates = [desiredPassId];
+
+  for (let attempt = 1; attempt < 1000; attempt += 1) {
+    candidates.push(`SEED-${desiredPassId}-${attempt}`);
   }
 
-  let attempt = 1;
-  while (attempt < 1000) {
-    const candidate = `SEED-${desiredPassId}-${attempt}`;
-    const candidateOwner = await prisma.user.findUnique({
+  for (const candidate of candidates) {
+    if (skipPassIds.has(candidate)) {
+      continue;
+    }
+
+    const passIdOwner = await prisma.user.findUnique({
       where: { passId: candidate },
       select: { id: true },
     });
 
-    if (!candidateOwner || (excludeUserId && candidateOwner.id === excludeUserId)) {
+    if (!passIdOwner || (excludeUserId && passIdOwner.id === excludeUserId)) {
       return candidate;
     }
-
-    attempt += 1;
   }
 
   throw new Error(`Unable to resolve an available passId for ${desiredPassId}`);
 }
 
-async function resolveAvailablePhone(prisma, desiredPhone, excludeUserId = null) {
-  const phoneOwner = await prisma.user.findUnique({
-    where: { phoneNumber: desiredPhone },
-    select: { id: true },
-  });
+async function resolveAvailablePhone(
+  prisma,
+  desiredPhone,
+  excludeUserId = null,
+  skipPhones = new Set(),
+) {
+  const candidates = [desiredPhone];
 
-  if (!phoneOwner || (excludeUserId && phoneOwner.id === excludeUserId)) {
-    return desiredPhone;
+  for (let attempt = 1; attempt < 1000; attempt += 1) {
+    candidates.push(`+9639118${String(attempt).padStart(5, '0')}`);
   }
 
-  let attempt = 1;
-  while (attempt < 1000) {
-    const candidate = `+9639118${String(attempt).padStart(5, '0')}`;
-    const candidateOwner = await prisma.user.findUnique({
+  for (const candidate of candidates) {
+    if (skipPhones.has(candidate)) {
+      continue;
+    }
+
+    const phoneOwner = await prisma.user.findUnique({
       where: { phoneNumber: candidate },
       select: { id: true },
     });
 
-    if (!candidateOwner || (excludeUserId && candidateOwner.id === excludeUserId)) {
+    if (!phoneOwner || (excludeUserId && phoneOwner.id === excludeUserId)) {
       return candidate;
     }
-
-    attempt += 1;
   }
 
   throw new Error(`Unable to resolve an available phone number for ${desiredPhone}`);
 }
 
-async function upsertTestUser(prisma, account, roleName, roleMap, damascus, passwordHash) {
+async function resolveAvailableWalletId(prisma, desiredWalletId, excludeCustomerId = null) {
+  const candidates = [desiredWalletId];
+
+  for (let attempt = 1; attempt < 1000; attempt += 1) {
+    candidates.push(`SEED-${desiredWalletId}-${attempt}`);
+  }
+
+  for (const candidate of candidates) {
+    const walletOwner = await prisma.wallet.findUnique({
+      where: { walletId: candidate },
+      select: { customerId: true },
+    });
+
+    if (!walletOwner || (excludeCustomerId && walletOwner.customerId === excludeCustomerId)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(`Unable to resolve an available walletId for ${desiredWalletId}`);
+}
+
+/**
+ * Idempotent user upsert keyed by email.
+ * Never changes passId on existing users; resolves unique passId only on create.
+ */
+async function upsertUser(prisma, account, roleName, roleMap, damascus, passwordHash) {
   const roleId = roleMap[roleName];
   if (!roleId) {
     throw new Error(`Role ${roleName} not found`);
   }
 
-  const userData = {
+  const existingByEmail = await prisma.user.findUnique({
+    where: { email: account.email },
+    select: { id: true, passId: true },
+  });
+
+  const updateData = {
     fullName: account.fullName,
     password: passwordHash,
     emailVerified: true,
@@ -117,68 +158,173 @@ async function upsertTestUser(prisma, account, roleName, roleMap, damascus, pass
     smartAssistantName: account.smartAssistantName,
   };
 
-  const existingByEmail = await prisma.user.findUnique({
-    where: { email: account.email },
+  const phoneOwner = await prisma.user.findUnique({
+    where: { phoneNumber: account.phoneNumber },
+    select: { id: true },
   });
 
-  if (existingByEmail) {
-    const phoneOwner = await prisma.user.findUnique({
-      where: { phoneNumber: account.phoneNumber },
-      select: { id: true },
-    });
+  if (!phoneOwner || phoneOwner.id === existingByEmail?.id) {
+    updateData.phoneNumber = account.phoneNumber;
+  }
 
+  if (existingByEmail) {
     return prisma.user.update({
       where: { email: account.email },
-      data: {
-        ...userData,
-        ...(phoneOwner && phoneOwner.id !== existingByEmail.id
-          ? {}
-          : { phoneNumber: account.phoneNumber }),
-      },
+      data: updateData,
     });
   }
 
-  const passId = await resolveAvailablePassId(prisma, account.passId);
+  let passId = await resolveAvailablePassId(prisma, account.passId);
   if (passId !== account.passId) {
     console.log(
       `ℹ️ passId ${account.passId} already assigned; using ${passId} for ${account.email}`,
     );
   }
 
-  const phoneNumber = await resolveAvailablePhone(prisma, account.phoneNumber);
+  let phoneNumber = await resolveAvailablePhone(prisma, account.phoneNumber);
   if (phoneNumber !== account.phoneNumber) {
     console.log(
       `ℹ️ phone ${account.phoneNumber} already assigned; using ${phoneNumber} for ${account.email}`,
     );
   }
 
-  try {
-    return await prisma.user.create({
-      data: {
-        passId,
-        email: account.email,
-        phoneNumber,
-        subscription: 'FREE',
-        acceptTerms: true,
-        ...userData,
-      },
-    });
-  } catch (error) {
-    if (error.code === 'P2002') {
+  const triedPassIds = new Set();
+  const triedPhones = new Set();
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      return await prisma.user.upsert({
+        where: { email: account.email },
+        update: updateData,
+        create: {
+          passId,
+          email: account.email,
+          phoneNumber,
+          subscription: 'FREE',
+          acceptTerms: true,
+          ...updateData,
+        },
+      });
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) {
+        throw error;
+      }
+
       const existing = await prisma.user.findUnique({ where: { email: account.email } });
       if (existing) {
         return prisma.user.update({
           where: { email: account.email },
-          data: userData,
+          data: updateData,
         });
       }
-    }
 
-    throw error;
+      const conflictFields = getConflictFields(error);
+
+      if (conflictFields.includes('pass_id')) {
+        triedPassIds.add(passId);
+        const previousPassId = passId;
+        passId = await resolveAvailablePassId(prisma, account.passId, null, triedPassIds);
+        if (passId !== previousPassId) {
+          console.log(
+            `ℹ️ passId ${previousPassId} already assigned; using ${passId} for ${account.email}`,
+          );
+        }
+        continue;
+      }
+
+      if (conflictFields.includes('phone_number')) {
+        triedPhones.add(phoneNumber);
+        const previousPhone = phoneNumber;
+        phoneNumber = await resolveAvailablePhone(prisma, account.phoneNumber, null, triedPhones);
+        if (phoneNumber !== previousPhone) {
+          console.log(
+            `ℹ️ phone ${previousPhone} already assigned; using ${phoneNumber} for ${account.email}`,
+          );
+        }
+        continue;
+      }
+
+      throw error;
+    }
   }
+
+  throw new Error(`Unable to upsert user ${account.email} after multiple unique constraint retries`);
 }
 
-async function upsertTestDriver(prisma, account, damascus, passwordHash, adminUserId) {
+async function upsertWallet(prisma, customerUser) {
+  const existingWallet = await prisma.wallet.findUnique({
+    where: { customerId: customerUser.id },
+  });
+
+  if (existingWallet) {
+    return prisma.wallet.update({
+      where: { customerId: customerUser.id },
+      data: {
+        currentBalance: 50000,
+        availableBalance: 50000,
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  let walletId = await resolveAvailableWalletId(prisma, 'WLT-CUSTOMER-001', customerUser.id);
+  if (walletId !== 'WLT-CUSTOMER-001') {
+    console.log(
+      `ℹ️ walletId WLT-CUSTOMER-001 already assigned; using ${walletId} for ${customerUser.email}`,
+    );
+  }
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      return await prisma.wallet.create({
+        data: {
+          walletId,
+          customerId: customerUser.id,
+          currentBalance: 50000,
+          availableBalance: 50000,
+          blockedBalance: 0,
+          currency: 'SYP',
+          status: 'ACTIVE',
+        },
+      });
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) {
+        throw error;
+      }
+
+      const walletByCustomer = await prisma.wallet.findUnique({
+        where: { customerId: customerUser.id },
+      });
+      if (walletByCustomer) {
+        return prisma.wallet.update({
+          where: { customerId: customerUser.id },
+          data: {
+            currentBalance: 50000,
+            availableBalance: 50000,
+            status: 'ACTIVE',
+          },
+        });
+      }
+
+      if (getConflictFields(error).includes('wallet_id')) {
+        const previousWalletId = walletId;
+        walletId = await resolveAvailableWalletId(prisma, 'WLT-CUSTOMER-001', customerUser.id);
+        if (walletId !== previousWalletId) {
+          console.log(
+            `ℹ️ walletId ${previousWalletId} already assigned; using ${walletId} for ${customerUser.email}`,
+          );
+        }
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error(`Unable to create wallet for ${customerUser.email}`);
+}
+
+async function upsertDriver(prisma, account, damascus, passwordHash, adminUserId) {
   const existingByEmail = await prisma.driver.findUnique({
     where: { email: account.email },
   });
@@ -201,25 +347,50 @@ async function upsertTestDriver(prisma, account, damascus, passwordHash, adminUs
     });
   }
 
-  const createData = {
-    ...driverData,
-    email: account.email,
-    phoneNumber: account.phoneNumber,
-    driverId: account.driverId,
-    nationalId: account.nationalId,
-    drivingLicense: account.drivingLicense,
-    vehicleType: 'MOTORCYCLE',
-    vehicleBrand: 'Honda',
-    vehicleModel: 'CB150',
-    vehicleRegistrationNumber: account.vehicleRegistrationNumber,
-    vehiclePlateNumber: account.vehiclePlateNumber,
-    vehicleImages: [],
-  };
+  const uniqueFields = [
+    { key: 'driverId', value: account.driverId },
+    { key: 'nationalId', value: account.nationalId },
+    { key: 'drivingLicense', value: account.drivingLicense },
+    { key: 'vehicleRegistrationNumber', value: account.vehicleRegistrationNumber },
+    { key: 'vehiclePlateNumber', value: account.vehiclePlateNumber },
+    { key: 'phoneNumber', value: account.phoneNumber },
+  ];
+
+  const resolvedValues = Object.fromEntries(uniqueFields.map((field) => [field.key, field.value]));
+
+  for (const field of uniqueFields) {
+    const owner = await prisma.driver.findFirst({
+      where: { [field.key]: field.value },
+      select: { email: true },
+    });
+
+    if (owner && owner.email !== account.email) {
+      resolvedValues[field.key] = `SEED-${field.value}`;
+      console.log(
+        `ℹ️ driver ${field.key} ${field.value} already assigned; using ${resolvedValues[field.key]} for ${account.email}`,
+      );
+    }
+  }
 
   try {
-    return await prisma.driver.create({ data: createData });
+    return await prisma.driver.create({
+      data: {
+        ...driverData,
+        email: account.email,
+        phoneNumber: resolvedValues.phoneNumber,
+        driverId: resolvedValues.driverId,
+        nationalId: resolvedValues.nationalId,
+        drivingLicense: resolvedValues.drivingLicense,
+        vehicleType: 'MOTORCYCLE',
+        vehicleBrand: 'Honda',
+        vehicleModel: 'CB150',
+        vehicleRegistrationNumber: resolvedValues.vehicleRegistrationNumber,
+        vehiclePlateNumber: resolvedValues.vehiclePlateNumber,
+        vehicleImages: [],
+      },
+    });
   } catch (error) {
-    if (error.code !== 'P2002') {
+    if (!isUniqueConstraintError(error)) {
       throw error;
     }
 
@@ -234,13 +405,10 @@ async function upsertTestDriver(prisma, account, damascus, passwordHash, adminUs
     console.log(
       `ℹ️ Driver unique field conflict for ${account.email}; preserving existing driver record`,
     );
+
     return prisma.driver.findFirst({
       where: {
-        OR: [
-          { driverId: account.driverId },
-          { nationalId: account.nationalId },
-          { phoneNumber: account.phoneNumber },
-        ],
+        OR: uniqueFields.map((field) => ({ [field.key]: field.value })),
       },
     });
   }
@@ -258,14 +426,29 @@ async function seedDemoData(prisma) {
   const roles = await prisma.role.findMany();
   const roleMap = Object.fromEntries(roles.map((role) => [role.name, role.id]));
 
-  const upsertUser = (account, roleName) =>
-    upsertTestUser(prisma, account, roleName, roleMap, damascus, passwordHash);
-
-  const adminUser = await upsertUser(TEST_ACCOUNTS.admin, TEST_ACCOUNTS.admin.role);
-  const customerUser = await upsertUser(TEST_ACCOUNTS.customer, TEST_ACCOUNTS.customer.role);
+  const adminUser = await upsertUser(
+    prisma,
+    TEST_ACCOUNTS.admin,
+    TEST_ACCOUNTS.admin.role,
+    roleMap,
+    damascus,
+    passwordHash,
+  );
+  const customerUser = await upsertUser(
+    prisma,
+    TEST_ACCOUNTS.customer,
+    TEST_ACCOUNTS.customer.role,
+    roleMap,
+    damascus,
+    passwordHash,
+  );
   const businessOwner = await upsertUser(
+    prisma,
     TEST_ACCOUNTS.businessOwner,
     TEST_ACCOUNTS.businessOwner.role,
+    roleMap,
+    damascus,
+    passwordHash,
   );
 
   for (const user of [adminUser, customerUser, businessOwner]) {
@@ -284,23 +467,7 @@ async function seedDemoData(prisma) {
     });
   }
 
-  await prisma.wallet.upsert({
-    where: { customerId: customerUser.id },
-    update: {
-      currentBalance: 50000,
-      availableBalance: 50000,
-      status: 'ACTIVE',
-    },
-    create: {
-      walletId: 'WLT-CUSTOMER-001',
-      customerId: customerUser.id,
-      currentBalance: 50000,
-      availableBalance: 50000,
-      blockedBalance: 0,
-      currency: 'SYP',
-      status: 'ACTIVE',
-    },
-  });
+  await upsertWallet(prisma, customerUser);
 
   const restaurant = await prisma.business.upsert({
     where: { businessEmail: 'restaurant@coresy-demo.sy' },
@@ -569,7 +736,7 @@ async function seedDemoData(prisma) {
     },
   });
 
-  await upsertTestDriver(prisma, TEST_ACCOUNTS.driver, damascus, passwordHash, adminUser.id);
+  await upsertDriver(prisma, TEST_ACCOUNTS.driver, damascus, passwordHash, adminUser.id);
 
   console.log('✅ Demo data seeded successfully');
   console.log('');
@@ -582,6 +749,7 @@ async function seedDemoData(prisma) {
 
 module.exports = {
   seedDemoData,
+  upsertUser,
   TEST_PASSWORD,
   TEST_ACCOUNTS,
 };
