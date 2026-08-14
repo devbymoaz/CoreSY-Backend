@@ -9,22 +9,34 @@ const createBusiness = asyncHandler(async (req, res) => {
     req.ip,
     req.headers['user-agent'],
   );
-  return sendCreated(res, result);
+  return sendCreated(res, {
+    message: result.message,
+    data: result.business,
+  });
 });
 
 const getBusinesses = asyncHandler(async (req, res) => {
   const result = await businessService.getBusinesses(req.query, req.user);
-  return sendSuccess(res, result);
+  return sendSuccess(res, {
+    message: 'Businesses retrieved successfully',
+    data: result,
+  });
 });
 
 const getBusinessById = asyncHandler(async (req, res) => {
   const business = await businessService.getBusinessById(req.params.id, req.user);
-  return sendSuccess(res, { business });
+  return sendSuccess(res, {
+    message: 'Business retrieved successfully',
+    data: business,
+  });
 });
 
 const getMyBusinesses = asyncHandler(async (req, res) => {
   const result = await businessService.getMyBusinesses(req.user.id, req.query);
-  return sendSuccess(res, result);
+  return sendSuccess(res, {
+    message: 'Businesses retrieved successfully',
+    data: result,
+  });
 });
 
 const updateBusiness = asyncHandler(async (req, res) => {
@@ -36,7 +48,10 @@ const updateBusiness = asyncHandler(async (req, res) => {
     req.headers['user-agent'],
     req.user,
   );
-  return sendSuccess(res, result);
+  return sendSuccess(res, {
+    message: result.message,
+    data: result.business,
+  });
 });
 
 const deleteBusiness = asyncHandler(async (req, res) => {
@@ -47,7 +62,10 @@ const deleteBusiness = asyncHandler(async (req, res) => {
     req.headers['user-agent'],
     req.user,
   );
-  return sendSuccess(res, result);
+  return sendSuccess(res, {
+    message: result.message,
+    data: null,
+  });
 });
 
 const updateBusinessStatus = asyncHandler(async (req, res) => {
@@ -58,7 +76,10 @@ const updateBusinessStatus = asyncHandler(async (req, res) => {
     req.ip,
     req.headers['user-agent'],
   );
-  return sendSuccess(res, result);
+  return sendSuccess(res, {
+    message: result.message,
+    data: result.business,
+  });
 });
 
 const approveBusiness = asyncHandler(async (req, res) => {
@@ -68,7 +89,10 @@ const approveBusiness = asyncHandler(async (req, res) => {
     req.ip,
     req.headers['user-agent'],
   );
-  return sendSuccess(res, result);
+  return sendSuccess(res, {
+    message: result.message,
+    data: result.business,
+  });
 });
 
 const rejectBusiness = asyncHandler(async (req, res) => {
@@ -78,23 +102,26 @@ const rejectBusiness = asyncHandler(async (req, res) => {
     req.ip,
     req.headers['user-agent'],
   );
-  return sendSuccess(res, result);
+  return sendSuccess(res, {
+    message: result.message,
+    data: result.business,
+  });
 });
 
 const getDashboardStats = asyncHandler(async (req, res) => {
   const stats = await businessService.getDashboardStats();
-  return sendSuccess(res, { stats });
+  return sendSuccess(res, {
+    message: 'Business dashboard stats retrieved successfully',
+    data: stats,
+  });
 });
 
-// TODO: Add file upload endpoints
 const uploadLogo = asyncHandler(async (req, res) => {
-  // To be implemented
-  return sendSuccess(res, { message: 'Upload logo endpoint' });
+  return sendSuccess(res, { message: 'Upload logo endpoint', data: null });
 });
 
 const uploadCoverImage = asyncHandler(async (req, res) => {
-  // To be implemented
-  return sendSuccess(res, { message: 'Upload cover image endpoint' });
+  return sendSuccess(res, { message: 'Upload cover image endpoint', data: null });
 });
 
 module.exports = {

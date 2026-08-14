@@ -5,6 +5,67 @@
 
 const { HTTP_STATUS } = require('../constants');
 
+const RESPONSE_META_KEYS = new Set(['message', 'statusCode', 'meta', 'data', 'success', 'errors']);
+
+/**
+ * Normalize service/controller payloads into { message, data, meta, statusCode }.
+ * Supports both:
+ * - { message, data: entity }
+ * - { message, business } / { message, product } / etc.
+ * - { businesses, total, page } list payloads
+ */
+const normalizeSuccessOptions = (options = {}) => {
+  if (options === null || options === undefined) {
+    return {
+      message: 'Success',
+      data: null,
+      meta: null,
+      statusCode: HTTP_STATUS.OK,
+    };
+  }
+
+  if (typeof options !== 'object' || Array.isArray(options)) {
+    return {
+      message: 'Success',
+      data: options,
+      meta: null,
+      statusCode: HTTP_STATUS.OK,
+    };
+  }
+
+  const {
+    message = 'Success',
+    statusCode = HTTP_STATUS.OK,
+    meta = null,
+    data,
+    ...rest
+  } = options;
+
+  let responseData = data !== undefined ? data : null;
+
+  if (responseData === null) {
+    const payloadKeys = Object.keys(rest).filter((key) => !RESPONSE_META_KEYS.has(key));
+
+    if (payloadKeys.length === 1) {
+      // { message, business } -> data: business
+      responseData = rest[payloadKeys[0]];
+    } else if (payloadKeys.length > 1) {
+      // { businesses, total, page } -> data: { businesses, total, page }
+      responseData = {};
+      for (const key of payloadKeys) {
+        responseData[key] = rest[key];
+      }
+    }
+  }
+
+  return {
+    message,
+    data: responseData,
+    meta,
+    statusCode,
+  };
+};
+
 /**
  * Send a standardized success response.
  * @param {import('express').Response} res - Express response object
@@ -14,10 +75,9 @@ const { HTTP_STATUS } = require('../constants');
  * @param {number} [options.statusCode] - HTTP status code
  * @param {Object} [options.meta] - Additional metadata (pagination, etc.)
  */
-const sendSuccess = (
-  res,
-  { data = null, message = 'Success', statusCode = HTTP_STATUS.OK, meta = null },
-) => {
+const sendSuccess = (res, options = {}) => {
+  const { data, message, statusCode, meta } = normalizeSuccessOptions(options);
+
   const response = {
     success: true,
     message,
@@ -77,4 +137,5 @@ module.exports = {
   sendError,
   sendCreated,
   sendNoContent,
+  normalizeSuccessOptions,
 };
