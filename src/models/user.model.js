@@ -11,6 +11,19 @@
 const toUserResponse = (user) => {
   if (!user) return null;
 
+  const assignedRoles =
+    user.userRoles
+      ?.map((userRole) => userRole.role)
+      .filter(Boolean)
+      .map((role) => ({ id: role.id, name: role.name })) || [];
+
+  if (user.role && !assignedRoles.some((role) => role.id === user.role.id)) {
+    assignedRoles.push({
+      id: user.role.id,
+      name: user.role.name,
+    });
+  }
+
   return {
     id: user.id,
     passId: user.passId,
@@ -36,6 +49,7 @@ const toUserResponse = (user) => {
           name: user.role.name,
         }
       : null,
+    roles: assignedRoles,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

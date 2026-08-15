@@ -7,6 +7,7 @@ const userRepository = require('../repositories/user.repository');
 const governorateRepository = require('../repositories/governorate.repository');
 const roleRepository = require('../repositories/role.repository');
 const refreshTokenRepository = require('../repositories/refreshToken.repository');
+const businessRepository = require('../modules/business/repositories/business.repository');
 const redisService = require('./redis.service');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
@@ -25,10 +26,7 @@ const {
   SUCCESS_MESSAGES,
 } = require('../constants');
 
-const {
-  SYRIAN_GOVERNORATES,
-  findStaticGovernorate,
-} = require('../constants/governorates');
+const { SYRIAN_GOVERNORATES } = require('../constants/governorates');
 
 // Simple in-memory user store for demo mode (no database needed!)
 const DEMO_USERS = new Map();
@@ -41,20 +39,16 @@ class AuthService {
    * @returns {Promise<Object>}
    */
   async register(data) {
-    const {
-      fullName,
-      email,
-      phoneNumber,
-      smartAssistantName,
-      password,
-      governorateId,
-      acceptTerms,
-    } = data;
-
     // Try real registration first
     try {
       return await this._registerReal(data);
     } catch (error) {
+      // Never report an in-memory registration as successful in production,
+      // and never hide expected validation/business errors.
+      if (config.env === 'production' || error instanceof AppError) {
+        throw error;
+      }
+
       logger.warn('Real registration failed, falling back to demo mode:', error.message);
       return await this._registerDemo(data);
     }
@@ -256,7 +250,21 @@ class AuthService {
   async login(data) {
     const { identifier, password } = data;
 
-    const user = await userRepository.findByEmailOrPhone(identifier);
+    let user = await userRepository.findByEmailOrPhone(identifier);
+
+    // A business email may be used as an alias for its linked owner account.
+    // The ownerEmail match prevents legacy businesses linked to an admin from
+    // accidentally authenticating as that admin.
+    if (!user && identifier.includes('@')) {
+      const business = await businessRepository.findByBusinessEmail(identifier);
+      if (
+        business?.ownerId &&
+        business.owner?.email?.toLowerCase() === business.ownerEmail.toLowerCase()
+      ) {
+        user = await userRepository.findById(business.ownerId);
+      }
+    }
+
     if (!user) {
       throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, HTTP_STATUS.UNAUTHORIZED);
     }

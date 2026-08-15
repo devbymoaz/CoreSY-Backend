@@ -7,6 +7,25 @@ const { prisma } = require('../../../prisma');
 
 class UserRoleRepository {
   /**
+   * Assign one role without removing the user's existing roles.
+   */
+  async assignRole(userId, roleId) {
+    return prisma.userRole.upsert({
+      where: {
+        userId_roleId: {
+          userId,
+          roleId,
+        },
+      },
+      update: {},
+      create: {
+        userId,
+        roleId,
+      },
+    });
+  }
+
+  /**
    * Assign roles to a user
    */
   async assignRoles(userId, roleIds) {

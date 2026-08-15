@@ -1,5 +1,19 @@
 const { z } = require('zod');
 const { BUSINESS_TYPE, BUSINESS_STATUS } = require('../../../constants');
+const { getPasswordStrengthError } = require('../../../utils/passwordStrength');
+
+const ownerPasswordSchema = z
+  .string()
+  .max(100)
+  .superRefine((password, context) => {
+    const error = getPasswordStrengthError(password);
+    if (error) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: error,
+      });
+    }
+  });
 
 const createBusinessSchema = z.object({
   name: z.string().min(2).max(255).trim(),
@@ -23,6 +37,7 @@ const createBusinessSchema = z.object({
   facebook: z.string().url().optional().nullable(),
   instagram: z.string().url().optional().nullable(),
   whatsApp: z.string().min(5).max(20).optional().nullable(),
+  ownerPassword: ownerPasswordSchema.optional(),
 });
 
 const updateBusinessSchema = z.object({
@@ -47,6 +62,7 @@ const updateBusinessSchema = z.object({
   facebook: z.string().url().optional().nullable(),
   instagram: z.string().url().optional().nullable(),
   whatsApp: z.string().min(5).max(20).optional().nullable(),
+  ownerPassword: ownerPasswordSchema.optional(),
 });
 
 const updateBusinessStatusSchema = z.object({

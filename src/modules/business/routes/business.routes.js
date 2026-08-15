@@ -105,11 +105,39 @@ router.get('/:id', getBusinessById);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
+ *               - type
+ *               - category
+ *               - description
+ *               - ownerName
+ *               - ownerEmail
+ *               - ownerPhone
+ *               - businessEmail
+ *               - businessPhone
+ *               - registrationNumber
+ *               - governorateId
+ *               - city
+ *               - address
+ *             properties:
+ *               ownerEmail:
+ *                 type: string
+ *                 format: email
+ *                 description: Login email for the business owner account
+ *               ownerPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Required only when ownerEmail does not already have a CoreSY account
  *     responses:
  *       201:
  *         description: Business created
  */
-router.post('/', validate({ body: createBusinessSchema }), createBusiness);
+router.post(
+  '/',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  validate({ body: createBusinessSchema }),
+  createBusiness,
+);
 
 /**
  * @swagger

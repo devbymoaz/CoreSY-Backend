@@ -4,10 +4,7 @@
  */
 
 const { prisma } = require('../config/database');
-const {
-  findStaticGovernorate,
-  isStaticGovernorateId,
-} = require('../constants/governorates');
+const { findStaticGovernorate, isStaticGovernorateId } = require('../constants/governorates');
 
 class GovernorateRepository {
   /**
@@ -81,13 +78,25 @@ class GovernorateRepository {
    * @returns {Promise<string>} Formatted Pass ID (e.g., DM-000001)
    */
   async generatePassId(governorateId) {
-    const governorate = await prisma.governorate.update({
-      where: { id: governorateId },
-      data: { passIdSequence: { increment: 1 } },
-    });
+    for (let attempt = 0; attempt < 1000; attempt += 1) {
+      const governorate = await prisma.governorate.update({
+        where: { id: governorateId },
+        data: { passIdSequence: { increment: 1 } },
+      });
 
-    const sequence = String(governorate.passIdSequence).padStart(6, '0');
-    return `${governorate.code}-${sequence}`;
+      const sequence = String(governorate.passIdSequence).padStart(6, '0');
+      const passId = `${governorate.code}-${sequence}`;
+      const existingUser = await prisma.user.findUnique({
+        where: { passId },
+        select: { id: true },
+      });
+
+      if (!existingUser) {
+        return passId;
+      }
+    }
+
+    throw new Error('Unable to generate a unique Pass ID');
   }
 }
 
