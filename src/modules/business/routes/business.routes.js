@@ -127,7 +127,11 @@ router.get('/:id', getBusinessById);
  *               ownerPassword:
  *                 type: string
  *                 format: password
- *                 description: Required only when ownerEmail does not already have a CoreSY account
+ *                 description: Required only when ownerEmail does not already have a CoreSY account. Alias field `password` is also accepted.
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Alias for ownerPassword (Flutter / client compatibility)
  *     responses:
  *       201:
  *         description: Business created

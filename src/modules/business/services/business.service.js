@@ -53,7 +53,7 @@ class BusinessService {
 
     if (!ownerPassword) {
       throw new AppError(
-        'No login account exists for ownerEmail. Provide ownerPassword to create the business owner account.',
+        'No login account exists for ownerEmail. Provide password (or ownerPassword) to create the business owner account.',
         HTTP_STATUS.BAD_REQUEST,
       );
     }
@@ -85,7 +85,8 @@ class BusinessService {
   }
 
   async createBusiness(data, userId, ipAddress, userAgent) {
-    const { ownerPassword, ...businessData } = data;
+    const ownerPassword = data.ownerPassword || data.password;
+    const { ownerPassword: _ownerPassword, password: _password, ...businessData } = data;
 
     // Check if business email exists
     if (await businessRepository.findByBusinessEmail(businessData.businessEmail)) {
@@ -175,7 +176,8 @@ class BusinessService {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
-    const { ownerPassword, ...businessData } = data;
+    const ownerPassword = data.ownerPassword || data.password;
+    const { ownerPassword: _ownerPassword, password: _password, ...businessData } = data;
 
     // Check for unique constraints if fields are being updated
     if (businessData.businessEmail && businessData.businessEmail !== business.businessEmail) {
