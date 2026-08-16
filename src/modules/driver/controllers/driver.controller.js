@@ -6,6 +6,12 @@
 const driverService = require('../services/driver.service');
 const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
 const asyncHandler = require('../../../utils/asyncHandler');
+const {
+  buildPublicFileUrl,
+  buildPublicFileUrls,
+  removeUploadedFile,
+  removeUploadedFiles,
+} = require('../../../middlewares/upload.middleware');
 
 const register = asyncHandler(async (req, res) => {
   const result = await driverService.register(req.body, req.ip, req.headers['user-agent']);
@@ -50,6 +56,59 @@ const uploadVehicle = asyncHandler(async (req, res) => {
     req.headers['user-agent'],
   );
   return sendSuccess(res, result);
+});
+
+const uploadDocumentFiles = asyncHandler(async (req, res) => {
+  const uploadedFiles = Object.values(req.files || {}).flat();
+  try {
+    const data = {};
+    for (const [field, files] of Object.entries(req.files || {})) {
+      if (files[0]) data[field] = buildPublicFileUrl(req, files[0]);
+    }
+    const result = await driverService.uploadDocuments(
+      req.driver.id,
+      data,
+      req.ip,
+      req.headers['user-agent'],
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFiles(uploadedFiles);
+    throw error;
+  }
+});
+
+const uploadVehicleFiles = asyncHandler(async (req, res) => {
+  try {
+    const result = await driverService.uploadVehicle(
+      req.driver.id,
+      {
+        ...req.body,
+        vehicleImages: buildPublicFileUrls(req, req.files),
+      },
+      req.ip,
+      req.headers['user-agent'],
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFiles(req.files);
+    throw error;
+  }
+});
+
+const uploadProfilePhoto = asyncHandler(async (req, res) => {
+  try {
+    const result = await driverService.uploadDocuments(
+      req.driver.id,
+      { profilePhoto: buildPublicFileUrl(req, req.file) },
+      req.ip,
+      req.headers['user-agent'],
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
 });
 
 const updateAvailability = asyncHandler(async (req, res) => {
@@ -128,6 +187,9 @@ module.exports = {
   updateProfile,
   uploadDocuments,
   uploadVehicle,
+  uploadDocumentFiles,
+  uploadVehicleFiles,
+  uploadProfilePhoto,
   updateAvailability,
   updateLocation,
   getDriverDashboard,

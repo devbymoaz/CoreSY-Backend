@@ -96,6 +96,17 @@ const errorHandler = (err, req, res, _next) => {
     error = new AppError(message, HTTP_STATUS.UNAUTHORIZED);
   }
 
+  // Convert Multer upload errors
+  if (error.name === 'MulterError') {
+    let message = error.message;
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      message = 'Uploaded file exceeds the allowed size.';
+    } else if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      message = 'Unexpected file field. Use field name: file.';
+    }
+    error = new AppError(message, HTTP_STATUS.BAD_REQUEST);
+  }
+
   const statusCode = error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
   // Always show actual error message for debugging
   const message = error.message || ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
@@ -115,8 +126,8 @@ const errorHandler = (err, req, res, _next) => {
     errors: error.errors || null,
   };
 
-  // Include stack trace and original error for debugging in all environments
-  if (config.env === 'development' || config.env === 'production') {
+  // Include stack trace only during local development.
+  if (config.env === 'development') {
     response.stack = error.stack;
   }
 

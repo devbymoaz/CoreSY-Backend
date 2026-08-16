@@ -21,6 +21,7 @@ const notFoundHandler = require('./middlewares/notFound.middleware');
 
 // Initialize Express application
 const app = express();
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(
@@ -74,6 +75,20 @@ app.get('/api-docs.json', (_req, res) => {
 
 // API routes
 app.use(config.apiPrefix, routes);
+
+// Public uploaded files (branch images, logos, etc.)
+const uploadsPath = path.join(__dirname, '..', 'public', 'uploads');
+app.use(
+  '/uploads',
+  express.static(uploadsPath, {
+    immutable: true,
+    maxAge: '7d',
+    setHeaders: (res) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    },
+  }),
+);
 
 // Admin panel static files (upload your frontend build to public/admin)
 const adminPanelPath = path.join(__dirname, '..', 'public', 'admin');

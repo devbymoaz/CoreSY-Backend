@@ -1,6 +1,10 @@
 const branchService = require('../services/branch.service');
 const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
 const asyncHandler = require('../../../utils/asyncHandler');
+const {
+  buildPublicFileUrl,
+  removeUploadedFile,
+} = require('../../../middlewares/upload.middleware');
 
 const createBranch = asyncHandler(async (req, res) => {
   const result = await branchService.createBranch(
@@ -82,13 +86,40 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   return sendSuccess(res, { stats });
 });
 
-// TODO: File upload endpoints
 const uploadBranchImage = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { message: 'Upload branch image endpoint' });
+  try {
+    const imageUrl = buildPublicFileUrl(req, req.file);
+    const result = await branchService.uploadBranchImage(
+      req.params.id,
+      imageUrl,
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
 });
 
 const uploadBranchCoverImage = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { message: 'Upload branch cover image endpoint' });
+  try {
+    const coverImageUrl = buildPublicFileUrl(req, req.file);
+    const result = await branchService.uploadBranchCoverImage(
+      req.params.id,
+      coverImageUrl,
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
 });
 
 module.exports = {

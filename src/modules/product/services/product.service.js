@@ -8,6 +8,7 @@ const productCategoryRepository = require('../repositories/product-category.repo
 const businessRepository = require('../../business/repositories/business.repository');
 const branchRepository = require('../../branch/repositories/branch.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
+const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
 const logger = require('../../../utils/logger');
 const { prisma } = require('../../../prisma');
@@ -307,6 +308,7 @@ class ProductService {
     await this._assertProductAccess(product, user, { write: true });
 
     await productRepository.softDelete(id, userId);
+    await Promise.all((product.images || []).map((image) => removePublicUpload(image)));
     await this._audit(userId, 'PRODUCT_DELETED', { productId: id }, ipAddress, userAgent);
 
     return { message: SUCCESS_MESSAGES.PRODUCT_DELETED };
@@ -420,6 +422,7 @@ class ProductService {
       images: remainingImages,
       updatedBy: userId,
     });
+    await Promise.all(images.map((image) => removePublicUpload(image)));
 
     await this._audit(userId, 'PRODUCT_IMAGES_REMOVED', { productId: id }, ipAddress, userAgent);
     return { message: SUCCESS_MESSAGES.PRODUCT_IMAGES_REMOVED, product: updatedProduct };
@@ -675,6 +678,24 @@ class ProductService {
     return { message: SUCCESS_MESSAGES.PRODUCT_CATEGORY_UPDATED, category: updated };
   }
 
+  async uploadCategoryImage(id, imageUrl, userId, ipAddress, userAgent, user) {
+    const category = await productCategoryRepository.findById(id);
+    if (!category) {
+      throw new AppError(ERROR_MESSAGES.PRODUCT_CATEGORY_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    const result = await this.updateCategory(
+      id,
+      { image: imageUrl },
+      userId,
+      ipAddress,
+      userAgent,
+      user,
+    );
+    await removePublicUpload(category.image);
+    return result;
+  }
+
   async deleteCategory(id, userId, ipAddress, userAgent, user) {
     this._assertWriteAccess(user);
 
@@ -690,6 +711,7 @@ class ProductService {
     }
 
     await productCategoryRepository.softDelete(id, userId);
+    await removePublicUpload(category.image);
     await this._audit(userId, 'PRODUCT_CATEGORY_DELETED', { categoryId: id }, ipAddress, userAgent);
     return { message: SUCCESS_MESSAGES.PRODUCT_CATEGORY_DELETED };
   }

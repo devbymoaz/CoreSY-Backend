@@ -40,3 +40,7 @@ docker/data/
 
 # Jest
 .jest-cache/
+
+# Uploaded files (keep folder)
+public/uploads/**
+!public/uploads/.gitkeep

@@ -1,6 +1,10 @@
 const businessService = require('../services/business.service');
 const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
 const asyncHandler = require('../../../utils/asyncHandler');
+const {
+  buildPublicFileUrl,
+  removeUploadedFile,
+} = require('../../../middlewares/upload.middleware');
 
 const createBusiness = asyncHandler(async (req, res) => {
   const result = await businessService.createBusiness(
@@ -117,11 +121,37 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 });
 
 const uploadLogo = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { message: 'Upload logo endpoint', data: null });
+  try {
+    const result = await businessService.uploadLogo(
+      req.params.id,
+      buildPublicFileUrl(req, req.file),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, { message: result.message, data: result.business });
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
 });
 
 const uploadCoverImage = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { message: 'Upload cover image endpoint', data: null });
+  try {
+    const result = await businessService.uploadCoverImage(
+      req.params.id,
+      buildPublicFileUrl(req, req.file),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, { message: result.message, data: result.business });
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
 });
 
 module.exports = {

@@ -5,6 +5,7 @@ const roleRepository = require('../../../repositories/role.repository');
 const userRoleRepository = require('../../rbac/repositories/user-role.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const { hashPassword } = require('../../../utils/password');
+const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
 const {
   HTTP_STATUS,
@@ -86,7 +87,9 @@ class BusinessService {
 
   async createBusiness(data, userId, ipAddress, userAgent) {
     const ownerPassword = data.ownerPassword || data.password;
-    const { ownerPassword: _ownerPassword, password: _password, ...businessData } = data;
+    const businessData = { ...data };
+    delete businessData.ownerPassword;
+    delete businessData.password;
 
     // Check if business email exists
     if (await businessRepository.findByBusinessEmail(businessData.businessEmail)) {
@@ -177,7 +180,9 @@ class BusinessService {
     }
 
     const ownerPassword = data.ownerPassword || data.password;
-    const { ownerPassword: _ownerPassword, password: _password, ...businessData } = data;
+    const businessData = { ...data };
+    delete businessData.ownerPassword;
+    delete businessData.password;
 
     // Check for unique constraints if fields are being updated
     if (businessData.businessEmail && businessData.businessEmail !== business.businessEmail) {
@@ -242,6 +247,7 @@ class BusinessService {
     }
 
     await businessRepository.softDelete(id, userId);
+    await Promise.all([removePublicUpload(business.logo), removePublicUpload(business.coverImage)]);
 
     await auditLogService.create({
       userId,
@@ -332,6 +338,60 @@ class BusinessService {
 
   async getDashboardStats() {
     return businessRepository.getDashboardStats();
+  }
+
+  async uploadLogo(id, logoUrl, userId, ipAddress, userAgent, user) {
+    const business = await businessRepository.findById(id);
+    if (!business) {
+      throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+    if (!user.roles.includes(ROLES.SUPER_ADMIN) && business.ownerId !== userId) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const updatedBusiness = await businessRepository.update(id, {
+      logo: logoUrl,
+      updatedBy: userId,
+    });
+    await removePublicUpload(business.logo);
+
+    await auditLogService.create({
+      userId,
+      action: 'BUSINESS_LOGO_UPLOADED',
+      module: 'Businesses',
+      ipAddress,
+      userAgent,
+      payload: { businessId: id, logo: logoUrl },
+    });
+
+    return { message: SUCCESS_MESSAGES.BUSINESS_LOGO_UPLOADED, business: updatedBusiness };
+  }
+
+  async uploadCoverImage(id, coverImageUrl, userId, ipAddress, userAgent, user) {
+    const business = await businessRepository.findById(id);
+    if (!business) {
+      throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+    if (!user.roles.includes(ROLES.SUPER_ADMIN) && business.ownerId !== userId) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const updatedBusiness = await businessRepository.update(id, {
+      coverImage: coverImageUrl,
+      updatedBy: userId,
+    });
+    await removePublicUpload(business.coverImage);
+
+    await auditLogService.create({
+      userId,
+      action: 'BUSINESS_COVER_UPLOADED',
+      module: 'Businesses',
+      ipAddress,
+      userAgent,
+      payload: { businessId: id, coverImage: coverImageUrl },
+    });
+
+    return { message: SUCCESS_MESSAGES.BUSINESS_COVER_UPLOADED, business: updatedBusiness };
   }
 }
 

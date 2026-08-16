@@ -17,6 +17,7 @@ const {
   updateProductStatus,
   updateProductStock,
   uploadProductImages,
+  uploadProductImageFiles,
   removeProductImages,
   duplicateProduct,
   bulkUpdateProducts,
@@ -39,6 +40,12 @@ const {
   importProductsSchema,
 } = require('../validators/product.validator');
 const { ROLES } = require('../../../constants');
+const {
+  upload,
+  setUploadFolder,
+  requireUploadedFiles,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 
 const managementRoles = [
   ROLES.SUPER_ADMIN,
@@ -720,6 +727,52 @@ router.post(
   authorizeRoles(...writeRoles),
   validate({ body: uploadProductImagesSchema }),
   uploadProductImages,
+);
+
+/**
+ * @swagger
+ * /products/{id}/images/upload:
+ *   post:
+ *     summary: Upload product image files
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Product ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [files]
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       200:
+ *         description: Product images uploaded and stored
+ */
+router.post(
+  '/:id/images/upload',
+  authorizeRoles(...writeRoles),
+  setUploadFolder('products'),
+  upload.array('files', 10),
+  validateUploadedFileSignatures,
+  requireUploadedFiles,
+  uploadProductImageFiles,
 );
 
 /**

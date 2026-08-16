@@ -179,6 +179,10 @@
  *           type: string
  *         smartAssistantName:
  *           type: string
+ *         profileImage:
+ *           type: string
+ *           format: uri
+ *           nullable: true
  *         emailVerified:
  *           type: boolean
  *         phoneVerified:

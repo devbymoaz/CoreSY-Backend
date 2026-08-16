@@ -37,6 +37,7 @@ COPY src ./src
 COPY public ./public
 
 RUN npx prisma generate
+RUN mkdir -p public/uploads && chown -R coresy:nodejs public/uploads
 
 USER coresy
 

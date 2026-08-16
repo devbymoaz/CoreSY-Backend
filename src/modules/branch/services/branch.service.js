@@ -2,6 +2,7 @@ const branchRepository = require('../repositories/branch.repository');
 const businessRepository = require('../../business/repositories/business.repository');
 const governorateRepository = require('../../../repositories/governorate.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
+const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
 const {
   HTTP_STATUS,
@@ -115,8 +116,7 @@ class BranchService {
 
     if (!branch) {
       throw (
-        lastError ||
-        new AppError(ERROR_MESSAGES.BRANCH_CODE_ALREADY_EXISTS, HTTP_STATUS.CONFLICT)
+        lastError || new AppError(ERROR_MESSAGES.BRANCH_CODE_ALREADY_EXISTS, HTTP_STATUS.CONFLICT)
       );
     }
 
@@ -236,6 +236,7 @@ class BranchService {
 
     // Soft delete branch
     await branchRepository.softDelete(id, userId);
+    await Promise.all([removePublicUpload(branch.image), removePublicUpload(branch.coverImage)]);
 
     // Create audit log
     await auditLogService.create({
@@ -315,6 +316,62 @@ class BranchService {
 
   async getDashboardStats() {
     return branchRepository.getDashboardStats();
+  }
+
+  async uploadBranchImage(id, imageUrl, userId, ipAddress, userAgent, user) {
+    const branch = await branchRepository.findById(id);
+    if (!branch) {
+      throw new AppError(ERROR_MESSAGES.BRANCH_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && branch.business.ownerId !== userId) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const updatedBranch = await branchRepository.update(id, {
+      image: imageUrl,
+      updatedBy: userId,
+    });
+    await removePublicUpload(branch.image);
+
+    await auditLogService.create({
+      userId,
+      action: 'BRANCH_IMAGE_UPLOADED',
+      module: 'Branches',
+      ipAddress,
+      userAgent,
+      payload: { branchId: id, image: imageUrl },
+    });
+
+    return { message: SUCCESS_MESSAGES.BRANCH_IMAGE_UPLOADED, branch: updatedBranch };
+  }
+
+  async uploadBranchCoverImage(id, coverImageUrl, userId, ipAddress, userAgent, user) {
+    const branch = await branchRepository.findById(id);
+    if (!branch) {
+      throw new AppError(ERROR_MESSAGES.BRANCH_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && branch.business.ownerId !== userId) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const updatedBranch = await branchRepository.update(id, {
+      coverImage: coverImageUrl,
+      updatedBy: userId,
+    });
+    await removePublicUpload(branch.coverImage);
+
+    await auditLogService.create({
+      userId,
+      action: 'BRANCH_COVER_UPLOADED',
+      module: 'Branches',
+      ipAddress,
+      userAgent,
+      payload: { branchId: id, coverImage: coverImageUrl },
+    });
+
+    return { message: SUCCESS_MESSAGES.BRANCH_COVER_UPLOADED, branch: updatedBranch };
   }
 }
 

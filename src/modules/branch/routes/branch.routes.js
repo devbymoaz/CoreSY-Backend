@@ -23,6 +23,12 @@ const {
   listBranchesSchema,
 } = require('../validators/branch.validator');
 const { ROLES } = require('../../../constants');
+const {
+  upload,
+  setUploadFolder,
+  requireUploadedFile,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 
 // All branch routes require authentication
 router.use(authenticate);
@@ -491,7 +497,15 @@ router.patch('/:id/main', setMainBranch);
  *       404:
  *         description: Branch not found
  */
-router.post('/:id/image', uploadBranchImage);
+router.post(
+  '/:id/image',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  setUploadFolder('branches'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadBranchImage,
+);
 
 /**
  * @swagger
@@ -530,6 +544,14 @@ router.post('/:id/image', uploadBranchImage);
  *       404:
  *         description: Branch not found
  */
-router.post('/:id/cover-image', uploadBranchCoverImage);
+router.post(
+  '/:id/cover-image',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  setUploadFolder('branches'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadBranchCoverImage,
+);
 
 module.exports = router;

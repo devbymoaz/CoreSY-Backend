@@ -31,6 +31,7 @@ const toUserResponse = (user) => {
     email: user.email,
     phoneNumber: user.phoneNumber,
     smartAssistantName: user.smartAssistantName,
+    profileImage: user.profileImage,
     emailVerified: user.emailVerified,
     phoneVerified: user.phoneVerified,
     status: user.status,

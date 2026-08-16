@@ -16,6 +16,9 @@ const {
   updateProfile,
   uploadDocuments,
   uploadVehicle,
+  uploadDocumentFiles,
+  uploadVehicleFiles,
+  uploadProfilePhoto,
   updateAvailability,
   updateLocation,
   getDriverDashboard,
@@ -37,6 +40,16 @@ const {
   updateLocationSchema,
   listDriversSchema,
 } = require('../validators/driver.validator');
+const {
+  upload,
+  documentUpload,
+  setUploadFolder,
+  setUploadKind,
+  requireUploadedFile,
+  requireUploadedFiles,
+  requireAnyUploadedFile,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 const { ROLES } = require('../../../constants');
 
 const adminRoles = [ROLES.SUPER_ADMIN, ROLES.SUPPORT_ADMIN];
@@ -378,6 +391,128 @@ router.post(
   driverAuthenticate,
   validate({ body: uploadVehicleSchema }),
   uploadVehicle,
+);
+
+/**
+ * @swagger
+ * /drivers/upload-documents/files:
+ *   post:
+ *     summary: Upload driver document files
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nationalIdDocument:
+ *                 type: string
+ *                 format: binary
+ *               drivingLicenseDocument:
+ *                 type: string
+ *                 format: binary
+ *               insuranceDocument:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Driver documents uploaded and stored
+ */
+router.post(
+  '/upload-documents/files',
+  driverAuthenticate,
+  setUploadFolder('driver-documents'),
+  setUploadKind('document'),
+  documentUpload.fields([
+    { name: 'nationalIdDocument', maxCount: 1 },
+    { name: 'drivingLicenseDocument', maxCount: 1 },
+    { name: 'insuranceDocument', maxCount: 1 },
+  ]),
+  validateUploadedFileSignatures,
+  requireAnyUploadedFile,
+  uploadDocumentFiles,
+);
+
+/**
+ * @swagger
+ * /drivers/upload-vehicle/files:
+ *   post:
+ *     summary: Upload driver vehicle image files
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [files]
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *               vehicleBrand:
+ *                 type: string
+ *                 example: Honda
+ *               vehicleModel:
+ *                 type: string
+ *                 example: CG125
+ *               vehicleType:
+ *                 type: string
+ *                 enum: [MOTORCYCLE, CAR, BICYCLE, VAN]
+ *     responses:
+ *       200:
+ *         description: Vehicle images uploaded and stored
+ */
+router.post(
+  '/upload-vehicle/files',
+  driverAuthenticate,
+  setUploadFolder('driver-vehicles'),
+  upload.array('files', 10),
+  validateUploadedFileSignatures,
+  requireUploadedFiles,
+  uploadVehicleFiles,
+);
+
+/**
+ * @swagger
+ * /drivers/profile-photo:
+ *   post:
+ *     summary: Upload driver profile photo
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Driver profile photo uploaded
+ */
+router.post(
+  '/profile-photo',
+  driverAuthenticate,
+  setUploadFolder('driver-profiles'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadProfilePhoto,
 );
 
 /**

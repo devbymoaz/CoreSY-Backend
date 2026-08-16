@@ -24,6 +24,12 @@ const {
   listBusinessesSchema,
 } = require('../validators/business.validator');
 const { ROLES } = require('../../../constants');
+const {
+  upload,
+  setUploadFolder,
+  requireUploadedFile,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 
 // All business routes require authentication
 router.use(authenticate);
@@ -471,12 +477,21 @@ router.patch('/:id/reject', authorizeRoles(ROLES.SUPER_ADMIN), rejectBusiness);
 
 /**
  * @swagger
- * /businesses/logo:
+ * /businesses/{id}/logo:
  *   post:
  *     summary: Upload business logo
  *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Business ID
  *     requestBody:
  *       required: true
  *       content:
@@ -493,16 +508,33 @@ router.patch('/:id/reject', authorizeRoles(ROLES.SUPER_ADMIN), rejectBusiness);
  *       200:
  *         description: Logo uploaded
  */
-router.post('/logo', uploadLogo);
+router.post(
+  '/:id/logo',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  setUploadFolder('businesses'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadLogo,
+);
 
 /**
  * @swagger
- * /businesses/cover-image:
+ * /businesses/{id}/cover-image:
  *   post:
  *     summary: Upload business cover image
  *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Business ID
  *     requestBody:
  *       required: true
  *       content:
@@ -519,6 +551,14 @@ router.post('/logo', uploadLogo);
  *       200:
  *         description: Cover image uploaded
  */
-router.post('/cover-image', uploadCoverImage);
+router.post(
+  '/:id/cover-image',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  setUploadFolder('businesses'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadCoverImage,
+);
 
 module.exports = router;

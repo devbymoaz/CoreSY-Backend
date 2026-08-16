@@ -1,6 +1,10 @@
 const cashierService = require('../services/cashier.service');
 const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
 const asyncHandler = require('../../../utils/asyncHandler');
+const {
+  buildPublicFileUrl,
+  removeUploadedFile,
+} = require('../../../middlewares/upload.middleware');
 
 const createCashier = asyncHandler(async (req, res) => {
   const result = await cashierService.createCashier(
@@ -116,7 +120,20 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 });
 
 const uploadProfileImage = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { message: 'Cashier profile image upload endpoint' });
+  try {
+    const result = await cashierService.uploadProfileImage(
+      req.params.id,
+      buildPublicFileUrl(req, req.file),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
 });
 
 module.exports = {

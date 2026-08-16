@@ -61,6 +61,13 @@ const reportReviewSchema = z.object({
   reason: z.string().max(500).optional().nullable(),
 });
 
+const reviewImagesSchema = z.object({
+  images: z
+    .array(z.string().url().or(z.string().min(1)))
+    .min(1)
+    .max(10),
+});
+
 const replyReviewSchema = z.object({
   message: z.string().min(2).max(2000),
 });
@@ -92,6 +99,7 @@ module.exports = {
   createReviewSchema,
   updateReviewSchema,
   reportReviewSchema,
+  reviewImagesSchema,
   replyReviewSchema,
   updateStatusSchema,
   listReviewsSchema,

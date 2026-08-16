@@ -4,6 +4,7 @@
  */
 
 const userRepository = require('../repositories/user.repository');
+const { removePublicUpload } = require('../middlewares/upload.middleware');
 const governorateRepository = require('../repositories/governorate.repository');
 const roleRepository = require('../repositories/role.repository');
 const refreshTokenRepository = require('../repositories/refreshToken.repository');
@@ -449,6 +450,24 @@ class AuthService {
     }
 
     return { user: toUserResponse(user) };
+  }
+
+  async uploadProfileImage(userId, imageUrl) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    const updatedUser = await userRepository.update(userId, {
+      profileImage: imageUrl,
+      updatedBy: userId,
+    });
+    await removePublicUpload(user.profileImage);
+
+    return {
+      message: SUCCESS_MESSAGES.PROFILE_IMAGE_UPLOADED,
+      user: toUserResponse(updatedUser),
+    };
   }
 
   /**

@@ -11,6 +11,8 @@ const {
   getReviews,
   getReviewById,
   updateReview,
+  uploadReviewImages,
+  removeReviewImages,
   deleteReview,
   reportReview,
   likeReview,
@@ -19,8 +21,15 @@ const {
   createReviewSchema,
   updateReviewSchema,
   reportReviewSchema,
+  reviewImagesSchema,
   listReviewsSchema,
 } = require('../validators/review.validator');
+const {
+  upload,
+  setUploadFolder,
+  requireUploadedFiles,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 
 router.use(authenticate);
 
@@ -320,5 +329,87 @@ router.post('/:id/report', validate({ body: reportReviewSchema }), reportReview)
  *         description: Like toggled
  */
 router.post('/:id/like', likeReview);
+
+/**
+ * @swagger
+ * /reviews/{id}/images:
+ *   post:
+ *     summary: Upload review image files
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [files]
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       200:
+ *         description: Review images uploaded
+ */
+router.post(
+  '/:id/images',
+  setUploadFolder('reviews'),
+  upload.array('files', 10),
+  validateUploadedFileSignatures,
+  requireUploadedFiles,
+  uploadReviewImages,
+);
+
+/**
+ * @swagger
+ * /reviews/{id}/images/remove:
+ *   post:
+ *     summary: Remove review images
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [images]
+ *             properties:
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uri
+ *           example:
+ *             images:
+ *               - http://localhost:3000/uploads/reviews/example/image.jpg
+ *     responses:
+ *       200:
+ *         description: Review images removed
+ */
+router.post('/:id/images/remove', validate({ body: reviewImagesSchema }), removeReviewImages);
 
 module.exports = router;

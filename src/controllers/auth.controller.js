@@ -6,6 +6,7 @@
 const authService = require('../services/auth.service');
 const { sendSuccess, sendCreated } = require('../helpers/response.helper');
 const asyncHandler = require('../utils/asyncHandler');
+const { buildPublicFileUrl, removeUploadedFile } = require('../middlewares/upload.middleware');
 
 const register = asyncHandler(async (req, res) => {
   const result = await authService.register(req.body);
@@ -62,6 +63,19 @@ const updateProfile = asyncHandler(async (req, res) => {
   return sendSuccess(res, { message: result.message, data: result });
 });
 
+const uploadProfileImage = asyncHandler(async (req, res) => {
+  try {
+    const result = await authService.uploadProfileImage(
+      req.user.id,
+      buildPublicFileUrl(req, req.file),
+    );
+    return sendSuccess(res, { message: result.message, data: result.user });
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
+});
+
 module.exports = {
   register,
   verifyEmail,
@@ -74,4 +88,5 @@ module.exports = {
   changePassword,
   getProfile,
   updateProfile,
+  uploadProfileImage,
 };

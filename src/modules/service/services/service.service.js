@@ -2,13 +2,13 @@ const serviceRepository = require('../repositories/service.repository');
 const businessRepository = require('../../business/repositories/business.repository');
 const branchRepository = require('../../branch/repositories/branch.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
+const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
   ROLES,
-  SERVICE_STATUS,
   PERMISSION_MODULES,
 } = require('../../../constants');
 
@@ -83,7 +83,7 @@ class ServiceService {
     return { message: SUCCESS_MESSAGES.SERVICE_CREATED, service };
   }
 
-  async getServices(query, user) {
+  async getServices(query, _user) {
     const where = { ...query };
     return serviceRepository.findAll(where);
   }
@@ -182,6 +182,10 @@ class ServiceService {
     }
 
     await serviceRepository.softDelete(id, userId);
+    await Promise.all([
+      removePublicUpload(service.serviceImage),
+      ...(service.galleryImages || []).map((image) => removePublicUpload(image)),
+    ]);
 
     await auditLogService.create({
       userId,
@@ -249,6 +253,63 @@ class ServiceService {
 
   async getDashboardStats() {
     return serviceRepository.getDashboardStats();
+  }
+
+  async uploadServiceImage(id, imageUrl, userId, ipAddress, userAgent, user) {
+    const service = await serviceRepository.findById(id);
+    if (!service) {
+      throw new AppError(ERROR_MESSAGES.SERVICE_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+    if (!user.roles.includes(ROLES.SUPER_ADMIN) && service.business.ownerId !== userId) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const updatedService = await serviceRepository.update(id, {
+      serviceImage: imageUrl,
+      updatedBy: userId,
+    });
+    await removePublicUpload(service.serviceImage);
+
+    await auditLogService.create({
+      userId,
+      action: 'SERVICE_IMAGE_UPLOADED',
+      module: PERMISSION_MODULES.SERVICES,
+      ipAddress,
+      userAgent,
+      payload: { serviceId: id, serviceImage: imageUrl },
+    });
+
+    return { message: SUCCESS_MESSAGES.SERVICE_IMAGE_UPLOADED, service: updatedService };
+  }
+
+  async uploadServiceGallery(id, imageUrls, userId, ipAddress, userAgent, user) {
+    const service = await serviceRepository.findById(id);
+    if (!service) {
+      throw new AppError(ERROR_MESSAGES.SERVICE_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+    if (!user.roles.includes(ROLES.SUPER_ADMIN) && service.business.ownerId !== userId) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const galleryImages = [...new Set([...(service.galleryImages || []), ...imageUrls])].slice(
+      0,
+      20,
+    );
+    const updatedService = await serviceRepository.update(id, {
+      galleryImages,
+      updatedBy: userId,
+    });
+
+    await auditLogService.create({
+      userId,
+      action: 'SERVICE_GALLERY_UPLOADED',
+      module: PERMISSION_MODULES.SERVICES,
+      ipAddress,
+      userAgent,
+      payload: { serviceId: id, imagesAdded: imageUrls.length },
+    });
+
+    return { message: SUCCESS_MESSAGES.SERVICE_GALLERY_UPLOADED, service: updatedService };
   }
 }
 

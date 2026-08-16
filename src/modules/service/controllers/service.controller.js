@@ -1,6 +1,12 @@
 const serviceService = require('../services/service.service');
 const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
 const asyncHandler = require('../../../utils/asyncHandler');
+const {
+  buildPublicFileUrl,
+  buildPublicFileUrls,
+  removeUploadedFile,
+  removeUploadedFiles,
+} = require('../../../middlewares/upload.middleware');
 
 const createService = asyncHandler(async (req, res) => {
   const result = await serviceService.createService(
@@ -87,13 +93,38 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   return sendSuccess(res, { stats });
 });
 
-// TODO: Add file upload endpoints
 const uploadServiceImage = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { message: 'Upload service image endpoint' });
+  try {
+    const result = await serviceService.uploadServiceImage(
+      req.params.id,
+      buildPublicFileUrl(req, req.file),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
 });
 
 const uploadServiceGallery = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { message: 'Upload service gallery endpoint' });
+  try {
+    const result = await serviceService.uploadServiceGallery(
+      req.params.id,
+      buildPublicFileUrls(req, req.files),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFiles(req.files);
+    throw error;
+  }
 });
 
 module.exports = {

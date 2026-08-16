@@ -2,6 +2,7 @@ const cashierRepository = require('../repositories/cashier.repository');
 const businessRepository = require('../../business/repositories/business.repository');
 const branchRepository = require('../../branch/repositories/branch.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
+const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
 const { hashPassword, comparePassword } = require('../../../utils/password');
 const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, ROLES } = require('../../../constants');
@@ -81,7 +82,7 @@ class CashierService {
     return { message: SUCCESS_MESSAGES.CASHIER_CREATED, cashier };
   }
 
-  async getCashiers(query, user) {
+  async getCashiers(query, _user) {
     return cashierRepository.findAll(query);
   }
 
@@ -178,6 +179,7 @@ class CashierService {
     }
 
     await cashierRepository.softDelete(id, userId);
+    await removePublicUpload(cashier.profileImage);
 
     await auditLogService.create({
       userId,
@@ -300,6 +302,36 @@ class CashierService {
 
   async getDashboardStats() {
     return cashierRepository.getDashboardStats();
+  }
+
+  async uploadProfileImage(id, imageUrl, userId, ipAddress, userAgent, user) {
+    const cashier = await cashierRepository.findById(id);
+    if (!cashier) {
+      throw new AppError(ERROR_MESSAGES.CASHIER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+    if (!user.roles.includes(ROLES.SUPER_ADMIN) && cashier.business.ownerId !== userId) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const updatedCashier = await cashierRepository.update(id, {
+      profileImage: imageUrl,
+      updatedBy: userId,
+    });
+    await removePublicUpload(cashier.profileImage);
+
+    await auditLogService.create({
+      userId,
+      action: 'CASHIER_PROFILE_IMAGE_UPLOADED',
+      module: 'Cashiers',
+      ipAddress,
+      userAgent,
+      payload: { cashierId: id, profileImage: imageUrl },
+    });
+
+    return {
+      message: SUCCESS_MESSAGES.CASHIER_PROFILE_IMAGE_UPLOADED,
+      cashier: updatedCashier,
+    };
   }
 }
 

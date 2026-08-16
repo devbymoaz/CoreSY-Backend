@@ -15,6 +15,7 @@ services:
       - ../src:/app/src
       - ../prisma:/app/prisma
       - ../tests:/app/tests
+      - uploads_data:/app/public/uploads
       - /app/node_modules
     env_file:
       - ../.env
@@ -72,6 +73,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:
 
 networks:
   coresy-network:

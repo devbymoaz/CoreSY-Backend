@@ -24,6 +24,13 @@ const {
   listServicesSchema,
 } = require('../validators/service.validator');
 const { ROLES } = require('../../../constants');
+const {
+  upload,
+  setUploadFolder,
+  requireUploadedFile,
+  requireUploadedFiles,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 
 // All service routes require authentication
 router.use(authenticate);
@@ -441,12 +448,21 @@ router.patch('/:id/feature', updateServiceFeatured);
 
 /**
  * @swagger
- * /services/image:
+ * /services/{id}/image:
  *   post:
  *     summary: Upload service image
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Service ID
  *     requestBody:
  *       required: true
  *       content:
@@ -465,16 +481,33 @@ router.patch('/:id/feature', updateServiceFeatured);
  *       401:
  *         description: Unauthorized
  */
-router.post('/image', uploadServiceImage);
+router.post(
+  '/:id/image',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  setUploadFolder('services'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadServiceImage,
+);
 
 /**
  * @swagger
- * /services/gallery:
+ * /services/{id}/gallery:
  *   post:
  *     summary: Upload service gallery image
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Service ID
  *     requestBody:
  *       required: true
  *       content:
@@ -482,17 +515,29 @@ router.post('/image', uploadServiceImage);
  *           schema:
  *             type: object
  *             required:
- *               - file
+ *               - files
  *             properties:
- *               file:
- *                 type: string
- *                 format: binary
+ *               files:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
  *       200:
  *         description: Gallery image uploaded
  *       401:
  *         description: Unauthorized
  */
-router.post('/gallery', uploadServiceGallery);
+router.post(
+  '/:id/gallery',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  setUploadFolder('services'),
+  upload.array('files', 10),
+  validateUploadedFileSignatures,
+  requireUploadedFiles,
+  uploadServiceGallery,
+);
 
 module.exports = router;

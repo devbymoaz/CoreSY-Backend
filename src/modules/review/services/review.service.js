@@ -8,6 +8,7 @@ const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
 const logger = require('../../../utils/logger');
 const { prisma } = require('../../../prisma');
+const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
@@ -214,6 +215,39 @@ class ReviewService {
     return { message: SUCCESS_MESSAGES.REVIEW_UPDATED, review: updated };
   }
 
+  async uploadImages(id, imageUrls, userId, ipAddress, userAgent, user) {
+    const review = await reviewRepository.findById(id);
+    if (!review) throw new AppError(ERROR_MESSAGES.REVIEW_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    if (review.customerId !== userId && !this._hasRole(user, ADMIN_ROLES)) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const images = [...new Set([...(review.images || []), ...imageUrls])].slice(0, 10);
+    const updated = await reviewRepository.update(id, { images, updatedBy: userId });
+    await this._audit(
+      userId,
+      'REVIEW_IMAGES_UPLOADED',
+      { reviewId: id, imagesAdded: imageUrls.length },
+      ipAddress,
+      userAgent,
+    );
+    return { message: SUCCESS_MESSAGES.REVIEW_UPDATED, review: updated };
+  }
+
+  async removeImages(id, imageUrls, userId, ipAddress, userAgent, user) {
+    const review = await reviewRepository.findById(id);
+    if (!review) throw new AppError(ERROR_MESSAGES.REVIEW_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    if (review.customerId !== userId && !this._hasRole(user, ADMIN_ROLES)) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const images = (review.images || []).filter((image) => !imageUrls.includes(image));
+    const updated = await reviewRepository.update(id, { images, updatedBy: userId });
+    await Promise.all(imageUrls.map((image) => removePublicUpload(image)));
+    await this._audit(userId, 'REVIEW_IMAGES_REMOVED', { reviewId: id }, ipAddress, userAgent);
+    return { message: SUCCESS_MESSAGES.REVIEW_UPDATED, review: updated };
+  }
+
   async deleteReview(id, userId, ipAddress, userAgent, user) {
     const review = await reviewRepository.findById(id);
     if (!review) throw new AppError(ERROR_MESSAGES.REVIEW_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
@@ -225,6 +259,7 @@ class ReviewService {
     }
 
     await reviewRepository.softDelete(id, userId);
+    await Promise.all((review.images || []).map((image) => removePublicUpload(image)));
     await this._updateAggregates({
       businessId: review.businessId,
       driverId: review.driverId,

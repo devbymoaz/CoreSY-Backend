@@ -8,6 +8,12 @@ const authController = require('../controllers/auth.controller');
 const authenticate = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
 const {
+  upload,
+  setUploadFolder,
+  requireUploadedFile,
+  validateUploadedFileSignatures,
+} = require('../middlewares/upload.middleware');
+const {
   validateRegister,
   validateVerifyEmail,
   validateResendVerification,
@@ -434,6 +440,44 @@ router.patch(
   authenticate,
   validate(validateUpdateProfile),
   authController.updateProfile,
+);
+
+/**
+ * @swagger
+ * /auth/profile-image:
+ *   post:
+ *     summary: Upload authenticated user's profile image
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Profile image (JPEG, PNG, WEBP, or GIF; maximum 5MB)
+ *     responses:
+ *       200:
+ *         description: Profile image uploaded
+ *       400:
+ *         description: Invalid or missing image
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.post(
+  '/profile-image',
+  authenticate,
+  setUploadFolder('users'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  authController.uploadProfileImage,
 );
 
 module.exports = router;

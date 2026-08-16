@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticate = require('../../../middlewares/auth.middleware');
 const validate = require('../../../middlewares/zod-validate.middleware');
+const { authorizeRoles } = require('../../rbac/middlewares/rbac.middleware');
 const {
   createCashier,
   getCashiers,
@@ -28,6 +29,12 @@ const {
   updateCashierProfileSchema,
 } = require('../validators/cashier.validator');
 const { ROLES } = require('../../../constants');
+const {
+  upload,
+  setUploadFolder,
+  requireUploadedFile,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 
 router.use(authenticate);
 
@@ -471,12 +478,21 @@ router.patch(
 
 /**
  * @swagger
- * /cashiers/profile-image:
+ * /cashiers/{id}/profile-image:
  *   post:
  *     summary: Upload cashier profile image
  *     tags: [Cashiers]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Cashier ID
  *     requestBody:
  *       required: true
  *       content:
@@ -495,6 +511,14 @@ router.patch(
  *       401:
  *         description: Unauthorized
  */
-router.post('/profile-image', uploadProfileImage);
+router.post(
+  '/:id/profile-image',
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER),
+  setUploadFolder('cashiers'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadProfileImage,
+);
 
 module.exports = router;

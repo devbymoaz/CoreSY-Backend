@@ -6,6 +6,12 @@
 const productService = require('../services/product.service');
 const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
 const asyncHandler = require('../../../utils/asyncHandler');
+const {
+  buildPublicFileUrl,
+  buildPublicFileUrls,
+  removeUploadedFile,
+  removeUploadedFiles,
+} = require('../../../middlewares/upload.middleware');
 
 const createProduct = asyncHandler(async (req, res) => {
   const result = await productService.createProduct(
@@ -97,6 +103,23 @@ const uploadProductImages = asyncHandler(async (req, res) => {
     req.user,
   );
   return sendSuccess(res, result);
+});
+
+const uploadProductImageFiles = asyncHandler(async (req, res) => {
+  try {
+    const result = await productService.uploadImages(
+      req.params.id,
+      buildPublicFileUrls(req, req.files),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFiles(req.files);
+    throw error;
+  }
 });
 
 const removeProductImages = asyncHandler(async (req, res) => {
@@ -214,6 +237,23 @@ const deleteCategory = asyncHandler(async (req, res) => {
   return sendSuccess(res, result);
 });
 
+const uploadCategoryImage = asyncHandler(async (req, res) => {
+  try {
+    const result = await productService.uploadCategoryImage(
+      req.params.id,
+      buildPublicFileUrl(req, req.file),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFile(req.file);
+    throw error;
+  }
+});
+
 module.exports = {
   createProduct,
   getProducts,
@@ -225,6 +265,7 @@ module.exports = {
   updateProductStatus,
   updateProductStock,
   uploadProductImages,
+  uploadProductImageFiles,
   removeProductImages,
   duplicateProduct,
   bulkUpdateProducts,
@@ -239,4 +280,5 @@ module.exports = {
   getCategoryById,
   updateCategory,
   deleteCategory,
+  uploadCategoryImage,
 };

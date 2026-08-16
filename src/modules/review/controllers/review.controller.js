@@ -5,6 +5,10 @@
 const reviewService = require('../services/review.service');
 const { sendSuccess, sendCreated } = require('../../../helpers/response.helper');
 const asyncHandler = require('../../../utils/asyncHandler');
+const {
+  buildPublicFileUrls,
+  removeUploadedFiles,
+} = require('../../../middlewares/upload.middleware');
 
 const createReview = asyncHandler(async (req, res) => {
   const result = await reviewService.createReview(
@@ -31,6 +35,35 @@ const updateReview = asyncHandler(async (req, res) => {
   const result = await reviewService.updateReview(
     req.params.id,
     req.body,
+    req.user.id,
+    req.ip,
+    req.headers['user-agent'],
+    req.user,
+  );
+  return sendSuccess(res, result);
+});
+
+const uploadReviewImages = asyncHandler(async (req, res) => {
+  try {
+    const result = await reviewService.uploadImages(
+      req.params.id,
+      buildPublicFileUrls(req, req.files),
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'],
+      req.user,
+    );
+    return sendSuccess(res, result);
+  } catch (error) {
+    await removeUploadedFiles(req.files);
+    throw error;
+  }
+});
+
+const removeReviewImages = asyncHandler(async (req, res) => {
+  const result = await reviewService.removeImages(
+    req.params.id,
+    req.body.images,
     req.user.id,
     req.ip,
     req.headers['user-agent'],
@@ -109,6 +142,8 @@ module.exports = {
   getReviews,
   getReviewById,
   updateReview,
+  uploadReviewImages,
+  removeReviewImages,
   deleteReview,
   reportReview,
   likeReview,

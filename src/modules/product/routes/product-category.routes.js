@@ -15,6 +15,7 @@ const {
   getCategoryById,
   updateCategory,
   deleteCategory,
+  uploadCategoryImage,
 } = require('../controllers/product.controller');
 const {
   createCategorySchema,
@@ -22,6 +23,12 @@ const {
   listCategoriesSchema,
 } = require('../validators/product.validator');
 const { ROLES } = require('../../../constants');
+const {
+  upload,
+  setUploadFolder,
+  requireUploadedFile,
+  validateUploadedFileSignatures,
+} = require('../../../middlewares/upload.middleware');
 
 const writeRoles = [ROLES.SUPER_ADMIN, ROLES.BUSINESS_OWNER, ROLES.BUSINESS_MANAGER];
 const readRoles = [
@@ -269,6 +276,47 @@ router.patch(
   authorizeRoles(...writeRoles),
   validate({ body: updateCategorySchema }),
   updateCategory,
+);
+
+/**
+ * @swagger
+ * /product-categories/{id}/image:
+ *   post:
+ *     summary: Upload product category image
+ *     tags: [Product Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Category image uploaded
+ */
+router.post(
+  '/:id/image',
+  authorizeRoles(...writeRoles),
+  setUploadFolder('product-categories'),
+  upload.single('file'),
+  validateUploadedFileSignatures,
+  requireUploadedFile,
+  uploadCategoryImage,
 );
 
 /**

@@ -11,6 +11,7 @@ const { hashPassword, comparePassword } = require('../../../utils/password');
 const { generateAccessToken, generateRefreshToken } = require('../../../utils/jwt');
 const { prisma } = require('../../../prisma');
 const config = require('../../../config');
+const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
@@ -257,6 +258,17 @@ class DriverService {
       ...data,
       updatedBy: driverId,
     });
+    const replaceableFields = [
+      'nationalIdDocument',
+      'drivingLicenseDocument',
+      'insuranceDocument',
+      'profilePhoto',
+    ];
+    await Promise.all(
+      replaceableFields
+        .filter((field) => data[field] && data[field] !== driver[field])
+        .map((field) => removePublicUpload(driver[field])),
+    );
 
     await this._audit(driverId, 'DRIVER_DOCUMENTS_UPLOADED', { driverId }, ipAddress, userAgent);
     return { message: SUCCESS_MESSAGES.DRIVER_DOCUMENTS_UPLOADED, driver: updated };
@@ -408,6 +420,13 @@ class DriverService {
     if (!driver) throw new AppError(ERROR_MESSAGES.DRIVER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
     await driverRepository.softDelete(id, userId);
+    await Promise.all([
+      removePublicUpload(driver.profilePhoto),
+      removePublicUpload(driver.nationalIdDocument),
+      removePublicUpload(driver.drivingLicenseDocument),
+      removePublicUpload(driver.insuranceDocument),
+      ...(driver.vehicleImages || []).map((image) => removePublicUpload(image)),
+    ]);
     await this._audit(userId, 'DRIVER_DELETED', { driverId: id }, ipAddress, userAgent);
 
     return { message: SUCCESS_MESSAGES.DRIVER_DELETED };
