@@ -61,6 +61,16 @@ router.get('/profile', getCashierProfile);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Sara Ahmad
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "+923001234567"
+ *           example:
+ *             fullName: Sara Ahmad
+ *             phoneNumber: "+923001234567"
  *     responses:
  *       200:
  *         description: Profile updated
@@ -83,7 +93,21 @@ router.patch('/profile', validate({ body: updateCashierProfileSchema }), updateC
  *         application/json:
  *           schema:
  *             type: object
- *             required: [currentPassword, newPassword]
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: OldPass1!
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: NewPass1!
+ *           example:
+ *             currentPassword: OldPass1!
+ *             newPassword: NewPass1!
  *     responses:
  *       200:
  *         description: Password changed
@@ -218,6 +242,48 @@ router.get('/:id', getCashierById);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - fullName
+ *               - email
+ *               - phoneNumber
+ *               - password
+ *               - businessId
+ *               - branchId
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Sara Ahmad
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: sara.ahmad@example.com
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "+923001234567"
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: SecurePass1!
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: b8e22881-6a05-456e-ce44-418decb9f711
+ *               joiningDate:
+ *                 type: string
+ *                 nullable: true
+ *                 example: "2026-01-15"
+ *           example:
+ *             fullName: Sara Ahmad
+ *             email: sara.ahmad@example.com
+ *             phoneNumber: "+923001234567"
+ *             password: SecurePass1!
+ *             businessId: a7f11770-5f94-445d-bd33-307cdba8f600
+ *             branchId: b8e22881-6a05-456e-ce44-418decb9f711
+ *             joiningDate: "2026-01-15"
  *     responses:
  *       201:
  *         description: Cashier created
@@ -250,6 +316,33 @@ router.post('/', validate({ body: createCashierSchema }), createCashier);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Sara Ahmad
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: sara.ahmad@example.com
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "+923001234567"
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: b8e22881-6a05-456e-ce44-418decb9f711
+ *               joiningDate:
+ *                 type: string
+ *                 nullable: true
+ *                 example: "2026-02-01"
+ *           example:
+ *             fullName: Sara Ahmad
+ *             phoneNumber: "+923009876543"
+ *             branchId: b8e22881-6a05-456e-ce44-418decb9f711
  *     responses:
  *       200:
  *         description: Cashier updated
@@ -312,7 +405,15 @@ router.delete('/:id', deleteCashier);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [status]
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING, ACTIVE, INACTIVE, SUSPENDED, RESIGNED, DELETED]
+ *                 example: ACTIVE
+ *           example:
+ *             status: ACTIVE
  *     responses:
  *       200:
  *         description: Status updated
@@ -345,7 +446,15 @@ router.patch('/:id/status', validate({ body: updateCashierStatusSchema }), updat
  *         application/json:
  *           schema:
  *             type: object
- *             required: [newPassword]
+ *             required:
+ *               - newPassword
+ *             properties:
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: ResetPass1!
+ *           example:
+ *             newPassword: ResetPass1!
  *     responses:
  *       200:
  *         description: Password reset
@@ -368,6 +477,18 @@ router.patch(
  *     tags: [Cashiers]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Image uploaded

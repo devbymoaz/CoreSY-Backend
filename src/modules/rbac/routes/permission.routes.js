@@ -107,12 +107,25 @@ router.get('/:id', getPermissionById);
  *             properties:
  *               module:
  *                 type: string
+ *                 enum: [Users, Businesses, Branches, Services, Products, Orders, Slots, Bookings, Drivers, Cashiers, Wallet, Payments, Subscriptions, Notifications, Reports, Analytics, Settings, Roles, Permissions, Content, Support, Finance, Points, Reviews, QR]
  *               name:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *               slug:
  *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 100
+ *                 description: Must contain a module prefix (e.g., users.create)
  *               description:
  *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
+ *           example:
+ *             module: Users
+ *             name: Create User
+ *             slug: users.create
+ *             description: Create new users
  *     responses:
  *       201:
  *         description: Permission created
@@ -144,11 +157,19 @@ router.post('/', validate({ body: createPermissionSchema }), createPermission);
  *             properties:
  *               name:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *               description:
  *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *               status:
  *                 type: string
  *                 enum: [ACTIVE, INACTIVE]
+ *           example:
+ *             name: Update User
+ *             description: Update existing users
+ *             status: ACTIVE
  *     responses:
  *       200:
  *         description: Permission updated

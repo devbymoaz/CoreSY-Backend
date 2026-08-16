@@ -140,6 +140,7 @@ router.get('/', validate({ query: listQRsSchema }), getAllQRs);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: ID of the booking
  *     responses:
  *       200:
@@ -183,6 +184,7 @@ router.get('/booking/:bookingId', getQRByBookingId);
  *         required: true
  *         schema:
  *           type: string
+ *           example: QR-1723789123456-ABC123XYZ
  *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
@@ -227,6 +229,7 @@ router.get('/:qrId', getQRByQrId);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: ID of the booking to generate QR code for
  *     responses:
  *       201:
@@ -282,7 +285,8 @@ router.post('/generate/:bookingId', generateQR);
  *               token:
  *                 type: string
  *                 description: Secure token from the QR code
- *                 example: a1b2c3d4e5f6...
+ *           example:
+ *             token: a1b2c3d4e5f6789012345678901234567890abcdef
  *     responses:
  *       200:
  *         description: QR code validated successfully
@@ -338,7 +342,8 @@ router.post('/validate', validate({ body: validateQRSchema }), validateQR);
  *               token:
  *                 type: string
  *                 description: Secure token from the QR code
- *                 example: a1b2c3d4e5f6...
+ *           example:
+ *             token: a1b2c3d4e5f6789012345678901234567890abcdef
  *     responses:
  *       200:
  *         description: QR code scanned successfully
@@ -386,6 +391,7 @@ router.post('/scan', validate({ body: scanQRSchema }), scanQR);
  *         required: true
  *         schema:
  *           type: string
+ *           example: QR-1723789123456-ABC123XYZ
  *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
@@ -434,6 +440,7 @@ router.patch('/:qrId/check-in', checkIn);
  *         required: true
  *         schema:
  *           type: string
+ *           example: QR-1723789123456-ABC123XYZ
  *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
@@ -482,6 +489,7 @@ router.patch('/:qrId/check-out', checkOut);
  *         required: true
  *         schema:
  *           type: string
+ *           example: QR-1723789123456-ABC123XYZ
  *         description: "Unique QR ID (format: QR-XXXXXXXXX)"
  *     responses:
  *       200:
@@ -577,6 +585,7 @@ router.get('/dashboard/customer', getCustomerDashboard);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: ID of the business
  *     responses:
  *       200:

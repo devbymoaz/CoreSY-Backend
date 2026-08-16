@@ -68,8 +68,15 @@ router.get('/profile', getOwnProfile);
  *             properties:
  *               fullName:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *               phoneNumber:
  *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *           example:
+ *             fullName: John Doe
+ *             phoneNumber: "+963912345678"
  *     responses:
  *       200:
  *         description: Profile updated
@@ -183,15 +190,29 @@ router.get(
  *             properties:
  *               fullName:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *               email:
  *                 type: string
+ *                 format: email
  *               phoneNumber:
  *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
  *               password:
  *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *                 maxLength: 100
  *               role:
  *                 type: string
  *                 enum: [FINANCE_ADMIN, SUPPORT_ADMIN]
+ *           example:
+ *             fullName: John Doe
+ *             email: admin@example.com
+ *             phoneNumber: "+963912345678"
+ *             password: SecurePass123!
+ *             role: FINANCE_ADMIN
  *     responses:
  *       201:
  *         description: Admin created
@@ -262,13 +283,23 @@ router.get('/:id', authorizeRoles(ROLES.SUPER_ADMIN), getAdminById);
  *             properties:
  *               fullName:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *               email:
  *                 type: string
+ *                 format: email
  *               phoneNumber:
  *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
  *               role:
  *                 type: string
  *                 enum: [FINANCE_ADMIN, SUPPORT_ADMIN]
+ *           example:
+ *             fullName: John Smith
+ *             email: john.smith@example.com
+ *             phoneNumber: "+963912345679"
+ *             role: SUPPORT_ADMIN
  *     responses:
  *       200:
  *         description: Admin updated
@@ -341,6 +372,8 @@ router.delete('/:id', authorizeRoles(ROLES.SUPER_ADMIN), deleteAdmin);
  *               status:
  *                 type: string
  *                 enum: [ACTIVE, SUSPENDED, DEACTIVATED]
+ *           example:
+ *             status: ACTIVE
  *     responses:
  *       200:
  *         description: Status updated
@@ -384,6 +417,11 @@ router.patch(
  *             properties:
  *               newPassword:
  *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *                 maxLength: 100
+ *           example:
+ *             newPassword: NewSecurePass123!
  *     responses:
  *       200:
  *         description: Password reset

@@ -117,6 +117,18 @@ router.get('/transactions', validate({ query: listTransactionsSchema }), getTran
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 exclusiveMinimum: 0
+ *               description:
+ *                 type: string
+ *                 maxLength: 255
+ *                 nullable: true
  *           example:
  *             amount: 100
  *             description: Monthly top-up
@@ -138,8 +150,21 @@ router.post('/top-up', validate({ body: topUpSchema }), topUp);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 exclusiveMinimum: 0
+ *               description:
+ *                 type: string
+ *                 maxLength: 255
+ *                 nullable: true
  *           example:
  *             amount: 50
+ *             description: Cash withdrawal
  *     responses:
  *       200:
  *         description: Withdrawal completed
@@ -158,9 +183,26 @@ router.post('/withdraw', validate({ body: withdrawSchema }), withdraw);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - toCustomerId
+ *               - amount
+ *             properties:
+ *               toCustomerId:
+ *                 type: string
+ *                 format: uuid
+ *               amount:
+ *                 type: number
+ *                 exclusiveMinimum: 0
+ *               description:
+ *                 type: string
+ *                 maxLength: 255
+ *                 nullable: true
  *           example:
- *             toCustomerId: 550e8400-e29b-41d4-a716-446655440000
+ *             toCustomerId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             amount: 25
+ *             description: Shared dinner payment
  *     responses:
  *       200:
  *         description: Transfer completed

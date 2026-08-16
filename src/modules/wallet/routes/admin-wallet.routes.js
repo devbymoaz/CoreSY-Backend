@@ -68,8 +68,28 @@ router.get('/', validate({ query: listWalletsSchema }), getWallets);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - walletId
+ *               - amount
+ *               - direction
+ *             properties:
+ *               walletId:
+ *                 type: string
+ *                 format: uuid
+ *               amount:
+ *                 type: number
+ *                 exclusiveMinimum: 0
+ *               direction:
+ *                 type: string
+ *                 enum: [CREDIT, DEBIT]
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
- *             walletId: 550e8400-e29b-41d4-a716-446655440000
+ *             walletId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             amount: 20
  *             direction: CREDIT
  *             reason: Compensation
@@ -94,6 +114,7 @@ router.post('/adjust', validate({ body: adjustWalletSchema }), adjustWallet);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Wallet details
@@ -115,6 +136,7 @@ router.get('/:id', getWalletById);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Wallet frozen
@@ -133,8 +155,16 @@ router.patch('/:id/freeze', freezeWallet);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - walletId
+ *             properties:
+ *               walletId:
+ *                 type: string
+ *                 format: uuid
  *           example:
- *             walletId: 550e8400-e29b-41d4-a716-446655440000
+ *             walletId: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Wallet frozen
@@ -156,6 +186,7 @@ router.patch('/freeze', freezeWallet);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Wallet unfrozen
@@ -174,8 +205,16 @@ router.patch('/:id/unfreeze', unfreezeWallet);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - walletId
+ *             properties:
+ *               walletId:
+ *                 type: string
+ *                 format: uuid
  *           example:
- *             walletId: 550e8400-e29b-41d4-a716-446655440000
+ *             walletId: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Wallet unfrozen

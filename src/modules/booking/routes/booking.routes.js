@@ -50,6 +50,29 @@ router.use(authenticate);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - slotId
+ *               - numberOfGuests
+ *             properties:
+ *               slotId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *               numberOfGuests:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 4
+ *               specialInstructions:
+ *                 type: string
+ *                 example: Window seat preferred, one guest has a nut allergy.
+ *               paymentMethod:
+ *                 type: string
+ *                 example: CARD
+ *           example:
+ *             slotId: a7f11770-5f94-445d-bd33-307cdba8f600
+ *             numberOfGuests: 4
+ *             specialInstructions: Window seat preferred, one guest has a nut allergy.
+ *             paymentMethod: CARD
  *     responses:
  *       201:
  *         description: Booking created
@@ -141,6 +164,7 @@ router.get('/dashboard', getCustomerDashboard);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Booking details
@@ -162,12 +186,24 @@ router.get('/:id', getBookingById);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               numberOfGuests:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 3
+ *               specialInstructions:
+ *                 type: string
+ *                 example: Updated to outdoor seating if available.
+ *           example:
+ *             numberOfGuests: 3
+ *             specialInstructions: Updated to outdoor seating if available.
  *     responses:
  *       200:
  *         description: Booking updated
@@ -189,11 +225,18 @@ router.patch('/:id', validate({ body: updateBookingSchema }), updateBooking);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               cancellationReason:
+ *                 type: string
+ *                 example: Schedule conflict, unable to attend.
+ *           example:
+ *             cancellationReason: Schedule conflict, unable to attend.
  *     responses:
  *       200:
  *         description: Booking cancelled
@@ -215,13 +258,22 @@ router.patch('/:id/cancel', validate({ body: cancelBookingSchema }), cancelBooki
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [slotId]
+ *             required:
+ *               - slotId
+ *             properties:
+ *               slotId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: b8e22881-6a05-456e-ce44-418decb9f711
+ *           example:
+ *             slotId: b8e22881-6a05-456e-ce44-418decb9f711
  *     responses:
  *       200:
  *         description: Booking rescheduled
@@ -243,6 +295,7 @@ router.patch('/:id/reschedule', validate({ body: rescheduleBookingSchema }), res
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: QR code generated
@@ -265,6 +318,7 @@ router.get('/:id/qr', generateQRCode);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Business added to favorites
@@ -286,6 +340,7 @@ router.post('/favorites/:businessId', addFavorite);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Business removed from favorites
@@ -322,6 +377,7 @@ router.get('/business', validate({ query: listBookingsSchema }), getBusinessBook
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: List of today's bookings
@@ -343,6 +399,7 @@ router.get('/business/:businessId/today', getBusinessTodayBookings);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: List of upcoming bookings
@@ -364,6 +421,7 @@ router.get('/business/:businessId/upcoming', getBusinessUpcomingBookings);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Dashboard stats
@@ -385,6 +443,7 @@ router.get('/business/:businessId/dashboard', getBusinessDashboard);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Booking confirmed
@@ -416,6 +475,7 @@ router.patch('/business/:id/confirm', confirmBooking);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Booking rejected
@@ -447,6 +507,7 @@ router.patch('/business/:id/reject', rejectBooking);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Check-in successful
@@ -478,6 +539,7 @@ router.patch('/business/:id/check-in', checkInBooking);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Check-out successful

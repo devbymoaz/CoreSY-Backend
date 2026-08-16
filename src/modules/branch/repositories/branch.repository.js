@@ -34,6 +34,19 @@ class BranchRepository {
     });
   }
 
+  /**
+   * All codes for a prefix (includes soft-deleted) so unique constraint stays safe.
+   */
+  async findCodesByPrefix(prefix) {
+    const branches = await prisma.branch.findMany({
+      where: {
+        code: { startsWith: `${prefix}-` },
+      },
+      select: { code: true },
+    });
+    return branches.map((branch) => branch.code);
+  }
+
   async findByBusinessIdAndName(businessId, name, excludeId = null) {
     const where = {
       businessId,

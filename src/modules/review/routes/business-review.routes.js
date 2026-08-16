@@ -75,10 +75,20 @@ router.get('/', validate({ query: listReviewsSchema }), getBusinessReviews);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 2000
  *           example:
  *             message: Thank you for your feedback!
  *     responses:

@@ -222,15 +222,96 @@ router.get(
  *             properties:
  *               products:
  *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 200
  *                 items:
  *                   type: object
+ *                   required: [name, sku, businessId, branchId, categoryId, basePrice]
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       minLength: 2
+ *                       maxLength: 255
+ *                     sku:
+ *                       type: string
+ *                       minLength: 2
+ *                       maxLength: 100
+ *                     description:
+ *                       type: string
+ *                       maxLength: 5000
+ *                       nullable: true
+ *                     businessId:
+ *                       type: string
+ *                       format: uuid
+ *                     branchId:
+ *                       type: string
+ *                       format: uuid
+ *                     categoryId:
+ *                       type: string
+ *                       format: uuid
+ *                     subCategoryId:
+ *                       type: string
+ *                       format: uuid
+ *                       nullable: true
+ *                     images:
+ *                       type: array
+ *                       maxItems: 20
+ *                       items:
+ *                         type: string
+ *                         format: uri
+ *                     basePrice:
+ *                       type: number
+ *                       minimum: 0
+ *                     discountPrice:
+ *                       type: number
+ *                       minimum: 0
+ *                       nullable: true
+ *                     subscriberPrice:
+ *                       type: number
+ *                       minimum: 0
+ *                       nullable: true
+ *                     stockQuantity:
+ *                       type: integer
+ *                       minimum: 0
+ *                     unlimitedStock:
+ *                       type: boolean
+ *                     lowStockThreshold:
+ *                       type: integer
+ *                       minimum: 0
+ *                     preparationTime:
+ *                       type: integer
+ *                       minimum: 0
+ *                       nullable: true
+ *                     unit:
+ *                       type: string
+ *                       enum: [PIECE, KG, GRAM, LITER, ML, PACK, BOX, BOTTLE, PORTION, OTHER]
+ *                     weight:
+ *                       type: number
+ *                       minimum: 0
+ *                       nullable: true
+ *                     tags:
+ *                       type: array
+ *                       maxItems: 30
+ *                       items:
+ *                         type: string
+ *                     barcode:
+ *                       type: string
+ *                       maxLength: 100
+ *                       nullable: true
+ *                     status:
+ *                       type: string
+ *                       enum: [ACTIVE, INACTIVE, OUT_OF_STOCK, HIDDEN, DELETED]
+ *                     isFeatured:
+ *                       type: boolean
+ *                     isRecommended:
+ *                       type: boolean
  *           example:
  *             products:
  *               - name: Fresh Orange Juice
  *                 sku: JCE-ORG-001
- *                 businessId: 550e8400-e29b-41d4-a716-446655440000
- *                 branchId: 550e8400-e29b-41d4-a716-446655440001
- *                 categoryId: 550e8400-e29b-41d4-a716-446655440002
+ *                 businessId: a7f11770-5f94-445d-bd33-307cdba8f601
+ *                 branchId: a7f11770-5f94-445d-bd33-307cdba8f602
+ *                 categoryId: a7f11770-5f94-445d-bd33-307cdba8f603
  *                 basePrice: 25
  *                 stockQuantity: 50
  *     responses:
@@ -256,9 +337,37 @@ router.post(
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productIds, data]
+ *             properties:
+ *               productIds:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 100
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *               data:
+ *                 type: object
+ *                 minProperties: 1
+ *                 properties:
+ *                   status:
+ *                     type: string
+ *                     enum: [ACTIVE, INACTIVE, OUT_OF_STOCK, HIDDEN, DELETED]
+ *                   isFeatured:
+ *                     type: boolean
+ *                   isRecommended:
+ *                     type: boolean
+ *                   categoryId:
+ *                     type: string
+ *                     format: uuid
+ *                   branchId:
+ *                     type: string
+ *                     format: uuid
  *           example:
  *             productIds:
- *               - 550e8400-e29b-41d4-a716-446655440010
+ *               - a7f11770-5f94-445d-bd33-307cdba8f600
  *             data:
  *               status: ACTIVE
  *               isFeatured: true
@@ -362,14 +471,95 @@ router.get('/', validate({ query: listProductsSchema }), getProducts);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, sku, businessId, branchId, categoryId, basePrice]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               sku:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               description:
+ *                 type: string
+ *                 maxLength: 5000
+ *                 nullable: true
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *               categoryId:
+ *                 type: string
+ *                 format: uuid
+ *               subCategoryId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               images:
+ *                 type: array
+ *                 maxItems: 20
+ *                 items:
+ *                   type: string
+ *                   format: uri
+ *               basePrice:
+ *                 type: number
+ *                 minimum: 0
+ *               discountPrice:
+ *                 type: number
+ *                 minimum: 0
+ *                 nullable: true
+ *               subscriberPrice:
+ *                 type: number
+ *                 minimum: 0
+ *                 nullable: true
+ *               stockQuantity:
+ *                 type: integer
+ *                 minimum: 0
+ *               unlimitedStock:
+ *                 type: boolean
+ *               lowStockThreshold:
+ *                 type: integer
+ *                 minimum: 0
+ *               preparationTime:
+ *                 type: integer
+ *                 minimum: 0
+ *                 nullable: true
+ *               unit:
+ *                 type: string
+ *                 enum: [PIECE, KG, GRAM, LITER, ML, PACK, BOX, BOTTLE, PORTION, OTHER]
+ *               weight:
+ *                 type: number
+ *                 minimum: 0
+ *                 nullable: true
+ *               tags:
+ *                 type: array
+ *                 maxItems: 30
+ *                 items:
+ *                   type: string
+ *               barcode:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE, OUT_OF_STOCK, HIDDEN, DELETED]
+ *               isFeatured:
+ *                 type: boolean
+ *               isRecommended:
+ *                 type: boolean
  *           example:
  *             name: Fresh Orange Juice
  *             sku: JCE-ORG-001
  *             description: Freshly squeezed orange juice
- *             businessId: 550e8400-e29b-41d4-a716-446655440000
- *             branchId: 550e8400-e29b-41d4-a716-446655440001
- *             categoryId: 550e8400-e29b-41d4-a716-446655440002
- *             subCategoryId: 550e8400-e29b-41d4-a716-446655440003
+ *             businessId: a7f11770-5f94-445d-bd33-307cdba8f601
+ *             branchId: a7f11770-5f94-445d-bd33-307cdba8f602
+ *             categoryId: a7f11770-5f94-445d-bd33-307cdba8f603
+ *             subCategoryId: a7f11770-5f94-445d-bd33-307cdba8f604
  *             images:
  *               - https://cdn.coresy.io/products/orange-1.jpg
  *             basePrice: 25
@@ -414,10 +604,18 @@ router.post(
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE, OUT_OF_STOCK, HIDDEN]
  *           example:
  *             status: INACTIVE
  *     responses:
@@ -446,10 +644,24 @@ router.patch(
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [stockQuantity]
+ *             properties:
+ *               stockQuantity:
+ *                 type: integer
+ *                 minimum: 0
+ *               unlimitedStock:
+ *                 type: boolean
+ *               reason:
+ *                 type: string
+ *                 maxLength: 255
+ *                 nullable: true
  *           example:
  *             stockQuantity: 40
  *             unlimitedStock: false
@@ -480,10 +692,22 @@ router.patch(
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [images]
+ *             properties:
+ *               images:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 20
+ *                 items:
+ *                   type: string
+ *                   format: uri
  *           example:
  *             images:
  *               - https://cdn.coresy.io/products/orange-2.jpg
@@ -513,10 +737,22 @@ router.post(
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [images]
+ *             properties:
+ *               images:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 20
+ *                 items:
+ *                   type: string
+ *                   minLength: 1
  *           example:
  *             images:
  *               - https://cdn.coresy.io/products/orange-2.jpg
@@ -546,6 +782,7 @@ router.post(
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       201:
  *         description: Product duplicated
@@ -590,10 +827,82 @@ router.get('/:id', getProductById);
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             minProperties: 1
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               sku:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               description:
+ *                 type: string
+ *                 maxLength: 5000
+ *                 nullable: true
+ *               categoryId:
+ *                 type: string
+ *                 format: uuid
+ *               subCategoryId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               images:
+ *                 type: array
+ *                 maxItems: 20
+ *                 items:
+ *                   type: string
+ *                   format: uri
+ *               basePrice:
+ *                 type: number
+ *                 minimum: 0
+ *               discountPrice:
+ *                 type: number
+ *                 minimum: 0
+ *                 nullable: true
+ *               subscriberPrice:
+ *                 type: number
+ *                 minimum: 0
+ *                 nullable: true
+ *               stockQuantity:
+ *                 type: integer
+ *                 minimum: 0
+ *               unlimitedStock:
+ *                 type: boolean
+ *               lowStockThreshold:
+ *                 type: integer
+ *                 minimum: 0
+ *               preparationTime:
+ *                 type: integer
+ *                 nullable: true
+ *               unit:
+ *                 type: string
+ *                 enum: [PIECE, KG, GRAM, LITER, ML, PACK, BOX, BOTTLE, PORTION, OTHER]
+ *               weight:
+ *                 type: number
+ *                 minimum: 0
+ *                 nullable: true
+ *               tags:
+ *                 type: array
+ *                 maxItems: 30
+ *                 items:
+ *                   type: string
+ *               barcode:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               isFeatured:
+ *                 type: boolean
+ *               isRecommended:
+ *                 type: boolean
  *           example:
  *             name: Fresh Orange Juice Large
  *             basePrice: 30

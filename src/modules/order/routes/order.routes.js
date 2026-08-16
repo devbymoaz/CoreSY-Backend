@@ -152,13 +152,90 @@ router.get('/', validate({ query: listOrdersSchema }), getOrders);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [deliveryAddress, items]
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [CASH, WALLET, CARD, ONLINE]
+ *                 default: CASH
+ *               deliveryFee:
+ *                 type: number
+ *                 minimum: 0
+ *               deliveryNotes:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 nullable: true
+ *               deliveryAddress:
+ *                 type: object
+ *                 required: [customerName, phone, governorateId, area, street]
+ *                 properties:
+ *                   customerName:
+ *                     type: string
+ *                     minLength: 2
+ *                     maxLength: 255
+ *                   phone:
+ *                     type: string
+ *                     minLength: 8
+ *                     maxLength: 20
+ *                   governorateId:
+ *                     type: string
+ *                     format: uuid
+ *                   area:
+ *                     type: string
+ *                     minLength: 2
+ *                     maxLength: 255
+ *                   street:
+ *                     type: string
+ *                     minLength: 2
+ *                     maxLength: 255
+ *                   building:
+ *                     type: string
+ *                     maxLength: 100
+ *                     nullable: true
+ *                   floor:
+ *                     type: string
+ *                     maxLength: 50
+ *                     nullable: true
+ *                   apartment:
+ *                     type: string
+ *                     maxLength: 50
+ *                     nullable: true
+ *                   latitude:
+ *                     type: number
+ *                     nullable: true
+ *                   longitude:
+ *                     type: number
+ *                     nullable: true
+ *                   deliveryNotes:
+ *                     type: string
+ *                     maxLength: 1000
+ *                     nullable: true
+ *               items:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 100
+ *                 items:
+ *                   type: object
+ *                   required: [productId, quantity]
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: integer
+ *                       minimum: 1
  *           example:
  *             paymentMethod: CASH
  *             deliveryNotes: Please call on arrival
  *             deliveryAddress:
  *               customerName: Ahmad Al-Hassan
  *               phone: "+963912345678"
- *               governorateId: 550e8400-e29b-41d4-a716-446655440000
+ *               governorateId: a7f11770-5f94-445d-bd33-307cdba8f601
  *               area: Mazzeh
  *               street: Street 12
  *               building: Building 4
@@ -167,9 +244,9 @@ router.get('/', validate({ query: listOrdersSchema }), getOrders);
  *               latitude: 33.5138
  *               longitude: 36.2765
  *             items:
- *               - productId: 550e8400-e29b-41d4-a716-446655440010
+ *               - productId: a7f11770-5f94-445d-bd33-307cdba8f602
  *                 quantity: 2
- *               - productId: 550e8400-e29b-41d4-a716-446655440011
+ *               - productId: a7f11770-5f94-445d-bd33-307cdba8f603
  *                 quantity: 1
  *     responses:
  *       201:
@@ -241,9 +318,17 @@ router.get('/:id/invoice', getInvoice);
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
  *             reason: Changed my mind
  *     responses:
@@ -267,6 +352,7 @@ router.patch('/:id/cancel', validate({ body: cancelOrderSchema }), cancelOrder);
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       201:
  *         description: New order created from previous order

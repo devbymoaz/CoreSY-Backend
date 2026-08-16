@@ -14,25 +14,18 @@ const {
 class BranchService {
   async generateBranchCode(businessType) {
     const prefix = this.getBranchCodePrefix(businessType);
+    const existingCodes = await branchRepository.findCodesByPrefix(prefix);
 
-    // Find the latest branch count for this prefix
-    const latestBranch = await branchRepository.findAll({
-      page: 1,
-      limit: 1,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    });
-
-    let nextNumber = 1;
-    if (latestBranch.branches.length > 0) {
-      const latestCode = latestBranch.branches[0].code;
-      const match = latestCode.match(/(\d+)$/);
+    let maxNumber = 0;
+    const codePattern = new RegExp(`^${prefix}-(\\d+)$`);
+    for (const code of existingCodes) {
+      const match = code.match(codePattern);
       if (match) {
-        nextNumber = parseInt(match[1]) + 1;
+        maxNumber = Math.max(maxNumber, parseInt(match[1], 10));
       }
     }
 
-    return `${prefix}-${String(nextNumber).padStart(3, '0')}`;
+    return `${prefix}-${String(maxNumber + 1).padStart(3, '0')}`;
   }
 
   getBranchCodePrefix(businessType) {
@@ -86,25 +79,46 @@ class BranchService {
       throw new AppError(ERROR_MESSAGES.BRANCH_NAME_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
     }
 
-    // Generate branch code
-    const code = await this.generateBranchCode(business.type);
-
     // If this is main branch, unset other main branches for the same business
     if (data.isMain) {
       const mainBranches = await branchRepository.findByBusinessId(data.businessId);
-      for (const branch of mainBranches.branches) {
-        if (branch.isMain) {
-          await branchRepository.update(branch.id, { isMain: false });
+      for (const existing of mainBranches.branches) {
+        if (existing.isMain) {
+          await branchRepository.update(existing.id, { isMain: false });
         }
       }
     }
 
-    // Create branch
-    const branch = await branchRepository.create({
-      ...data,
-      code,
-      createdBy: userId,
-    });
+    // Generate unique branch code (retry on rare race collisions)
+    let branch;
+    let lastError;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const code = await this.generateBranchCode(business.type);
+      try {
+        branch = await branchRepository.create({
+          ...data,
+          code,
+          createdBy: userId,
+        });
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+        const target = error.meta?.target;
+        const targetText = Array.isArray(target) ? target.join(',') : String(target || '');
+        const isCodeConflict = error.code === 'P2002' && targetText.toLowerCase().includes('code');
+        if (!isCodeConflict) {
+          throw error;
+        }
+      }
+    }
+
+    if (!branch) {
+      throw (
+        lastError ||
+        new AppError(ERROR_MESSAGES.BRANCH_CODE_ALREADY_EXISTS, HTTP_STATUS.CONFLICT)
+      );
+    }
 
     // Create audit log
     await auditLogService.create({

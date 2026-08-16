@@ -95,6 +95,18 @@ router.get('/history', validate({ query: listHistorySchema }), getHistory);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - points
+ *             properties:
+ *               points:
+ *                 type: integer
+ *                 minimum: 1
+ *               description:
+ *                 type: string
+ *                 maxLength: 255
+ *                 nullable: true
  *           example:
  *             points: 100
  *             description: Redeem for discount

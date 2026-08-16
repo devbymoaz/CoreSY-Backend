@@ -117,6 +117,45 @@ router.get('/tree', authorizeRoles(...readRoles), getCategoryTree);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               nameAr:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *                 nullable: true
+ *               slug:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *                 pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+ *               description:
+ *                 type: string
+ *                 maxLength: 2000
+ *                 nullable: true
+ *               image:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               sortOrder:
+ *                 type: integer
+ *                 minimum: 0
+ *               isActive:
+ *                 type: boolean
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               parentId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
  *           example:
  *             name: Beverages
  *             nameAr: مشروبات
@@ -124,7 +163,7 @@ router.get('/tree', authorizeRoles(...readRoles), getCategoryTree);
  *             description: Drinks and juices
  *             image: https://cdn.coresy.io/categories/beverages.jpg
  *             sortOrder: 1
- *             businessId: 550e8400-e29b-41d4-a716-446655440000
+ *             businessId: a7f11770-5f94-445d-bd33-307cdba8f601
  *             parentId: null
  *     responses:
  *       201:
@@ -173,10 +212,50 @@ router.get('/:id', authorizeRoles(...readRoles), getCategoryById);
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             minProperties: 1
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               nameAr:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *                 nullable: true
+ *               slug:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *                 pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+ *               description:
+ *                 type: string
+ *                 maxLength: 2000
+ *                 nullable: true
+ *               image:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               sortOrder:
+ *                 type: integer
+ *                 minimum: 0
+ *               isActive:
+ *                 type: boolean
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               parentId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
  *           example:
  *             name: Fresh Beverages
  *             sortOrder: 2

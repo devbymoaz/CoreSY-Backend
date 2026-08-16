@@ -64,6 +64,89 @@ const viewRoles = [
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fullName, email, phoneNumber, password, confirmPassword, nationalId, drivingLicense, vehicleType, vehicleRegistrationNumber, vehiclePlateNumber, governorateId]
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phoneNumber:
+ *                 type: string
+ *                 minLength: 8
+ *                 maxLength: 20
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 maxLength: 100
+ *               confirmPassword:
+ *                 type: string
+ *                 minLength: 8
+ *                 maxLength: 100
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *                 nullable: true
+ *               gender:
+ *                 type: string
+ *                 enum: [MALE, FEMALE, OTHER]
+ *                 nullable: true
+ *               nationalId:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 50
+ *               drivingLicense:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 50
+ *               vehicleType:
+ *                 type: string
+ *                 enum: [MOTORCYCLE, CAR, BICYCLE, VAN]
+ *               vehicleBrand:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               vehicleModel:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               vehicleRegistrationNumber:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 50
+ *               vehiclePlateNumber:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 50
+ *               governorateId:
+ *                 type: string
+ *                 format: uuid
+ *               profilePhoto:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               nationalIdDocument:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               drivingLicenseDocument:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               insuranceDocument:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               vehicleImages:
+ *                 type: array
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
+ *                   format: uri
  *           example:
  *             fullName: Omar Driver
  *             email: omar.driver@example.com
@@ -79,7 +162,7 @@ const viewRoles = [
  *             vehicleModel: CG125
  *             vehicleRegistrationNumber: REG-123456
  *             vehiclePlateNumber: "12345-Damascus"
- *             governorateId: 550e8400-e29b-41d4-a716-446655440000
+ *             governorateId: a7f11770-5f94-445d-bd33-307cdba8f601
  *     responses:
  *       201:
  *         description: Driver registered and pending verification
@@ -98,6 +181,24 @@ router.post('/register', validate({ body: registerDriverSchema }), register);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [password]
+ *             properties:
+ *               identifier:
+ *                 type: string
+ *                 minLength: 3
+ *                 description: Email or phone number
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phoneNumber:
+ *                 type: string
+ *                 minLength: 8
+ *                 maxLength: 20
+ *               password:
+ *                 type: string
+ *                 minLength: 1
  *           example:
  *             identifier: omar.driver@example.com
  *             password: SecurePass1!
@@ -137,6 +238,41 @@ router.get('/profile', driverAuthenticate, getProfile);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             minProperties: 1
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               phoneNumber:
+ *                 type: string
+ *                 minLength: 8
+ *                 maxLength: 20
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *                 nullable: true
+ *               gender:
+ *                 type: string
+ *                 enum: [MALE, FEMALE, OTHER]
+ *                 nullable: true
+ *               profilePhoto:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               vehicleBrand:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               vehicleModel:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               governorateId:
+ *                 type: string
+ *                 format: uuid
  *           example:
  *             fullName: Omar Updated
  *             vehicleBrand: Yamaha
@@ -163,6 +299,22 @@ router.patch(
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             minProperties: 1
+ *             properties:
+ *               nationalIdDocument:
+ *                 type: string
+ *                 format: uri
+ *               drivingLicenseDocument:
+ *                 type: string
+ *                 format: uri
+ *               insuranceDocument:
+ *                 type: string
+ *                 format: uri
+ *               profilePhoto:
+ *                 type: string
+ *                 format: uri
  *           example:
  *             nationalIdDocument: https://cdn.coresy.io/docs/nid.pdf
  *             drivingLicenseDocument: https://cdn.coresy.io/docs/license.pdf
@@ -190,6 +342,28 @@ router.post(
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [vehicleImages]
+ *             properties:
+ *               vehicleImages:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
+ *                   format: uri
+ *               vehicleBrand:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               vehicleModel:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               vehicleType:
+ *                 type: string
+ *                 enum: [MOTORCYCLE, CAR, BICYCLE, VAN]
  *           example:
  *             vehicleImages:
  *               - https://cdn.coresy.io/vehicles/bike-1.jpg
@@ -218,6 +392,13 @@ router.post(
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [availabilityStatus]
+ *             properties:
+ *               availabilityStatus:
+ *                 type: string
+ *                 enum: [ONLINE, OFFLINE, BUSY, ON_DELIVERY]
  *           example:
  *             availabilityStatus: ONLINE
  *     responses:
@@ -243,6 +424,14 @@ router.patch(
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [latitude, longitude]
+ *             properties:
+ *               latitude:
+ *                 type: number
+ *               longitude:
+ *                 type: number
  *           example:
  *             latitude: 33.5138
  *             longitude: 36.2765
@@ -404,10 +593,22 @@ router.get('/:id', authenticate, authorizeRoles(...viewRoles), getDriverById);
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING_VERIFICATION, ACTIVE, INACTIVE, SUSPENDED, REJECTED]
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
  *             status: ACTIVE
  *             reason: Documents verified

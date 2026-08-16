@@ -120,10 +120,82 @@ router.get('/:id', getBusinessById);
  *               - city
  *               - address
  *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               type:
+ *                 type: string
+ *                 enum: [RESTAURANT, CAFE, BAR, MEDICAL_CLINIC, HOSPITAL, DENTAL_CLINIC, PHARMACY, BEAUTY_SALON, SPA, GYM, SPORTS_CLUB, ENTERTAINMENT_CENTER, JUICE_SHOP, SWEET_SHOP, SUPERMARKET, RETAIL_STORE, OTHER]
+ *               category:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               description:
+ *                 type: string
+ *                 minLength: 10
+ *               ownerName:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
  *               ownerEmail:
  *                 type: string
  *                 format: email
  *                 description: Login email for the business owner account
+ *               ownerPhone:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *               businessEmail:
+ *                 type: string
+ *                 format: email
+ *               businessPhone:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *               registrationNumber:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               taxNumber:
+ *                 type: string
+ *                 nullable: true
+ *               website:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               governorateId:
+ *                 type: string
+ *                 format: uuid
+ *               city:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               address:
+ *                 type: string
+ *                 minLength: 5
+ *               latitude:
+ *                 type: number
+ *                 nullable: true
+ *               longitude:
+ *                 type: number
+ *                 nullable: true
+ *               workingHours:
+ *                 type: object
+ *                 nullable: true
+ *               facebook:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               instagram:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               whatsApp:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *                 nullable: true
  *               ownerPassword:
  *                 type: string
  *                 format: password
@@ -132,6 +204,31 @@ router.get('/:id', getBusinessById);
  *                 type: string
  *                 format: password
  *                 description: Alias for ownerPassword (Flutter / client compatibility)
+ *           example:
+ *             name: Damascus Grill
+ *             type: RESTAURANT
+ *             category: Food & Beverage
+ *             description: A popular restaurant serving traditional Syrian cuisine.
+ *             ownerName: Ahmad Hassan
+ *             ownerEmail: ahmad@example.com
+ *             ownerPhone: "+963912345678"
+ *             businessEmail: contact@damascusgrill.com
+ *             businessPhone: "+963987654321"
+ *             registrationNumber: REG-123456
+ *             taxNumber: TAX-789012
+ *             website: https://damascusgrill.com
+ *             governorateId: a7f11770-5f94-445d-bd33-307cdba8f600
+ *             city: Damascus
+ *             address: Main Street, Building 42
+ *             latitude: 33.5138
+ *             longitude: 36.2765
+ *             workingHours:
+ *               monday: "9:00-22:00"
+ *               tuesday: "9:00-22:00"
+ *             facebook: https://facebook.com/damascusgrill
+ *             instagram: https://instagram.com/damascusgrill
+ *             whatsApp: "+963912345678"
+ *             ownerPassword: SecurePass123!
  *     responses:
  *       201:
  *         description: Business created
@@ -157,7 +254,107 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: Business ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               type:
+ *                 type: string
+ *                 enum: [RESTAURANT, CAFE, BAR, MEDICAL_CLINIC, HOSPITAL, DENTAL_CLINIC, PHARMACY, BEAUTY_SALON, SPA, GYM, SPORTS_CLUB, ENTERTAINMENT_CENTER, JUICE_SHOP, SWEET_SHOP, SUPERMARKET, RETAIL_STORE, OTHER]
+ *               category:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               description:
+ *                 type: string
+ *                 minLength: 10
+ *               ownerName:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 255
+ *               ownerEmail:
+ *                 type: string
+ *                 format: email
+ *               ownerPhone:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *               businessEmail:
+ *                 type: string
+ *                 format: email
+ *               businessPhone:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *               registrationNumber:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               taxNumber:
+ *                 type: string
+ *                 nullable: true
+ *               website:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               governorateId:
+ *                 type: string
+ *                 format: uuid
+ *               city:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
+ *               address:
+ *                 type: string
+ *                 minLength: 5
+ *               latitude:
+ *                 type: number
+ *                 nullable: true
+ *               longitude:
+ *                 type: number
+ *                 nullable: true
+ *               workingHours:
+ *                 type: object
+ *                 nullable: true
+ *               facebook:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               instagram:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               whatsApp:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 20
+ *                 nullable: true
+ *               ownerPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Alias field `password` is also accepted.
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Alias for ownerPassword (Flutter / client compatibility)
+ *           example:
+ *             name: Damascus Grill Updated
+ *             category: Fine Dining
+ *             description: Updated description for the restaurant.
+ *             businessPhone: "+963987654322"
+ *             website: https://damascusgrill.com
+ *             city: Damascus
+ *             address: Main Street, Building 43
  *     responses:
  *       200:
  *         description: Business updated
@@ -199,7 +396,22 @@ router.delete('/:id', deleteBusiness);
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: Business ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING, UNDER_REVIEW, APPROVED, REJECTED, SUSPENDED, INACTIVE, ACTIVE]
+ *           example:
+ *             status: ACTIVE
  *     responses:
  *       200:
  *         description: Status updated
@@ -225,6 +437,8 @@ router.patch(
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: Business ID
  *     responses:
  *       200:
@@ -246,6 +460,8 @@ router.patch('/:id/approve', authorizeRoles(ROLES.SUPER_ADMIN), approveBusiness)
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: Business ID
  *     responses:
  *       200:
@@ -253,8 +469,56 @@ router.patch('/:id/approve', authorizeRoles(ROLES.SUPER_ADMIN), approveBusiness)
  */
 router.patch('/:id/reject', authorizeRoles(ROLES.SUPER_ADMIN), rejectBusiness);
 
-// TODO: File upload endpoints
+/**
+ * @swagger
+ * /businesses/logo:
+ *   post:
+ *     summary: Upload business logo
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Logo image file (e.g. PNG, JPG)
+ *     responses:
+ *       200:
+ *         description: Logo uploaded
+ */
 router.post('/logo', uploadLogo);
+
+/**
+ * @swagger
+ * /businesses/cover-image:
+ *   post:
+ *     summary: Upload business cover image
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Cover image file (e.g. PNG, JPG)
+ *     responses:
+ *       200:
+ *         description: Cover image uploaded
+ */
 router.post('/cover-image', uploadCoverImage);
 
 module.exports = router;

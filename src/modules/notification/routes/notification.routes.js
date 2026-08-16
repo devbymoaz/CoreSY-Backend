@@ -97,9 +97,20 @@ router.get('/', validate({ query: listNotificationsSchema }), getNotifications);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ids]
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 100
+ *                 items:
+ *                   type: string
+ *                   format: uuid
  *           example:
  *             ids:
- *               - 550e8400-e29b-41d4-a716-446655440000
+ *               - a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Marked as read
@@ -132,6 +143,52 @@ router.patch('/read-all', markAllAsRead);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, message]
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 200
+ *               message:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 2000
+ *               type:
+ *                 type: string
+ *                 maxLength: 100
+ *               channel:
+ *                 type: string
+ *                 enum: [PUSH, EMAIL, SMS, WHATSAPP, IN_APP]
+ *               channels:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [PUSH, EMAIL, SMS, WHATSAPP, IN_APP]
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, CRITICAL]
+ *               module:
+ *                 type: string
+ *                 maxLength: 100
+ *               referenceId:
+ *                 type: string
+ *                 maxLength: 100
+ *                 nullable: true
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *               role:
+ *                 type: string
+ *               allUsers:
+ *                 type: boolean
+ *               data:
+ *                 type: object
+ *                 additionalProperties: true
+ *                 nullable: true
  *           example:
  *             title: System Maintenance
  *             message: CoreSY will be under maintenance tonight.

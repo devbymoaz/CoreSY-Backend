@@ -64,9 +64,13 @@ router.get('/:userId/roles', getUserRoles);
  *             properties:
  *               roleIds:
  *                 type: array
+ *                 minItems: 1
  *                 items:
  *                   type: string
  *                   format: uuid
+ *           example:
+ *             roleIds:
+ *               - a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Roles assigned

@@ -35,6 +35,15 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/RegisterRequest'
+ *           example:
+ *             fullName: Ahmad Al-Hassan
+ *             email: ahmad@example.com
+ *             phoneNumber: "+963912345678"
+ *             smartAssistantName: CoreAssist
+ *             password: "SecurePass1!"
+ *             confirmPassword: "SecurePass1!"
+ *             governorateId: "uuid-of-governorate"
+ *             acceptTerms: true
  *     responses:
  *       201:
  *         description: Registration successful, email verification required
@@ -77,6 +86,9 @@ router.post('/register', validate(validateRegister), authController.register);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/VerifyEmailRequest'
+ *           example:
+ *             email: ahmad@example.com
+ *             otp: "123456"
  *     responses:
  *       200:
  *         description: Email verified successfully
@@ -113,7 +125,15 @@ router.post('/verify-email', validate(validateVerifyEmail), authController.verif
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ResendVerificationRequest'
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: ahmad@example.com
+ *           example:
+ *             email: ahmad@example.com
  *     responses:
  *       200:
  *         description: Verification code sent
@@ -139,6 +159,9 @@ router.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/LoginRequest'
+ *           example:
+ *             identifier: ahmad@example.com
+ *             password: "SecurePass1!"
  *     responses:
  *       200:
  *         description: Login successful
@@ -173,6 +196,8 @@ router.post('/login', validate(validateLogin), authController.login);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/RefreshTokenRequest'
+ *           example:
+ *             refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     responses:
  *       200:
  *         description: Tokens refreshed successfully
@@ -202,7 +227,14 @@ router.post('/refresh-token', validate(validateRefreshToken), authController.ref
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/RefreshTokenRequest'
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *           example:
+ *             refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     responses:
  *       200:
  *         description: Logged out successfully
@@ -221,7 +253,15 @@ router.post('/logout', validate(validateLogout), authController.logout);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: ahmad@example.com
+ *           example:
+ *             email: ahmad@example.com
  *     responses:
  *       200:
  *         description: Reset code sent if email exists
@@ -240,7 +280,29 @@ router.post('/forgot-password', validate(validateForgotPassword), authController
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ResetPasswordRequest'
+ *             type: object
+ *             required: [email, otp, newPassword, confirmPassword]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: ahmad@example.com
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePass1!"
+ *               confirmPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePass1!"
+ *           example:
+ *             email: ahmad@example.com
+ *             otp: "123456"
+ *             newPassword: "SecurePass1!"
+ *             confirmPassword: "SecurePass1!"
  *     responses:
  *       200:
  *         description: Password reset successfully
@@ -263,7 +325,25 @@ router.post('/reset-password', validate(validateResetPassword), authController.r
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ChangePasswordRequest'
+ *             type: object
+ *             required: [currentPassword, newPassword, confirmPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePass1!"
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePass1!"
+ *               confirmPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePass1!"
+ *           example:
+ *             currentPassword: "SecurePass1!"
+ *             newPassword: "SecurePass1!"
+ *             confirmPassword: "SecurePass1!"
  *     responses:
  *       200:
  *         description: Password changed successfully
@@ -323,6 +403,10 @@ router.get('/profile', authenticate, authController.getProfile);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateProfileRequest'
+ *           example:
+ *             fullName: Ahmad Al-Hassan
+ *             smartAssistantName: CoreAssist
+ *             phoneNumber: "+963912345678"
  *     responses:
  *       200:
  *         description: Profile updated successfully

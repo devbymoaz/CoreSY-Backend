@@ -338,6 +338,15 @@ router.get('/:id', getBranchById);
  *                 nullable: true
  *               isMain:
  *                 type: boolean
+ *                 example: true
+ *           example:
+ *             name: Downtown Branch Updated
+ *             city: Lahore
+ *             address: Main Street 15
+ *             contactPhone: "+923001234567"
+ *             openingTime: "09:00"
+ *             closingTime: "23:00"
+ *             isMain: true
  *     responses:
  *       200:
  *         description: Branch updated
@@ -402,6 +411,9 @@ router.delete('/:id', deleteBranch);
  *               status:
  *                 type: string
  *                 enum: [PENDING, ACTIVE, INACTIVE, SUSPENDED, CLOSED]
+ *                 example: ACTIVE
+ *           example:
+ *             status: ACTIVE
  *     responses:
  *       200:
  *         description: Status updated
@@ -432,6 +444,7 @@ router.patch(
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: Branch ID
  *     responses:
  *       200:
@@ -441,8 +454,82 @@ router.patch(
  */
 router.patch('/:id/main', setMainBranch);
 
-// File upload endpoints
+/**
+ * @swagger
+ * /branches/{id}/image:
+ *   post:
+ *     summary: Upload branch image
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Branch ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Branch image file (e.g. PNG, JPG)
+ *     responses:
+ *       200:
+ *         description: Branch image uploaded
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Branch not found
+ */
 router.post('/:id/image', uploadBranchImage);
+
+/**
+ * @swagger
+ * /branches/{id}/cover-image:
+ *   post:
+ *     summary: Upload branch cover image
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *         description: Branch ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Branch cover image file (e.g. PNG, JPG)
+ *     responses:
+ *       200:
+ *         description: Branch cover image uploaded
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Branch not found
+ */
 router.post('/:id/cover-image', uploadBranchCoverImage);
 
 module.exports = router;

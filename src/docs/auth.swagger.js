@@ -110,15 +110,18 @@
  *         email:
  *           type: string
  *           format: email
+ *           example: ahmad@example.com
  *         otp:
  *           type: string
  *           example: "123456"
  *         newPassword:
  *           type: string
  *           format: password
+ *           example: "SecurePass1!"
  *         confirmPassword:
  *           type: string
  *           format: password
+ *           example: "SecurePass1!"
  *     ChangePasswordRequest:
  *       type: object
  *       required:
@@ -129,12 +132,23 @@
  *         currentPassword:
  *           type: string
  *           format: password
+ *           example: "SecurePass1!"
  *         newPassword:
  *           type: string
  *           format: password
+ *           example: "SecurePass1!"
  *         confirmPassword:
  *           type: string
  *           format: password
+ *           example: "SecurePass1!"
+ *     LogoutRequest:
+ *       type: object
+ *       required:
+ *         - refreshToken
+ *       properties:
+ *         refreshToken:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     UpdateProfileRequest:
  *       type: object
  *       properties:

@@ -172,6 +172,7 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *         description: Business order ID
  *     responses:
  *       200:
@@ -194,9 +195,17 @@ router.patch('/:id/accept', authorizeRoles(...writeRoles), acceptBusinessOrder);
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
  *             reason: Item unavailable
  *     responses:
@@ -225,6 +234,7 @@ router.patch(
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Order marked as preparing
@@ -246,6 +256,7 @@ router.patch('/:id/preparing', authorizeRoles(...writeRoles), preparingBusinessO
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Order marked as ready

@@ -86,6 +86,41 @@ router.get('/rules', getRules);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - rules
+ *             properties:
+ *               rules:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - type
+ *                     - name
+ *                     - points
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       enum: [PAYMENT, BOOKING, ORDER, REFERRAL, BIRTHDAY, CAMPAIGN]
+ *                     name:
+ *                       type: string
+ *                       minLength: 2
+ *                       maxLength: 100
+ *                     points:
+ *                       type: integer
+ *                       minimum: 0
+ *                     minAmount:
+ *                       type: number
+ *                       minimum: 0
+ *                       nullable: true
+ *                     isActive:
+ *                       type: boolean
+ *                     description:
+ *                       type: string
+ *                       maxLength: 500
+ *                       nullable: true
  *           example:
  *             rules:
  *               - type: ORDER
@@ -110,8 +145,32 @@ router.patch('/rules', validate({ body: updateRulesSchema }), updateRules);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - customerId
+ *               - points
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               points:
+ *                 type: integer
+ *                 minimum: 1
+ *               direction:
+ *                 type: string
+ *                 enum: [CREDIT, DEBIT]
+ *                 default: CREDIT
+ *               bonusType:
+ *                 type: string
+ *                 enum: [BIRTHDAY, REFERRAL, CAMPAIGN]
+ *                 nullable: true
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
- *             customerId: 550e8400-e29b-41d4-a716-446655440000
+ *             customerId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             points: 50
  *             direction: CREDIT
  *             bonusType: BIRTHDAY

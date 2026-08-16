@@ -80,8 +80,23 @@ router.get('/transactions', validate({ query: listPaymentsSchema }), getAdminPay
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - paymentId
+ *             properties:
+ *               paymentId:
+ *                 type: string
+ *                 format: uuid
+ *               amount:
+ *                 type: number
+ *                 minimum: 0
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
- *             paymentId: 550e8400-e29b-41d4-a716-446655440000
+ *             paymentId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             amount: 25
  *             reason: Customer complaint
  *     responses:
@@ -105,6 +120,7 @@ router.patch('/refund', validate({ body: refundPaymentSchema }), refundPayment);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Payment verified

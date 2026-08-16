@@ -125,7 +125,30 @@ router.get('/:id', getRoleById);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Role'
+ *             type: object
+ *             required: [name, displayName]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: CUSTOM_ROLE
+ *               displayName:
+ *                 type: string
+ *                 example: Custom Role
+ *               description:
+ *                 type: string
+ *                 example: A custom role for testing
+ *               priority:
+ *                 type: integer
+ *                 example: 50
+ *               isSystem:
+ *                 type: boolean
+ *                 example: false
+ *           example:
+ *             name: CUSTOM_ROLE
+ *             displayName: Custom Role
+ *             description: A custom role for testing
+ *             priority: 50
+ *             isSystem: false
  *     responses:
  *       201:
  *         description: Role created
@@ -159,13 +182,23 @@ router.post('/', validate({ body: createRoleSchema }), createRole);
  *             properties:
  *               displayName:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *               description:
  *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *               priority:
  *                 type: integer
+ *                 minimum: 1
  *               status:
  *                 type: string
  *                 enum: [ACTIVE, INACTIVE]
+ *           example:
+ *             displayName: Updated Role Name
+ *             description: Updated role description
+ *             priority: 45
+ *             status: ACTIVE
  *     responses:
  *       200:
  *         description: Role updated
@@ -201,6 +234,8 @@ router.patch('/:id', validate({ body: updateRoleSchema }), updateRole);
  *               status:
  *                 type: string
  *                 enum: [ACTIVE, INACTIVE]
+ *           example:
+ *             status: INACTIVE
  *     responses:
  *       200:
  *         description: Role status updated
@@ -279,9 +314,13 @@ router.get('/:id/permissions', (req, res) => getRoleById(req, res));
  *             properties:
  *               permissionIds:
  *                 type: array
+ *                 minItems: 1
  *                 items:
  *                   type: string
  *                   format: uuid
+ *           example:
+ *             permissionIds:
+ *               - a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Permissions assigned
@@ -314,9 +353,13 @@ router.patch('/:id/permissions', validate({ body: assignPermissionsSchema }), as
  *             properties:
  *               permissionIds:
  *                 type: array
+ *                 minItems: 1
  *                 items:
  *                   type: string
  *                   format: uuid
+ *           example:
+ *             permissionIds:
+ *               - a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Permissions assigned

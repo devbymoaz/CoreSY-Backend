@@ -57,8 +57,83 @@ router.get('/', validate({ query: listReviewsSchema }), getReviews);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - overallRating
+ *             properties:
+ *               bookingId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               orderId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               serviceId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               productId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               driverId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               overallRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               serviceRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               qualityRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               cleanlinessRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               deliveryRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               communicationRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               title:
+ *                 type: string
+ *                 maxLength: 200
+ *                 nullable: true
+ *               description:
+ *                 type: string
+ *                 maxLength: 2000
+ *                 nullable: true
+ *               images:
+ *                 type: array
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
  *           example:
- *             orderId: 550e8400-e29b-41d4-a716-446655440000
+ *             orderId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             overallRating: 5
  *             qualityRating: 5
  *             deliveryRating: 4
@@ -85,6 +160,7 @@ router.post('/', validate({ body: createReviewSchema }), createReview);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Review details
@@ -106,6 +182,61 @@ router.get('/:id', getReviewById);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               overallRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               serviceRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               qualityRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               cleanlinessRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               deliveryRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               communicationRating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *               title:
+ *                 type: string
+ *                 maxLength: 200
+ *                 nullable: true
+ *               description:
+ *                 type: string
+ *                 maxLength: 2000
+ *                 nullable: true
+ *               images:
+ *                 type: array
+ *                 maxItems: 10
+ *                 items:
+ *                   type: string
+ *           example:
+ *             overallRating: 4
+ *             qualityRating: 5
+ *             title: Updated review
+ *             description: Still great, but delivery was slightly late.
  *     responses:
  *       200:
  *         description: Review updated
@@ -127,6 +258,7 @@ router.patch('/:id', validate({ body: updateReviewSchema }), updateReview);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Review deleted
@@ -148,9 +280,17 @@ router.delete('/:id', deleteReview);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
  *             reason: Inappropriate content
  *     responses:
@@ -174,6 +314,7 @@ router.post('/:id/report', validate({ body: reportReviewSchema }), reportReview)
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Like toggled

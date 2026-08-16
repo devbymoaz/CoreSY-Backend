@@ -66,8 +66,20 @@ router.get('/', validate({ query: listReviewsSchema }), getAdminReviews);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reviewId
+ *               - status
+ *             properties:
+ *               reviewId:
+ *                 type: string
+ *                 format: uuid
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING, PUBLISHED, HIDDEN, REPORTED, DELETED]
  *           example:
- *             reviewId: 550e8400-e29b-41d4-a716-446655440000
+ *             reviewId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             status: PUBLISHED
  *     responses:
  *       200:
@@ -90,6 +102,7 @@ router.patch('/status', validate({ body: updateStatusSchema }), updateStatus);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Review deleted

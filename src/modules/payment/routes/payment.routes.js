@@ -73,6 +73,7 @@ router.get('/history', validate({ query: listPaymentsSchema }), getHistory);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Invoice and receipt
@@ -118,9 +119,71 @@ router.get('/', validate({ query: listPaymentsSchema }), getPayments);
  *       required: true
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - paymentMethod
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               bookingId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               orderId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [CASH, WALLET, CREDIT_CARD, DEBIT_CARD, APPLE_PAY, GOOGLE_PAY, STRIPE, PAYPAL]
+ *               paymentType:
+ *                 type: string
+ *                 enum: [BOOKING, ORDER, TOP_UP, OTHER]
+ *               subtotal:
+ *                 type: number
+ *                 minimum: 0
+ *               discount:
+ *                 type: number
+ *                 minimum: 0
+ *               subscriberDiscount:
+ *                 type: number
+ *                 minimum: 0
+ *               platformFee:
+ *                 type: number
+ *                 minimum: 0
+ *               deliveryFee:
+ *                 type: number
+ *                 minimum: 0
+ *               tax:
+ *                 type: number
+ *                 minimum: 0
+ *               grandTotal:
+ *                 type: number
+ *                 minimum: 0
+ *               currency:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 3
+ *               gatewayReference:
+ *                 type: string
+ *                 maxLength: 255
+ *                 nullable: true
  *           example:
- *             orderId: 550e8400-e29b-41d4-a716-446655440000
+ *             orderId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             paymentMethod: WALLET
+ *             paymentType: ORDER
+ *             grandTotal: 99.99
+ *             currency: USD
  *     responses:
  *       201:
  *         description: Payment created
@@ -144,6 +207,7 @@ router.post('/', validate({ body: createPaymentSchema }), createPayment);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     responses:
  *       200:
  *         description: Payment details
@@ -165,9 +229,17 @@ router.get('/:id', getPaymentById);
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: a7f11770-5f94-445d-bd33-307cdba8f600
  *     requestBody:
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 nullable: true
  *           example:
  *             reason: Changed payment method
  *     responses:
