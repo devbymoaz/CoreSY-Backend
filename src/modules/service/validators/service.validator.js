@@ -1,5 +1,6 @@
 const { z } = require('zod');
 const { SERVICE_TYPE, SERVICE_CATEGORY, SERVICE_STATUS } = require('../../../constants');
+const { optionalBooleanQuery } = require('../../../utils/zodHelpers');
 
 const createServiceSchema = z.object({
   name: z.string().min(2).max(255).trim(),
@@ -93,10 +94,7 @@ const listServicesSchema = z.object({
   category: z.nativeEnum(SERVICE_CATEGORY).optional(),
   type: z.nativeEnum(SERVICE_TYPE).optional(),
   status: z.nativeEnum(SERVICE_STATUS).optional(),
-  isFeatured: z
-    .any()
-    .transform((val) => (val === 'true' ? true : val === 'false' ? false : val))
-    .pipe(z.boolean().optional()),
+  isFeatured: optionalBooleanQuery(),
   minPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
   maxPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
   sortBy: z.string().optional(),

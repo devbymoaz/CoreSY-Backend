@@ -5,6 +5,7 @@
 
 const { z } = require('zod');
 const { PRODUCT_STATUS, PRODUCT_UNIT } = require('../../../constants');
+const { optionalBooleanQuery } = require('../../../utils/zodHelpers');
 
 const positivePrice = z
   .union([z.number(), z.string().transform(Number)])
@@ -150,14 +151,8 @@ const listProductsSchema = z.object({
   minPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
   maxPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
   availability: z.enum(['in_stock', 'out_of_stock', 'low_stock']).optional(),
-  isFeatured: z
-    .any()
-    .transform((val) => (val === 'true' ? true : val === 'false' ? false : val))
-    .pipe(z.boolean().optional()),
-  isRecommended: z
-    .any()
-    .transform((val) => (val === 'true' ? true : val === 'false' ? false : val))
-    .pipe(z.boolean().optional()),
+  isFeatured: optionalBooleanQuery(),
+  isRecommended: optionalBooleanQuery(),
   barcode: z.string().optional(),
   sortBy: z
     .enum(['createdAt', 'updatedAt', 'name', 'basePrice', 'stockQuantity', 'status'])
@@ -225,14 +220,8 @@ const listCategoriesSchema = z.object({
   search: z.string().optional(),
   businessId: z.string().uuid().optional(),
   parentId: z.string().uuid().optional().nullable(),
-  isActive: z
-    .any()
-    .transform((val) => (val === 'true' ? true : val === 'false' ? false : val))
-    .pipe(z.boolean().optional()),
-  mainOnly: z
-    .any()
-    .transform((val) => (val === 'true' ? true : val === 'false' ? false : val))
-    .pipe(z.boolean().optional()),
+  isActive: optionalBooleanQuery(),
+  mainOnly: optionalBooleanQuery(),
   sortBy: z.enum(['sortOrder', 'name', 'createdAt']).optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });

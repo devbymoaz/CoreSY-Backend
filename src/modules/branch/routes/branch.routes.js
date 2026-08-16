@@ -79,6 +79,55 @@ router.get('/business/:businessId', getBusinessBranches);
  *     tags: [Branches]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: businessId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, ACTIVE, INACTIVE, SUSPENDED, CLOSED]
+ *       - in: query
+ *         name: governorateId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: isMain
+ *         schema:
+ *           type: boolean
+ *         description: Filter main branches only
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
  *     responses:
  *       200:
  *         description: List of branches
@@ -95,11 +144,100 @@ router.get('/', validate({ query: listBranchesSchema }), getBranches);
  *     tags: [Branches]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - businessId
+ *               - type
+ *               - governorateId
+ *               - city
+ *               - address
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Downtown Branch
+ *               businessId:
+ *                 type: string
+ *                 format: uuid
+ *               type:
+ *                 type: string
+ *                 example: RESTAURANT
+ *               description:
+ *                 type: string
+ *                 nullable: true
+ *               governorateId:
+ *                 type: string
+ *                 format: uuid
+ *               city:
+ *                 type: string
+ *                 example: Lahore
+ *               address:
+ *                 type: string
+ *                 example: Main Street 12
+ *               latitude:
+ *                 type: number
+ *                 nullable: true
+ *               longitude:
+ *                 type: number
+ *                 nullable: true
+ *               googleMapLink:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               contactEmail:
+ *                 type: string
+ *                 format: email
+ *                 nullable: true
+ *               contactPhone:
+ *                 type: string
+ *                 nullable: true
+ *               whatsAppNumber:
+ *                 type: string
+ *                 nullable: true
+ *               workingDays:
+ *                 type: object
+ *                 nullable: true
+ *               openingTime:
+ *                 type: string
+ *                 example: "09:00"
+ *                 nullable: true
+ *               closingTime:
+ *                 type: string
+ *                 example: "22:00"
+ *                 nullable: true
+ *               emergencyContact:
+ *                 type: string
+ *                 nullable: true
+ *               isMain:
+ *                 type: boolean
+ *                 default: false
+ *                 description: Set as the main branch for the business
+ *           example:
+ *             name: Downtown Branch
+ *             businessId: a7f11770-5f94-445d-bd33-307cdba8f600
+ *             type: RESTAURANT
+ *             description: Main city branch
+ *             governorateId: a7f11770-5f94-445d-bd33-307cdba8f600
+ *             city: Lahore
+ *             address: Main Street 12
+ *             contactPhone: "+923001234567"
+ *             isMain: true
  *     responses:
  *       201:
  *         description: Branch created
  *       401:
  *         description: Unauthorized
+ *       404:
+ *         description: Business not found
+ *       409:
+ *         description: Branch name already exists
+ *       422:
+ *         description: Validation failed
  */
 router.post('/', validate({ body: createBranchSchema }), createBranch);
 
@@ -145,6 +283,61 @@ router.get('/:id', getBranchById);
  *           type: string
  *           format: uuid
  *         description: Branch ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *                 nullable: true
+ *               governorateId:
+ *                 type: string
+ *                 format: uuid
+ *               city:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               latitude:
+ *                 type: number
+ *                 nullable: true
+ *               longitude:
+ *                 type: number
+ *                 nullable: true
+ *               googleMapLink:
+ *                 type: string
+ *                 format: uri
+ *                 nullable: true
+ *               contactEmail:
+ *                 type: string
+ *                 format: email
+ *                 nullable: true
+ *               contactPhone:
+ *                 type: string
+ *                 nullable: true
+ *               whatsAppNumber:
+ *                 type: string
+ *                 nullable: true
+ *               workingDays:
+ *                 type: object
+ *                 nullable: true
+ *               openingTime:
+ *                 type: string
+ *                 nullable: true
+ *               closingTime:
+ *                 type: string
+ *                 nullable: true
+ *               emergencyContact:
+ *                 type: string
+ *                 nullable: true
+ *               isMain:
+ *                 type: boolean
  *     responses:
  *       200:
  *         description: Branch updated
@@ -197,6 +390,18 @@ router.delete('/:id', deleteBranch);
  *           type: string
  *           format: uuid
  *         description: Branch ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING, ACTIVE, INACTIVE, SUSPENDED, CLOSED]
  *     responses:
  *       200:
  *         description: Status updated

@@ -1,5 +1,6 @@
 const { z } = require('zod');
 const { BRANCH_STATUS } = require('../../../constants');
+const { optionalBooleanQuery, booleanBody } = require('../../../utils/zodHelpers');
 
 const createBranchSchema = z.object({
   name: z.string().min(2).max(255).trim(),
@@ -19,7 +20,7 @@ const createBranchSchema = z.object({
   openingTime: z.string().optional().nullable(),
   closingTime: z.string().optional().nullable(),
   emergencyContact: z.string().optional().nullable(),
-  isMain: z.boolean().optional().default(false),
+  isMain: booleanBody(false),
 });
 
 const updateBranchSchema = z.object({
@@ -39,6 +40,7 @@ const updateBranchSchema = z.object({
   openingTime: z.string().optional().nullable(),
   closingTime: z.string().optional().nullable(),
   emergencyContact: z.string().optional().nullable(),
+  isMain: optionalBooleanQuery(),
 });
 
 const updateBranchStatusSchema = z.object({
@@ -53,10 +55,7 @@ const listBranchesSchema = z.object({
   status: z.nativeEnum(BRANCH_STATUS).optional(),
   governorateId: z.string().uuid().optional(),
   city: z.string().optional(),
-  isMain: z
-    .any()
-    .transform((val) => (val === 'true' ? true : val === 'false' ? false : val))
-    .pipe(z.boolean().optional()),
+  isMain: optionalBooleanQuery(),
   sortBy: z.string().optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });

@@ -8,6 +8,7 @@ const {
   NOTIFICATION_PRIORITY,
   NOTIFICATION_DELIVERY_STATUS,
 } = require('../../../constants');
+const { optionalBooleanQuery } = require('../../../utils/zodHelpers');
 
 const listNotificationsSchema = z.object({
   page: z.string().transform(Number).pipe(z.number().int().min(1)).optional(),
@@ -18,10 +19,7 @@ const listNotificationsSchema = z.object({
   deliveryStatus: z.nativeEnum(NOTIFICATION_DELIVERY_STATUS).optional(),
   module: z.string().optional(),
   type: z.string().optional(),
-  isRead: z
-    .any()
-    .transform((val) => (val === 'true' ? true : val === 'false' ? false : val))
-    .pipe(z.boolean().optional()),
+  isRead: optionalBooleanQuery(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   sortBy: z.enum(['createdAt', 'priority', 'deliveryStatus']).optional(),

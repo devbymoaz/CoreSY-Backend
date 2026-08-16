@@ -181,6 +181,15 @@ class BranchService {
       }
     }
 
+    if (data.isMain === true) {
+      const siblings = await branchRepository.findByBusinessId(branch.businessId);
+      for (const sibling of siblings.branches) {
+        if (sibling.isMain && sibling.id !== id) {
+          await branchRepository.update(sibling.id, { isMain: false });
+        }
+      }
+    }
+
     // Update branch
     const updatedBranch = await branchRepository.update(id, {
       ...data,
