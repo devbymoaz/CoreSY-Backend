@@ -9,20 +9,19 @@ const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, ROLES } = require('../../
 
 class CashierService {
   async generateEmployeeId() {
-    const { cashiers } = await cashierRepository.findAll({
-      limit: 1,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    });
-    let nextNumber = 1;
-    if (cashiers.length > 0 && cashiers[0].employeeId) {
-      const latestCode = cashiers[0].employeeId;
-      const match = latestCode.match(/^CSH-(\d+)$/);
+    const prefix = 'CSH';
+    const existingIds = await cashierRepository.findEmployeeIdsByPrefix(prefix);
+
+    let maxNumber = 0;
+    const codePattern = new RegExp(`^${prefix}-(\\d+)$`);
+    for (const employeeId of existingIds) {
+      const match = employeeId.match(codePattern);
       if (match) {
-        nextNumber = parseInt(match[1], 10) + 1;
+        maxNumber = Math.max(maxNumber, parseInt(match[1], 10));
       }
     }
-    return `CSH-${String(nextNumber).padStart(6, '0')}`;
+
+    return `${prefix}-${String(maxNumber + 1).padStart(6, '0')}`;
   }
 
   async createCashier(data, userId, ipAddress, userAgent, user) {
@@ -50,12 +49,9 @@ class CashierService {
       throw new AppError(ERROR_MESSAGES.CASHIER_PHONE_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
     }
 
-    const employeeId = await this.generateEmployeeId();
     const hashedPassword = await hashPassword(data.password);
-
     const cashierData = {
       fullName: data.fullName,
-      employeeId,
       email: data.email,
       phoneNumber: data.phoneNumber,
       password: hashedPassword,
@@ -68,7 +64,35 @@ class CashierService {
       cashierData.joiningDate = new Date(data.joiningDate);
     }
 
-    const cashier = await cashierRepository.create(cashierData);
+    let cashier;
+    let lastError;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const employeeId = await this.generateEmployeeId();
+      try {
+        cashier = await cashierRepository.create({
+          ...cashierData,
+          employeeId,
+        });
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+        const target = error.meta?.target;
+        const targetText = Array.isArray(target) ? target.join(',') : String(target || '');
+        const isEmployeeIdConflict =
+          error.code === 'P2002' && targetText.toLowerCase().includes('employee_id');
+        if (!isEmployeeIdConflict) {
+          throw error;
+        }
+      }
+    }
+
+    if (!cashier) {
+      throw (
+        lastError ||
+        new AppError(ERROR_MESSAGES.CASHIER_EMPLOYEE_ID_ALREADY_EXISTS, HTTP_STATUS.CONFLICT)
+      );
+    }
 
     await auditLogService.create({
       userId,

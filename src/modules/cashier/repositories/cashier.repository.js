@@ -28,6 +28,19 @@ class CashierRepository {
     });
   }
 
+  /**
+   * All employee IDs for a prefix (includes soft-deleted) so unique constraint stays safe.
+   */
+  async findEmployeeIdsByPrefix(prefix = 'CSH') {
+    const cashiers = await prisma.cashier.findMany({
+      where: {
+        employeeId: { startsWith: `${prefix}-` },
+      },
+      select: { employeeId: true },
+    });
+    return cashiers.map((cashier) => cashier.employeeId);
+  }
+
   async findByEmail(email) {
     return prisma.cashier.findUnique({
       where: { email, deletedAt: null },
