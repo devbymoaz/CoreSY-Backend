@@ -55,6 +55,19 @@ class CashierRepository {
     });
   }
 
+  async findByEmailOrPhone(identifier) {
+    if (identifier.includes('@')) {
+      return this.findByEmail(identifier.toLowerCase());
+    }
+
+    const byPhone = await this.findByPhoneNumber(identifier);
+    if (byPhone) {
+      return byPhone;
+    }
+
+    return this.findByEmployeeId(identifier);
+  }
+
   async findAll({
     page = PAGINATION.DEFAULT_PAGE,
     limit = PAGINATION.DEFAULT_LIMIT,

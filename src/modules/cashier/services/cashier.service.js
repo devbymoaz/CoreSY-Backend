@@ -5,9 +5,26 @@ const auditLogService = require('../../rbac/services/audit-log.service');
 const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
 const { hashPassword, comparePassword } = require('../../../utils/password');
-const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, ROLES } = require('../../../constants');
+const { generateAccessToken, generateRefreshToken } = require('../../../utils/jwt');
+const config = require('../../../config');
+const {
+  HTTP_STATUS,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  ROLES,
+  CASHIER_STATUS,
+} = require('../../../constants');
 
 class CashierService {
+  _toPublicCashier(cashier) {
+    if (!cashier) {
+      return cashier;
+    }
+    const safeCashier = { ...cashier };
+    delete safeCashier.password;
+    return safeCashier;
+  }
+
   async generateEmployeeId() {
     const prefix = 'CSH';
     const existingIds = await cashierRepository.findEmployeeIdsByPrefix(prefix);
@@ -58,6 +75,7 @@ class CashierService {
       businessId: data.businessId,
       branchId: data.branchId,
       createdBy: userId,
+      status: CASHIER_STATUS.ACTIVE,
     };
 
     if (data.joiningDate) {
@@ -103,7 +121,58 @@ class CashierService {
       payload: { cashierId: cashier.id, employeeId: cashier.employeeId },
     });
 
-    return { message: SUCCESS_MESSAGES.CASHIER_CREATED, cashier };
+    return { message: SUCCESS_MESSAGES.CASHIER_CREATED, cashier: this._toPublicCashier(cashier) };
+  }
+
+  async login(data) {
+    const identifier = data.identifier.includes('@')
+      ? data.identifier.toLowerCase().trim()
+      : data.identifier.trim();
+
+    const cashier = await cashierRepository.findByEmailOrPhone(identifier);
+    if (!cashier) {
+      throw new AppError(ERROR_MESSAGES.CASHIER_INVALID_CREDENTIALS, HTTP_STATUS.UNAUTHORIZED);
+    }
+
+    const isValid = await comparePassword(data.password, cashier.password);
+    if (!isValid) {
+      throw new AppError(ERROR_MESSAGES.CASHIER_INVALID_CREDENTIALS, HTTP_STATUS.UNAUTHORIZED);
+    }
+
+    if (cashier.status === CASHIER_STATUS.SUSPENDED) {
+      throw new AppError(ERROR_MESSAGES.CASHIER_SUSPENDED, HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (cashier.status !== CASHIER_STATUS.ACTIVE && cashier.status !== CASHIER_STATUS.PENDING) {
+      throw new AppError(ERROR_MESSAGES.CASHIER_NOT_ACTIVE, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const payload = {
+      sub: cashier.id,
+      email: cashier.email,
+      role: ROLES.CASHIER,
+      type: 'cashier',
+      employeeId: cashier.employeeId,
+      businessId: cashier.businessId,
+      branchId: cashier.branchId,
+    };
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken({
+      sub: cashier.id,
+      type: 'cashier_refresh',
+    });
+
+    await cashierRepository.update(cashier.id, { lastLogin: new Date() });
+    const safeCashier = this._toPublicCashier(await cashierRepository.findById(cashier.id));
+
+    return {
+      message: SUCCESS_MESSAGES.CASHIER_LOGIN_SUCCESS,
+      accessToken,
+      refreshToken,
+      expiresIn: config.jwt.expiresIn,
+      cashier: safeCashier,
+    };
   }
 
   async getCashiers(query, _user) {
@@ -268,7 +337,7 @@ class CashierService {
     if (!cashier) {
       throw new AppError(ERROR_MESSAGES.CASHIER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
-    return cashier;
+    return this._toPublicCashier(cashier);
   }
 
   async updateCashierProfile(id, data, userId, ipAddress, userAgent) {
@@ -295,7 +364,10 @@ class CashierService {
       payload: { cashierId: id },
     });
 
-    return { message: SUCCESS_MESSAGES.PROFILE_UPDATED, cashier: updatedCashier };
+    return {
+      message: SUCCESS_MESSAGES.PROFILE_UPDATED,
+      cashier: this._toPublicCashier(updatedCashier),
+    };
   }
 
   async changeCashierPassword(id, currentPassword, newPassword, userId, ipAddress, userAgent) {

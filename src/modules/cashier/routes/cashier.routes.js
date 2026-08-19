@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const authenticate = require('../../../middlewares/auth.middleware');
+const cashierAuthenticate = require('../middlewares/cashier-auth.middleware');
 const validate = require('../../../middlewares/zod-validate.middleware');
 const { authorizeRoles } = require('../../rbac/middlewares/rbac.middleware');
 const {
+  login,
   createCashier,
   getCashiers,
   getCashierById,
@@ -27,6 +29,7 @@ const {
   changeCashierPasswordSchema,
   listCashiersSchema,
   updateCashierProfileSchema,
+  loginCashierSchema,
 } = require('../validators/cashier.validator');
 const { ROLES } = require('../../../constants');
 const {
@@ -36,7 +39,44 @@ const {
   validateUploadedFileSignatures,
 } = require('../../../middlewares/upload.middleware');
 
-router.use(authenticate);
+/**
+ * @swagger
+ * /cashiers/login:
+ *   post:
+ *     summary: Cashier login
+ *     tags: [Cashiers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [password]
+ *             properties:
+ *               identifier:
+ *                 type: string
+ *                 minLength: 3
+ *                 description: Email, phone number, or employee ID
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phoneNumber:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 minLength: 1
+ *           example:
+ *             identifier: ayancashi@gmail.com
+ *             password: CashierPass1!
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ *       403:
+ *         description: Account not active
+ */
+router.post('/login', validate({ body: loginCashierSchema }), login);
 
 /**
  * @swagger
@@ -52,7 +92,7 @@ router.use(authenticate);
  *       401:
  *         description: Unauthorized
  */
-router.get('/profile', getCashierProfile);
+router.get('/profile', cashierAuthenticate, getCashierProfile);
 
 /**
  * @swagger
@@ -84,7 +124,12 @@ router.get('/profile', getCashierProfile);
  *       401:
  *         description: Unauthorized
  */
-router.patch('/profile', validate({ body: updateCashierProfileSchema }), updateCashierProfile);
+router.patch(
+  '/profile',
+  cashierAuthenticate,
+  validate({ body: updateCashierProfileSchema }),
+  updateCashierProfile,
+);
 
 /**
  * @swagger
@@ -123,9 +168,12 @@ router.patch('/profile', validate({ body: updateCashierProfileSchema }), updateC
  */
 router.patch(
   '/change-password',
+  cashierAuthenticate,
   validate({ body: changeCashierPasswordSchema }),
   changeCashierPassword,
 );
+
+router.use(authenticate);
 
 /**
  * @swagger

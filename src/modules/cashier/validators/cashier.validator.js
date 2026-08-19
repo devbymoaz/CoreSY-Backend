@@ -67,6 +67,22 @@ const updateCashierProfileSchema = z.object({
   phoneNumber: z.string().min(10).max(20).trim().optional(),
 });
 
+const loginCashierSchema = z
+  .object({
+    identifier: z.string().min(3).trim().optional(),
+    email: z.string().email().trim().toLowerCase().optional(),
+    phoneNumber: z.string().min(8).max(20).trim().optional(),
+    password: z.string().min(1),
+  })
+  .refine((data) => data.identifier || data.email || data.phoneNumber, {
+    message: 'Email, phone number, or employee ID is required',
+    path: ['identifier'],
+  })
+  .transform((data) => ({
+    identifier: data.identifier || data.email || data.phoneNumber,
+    password: data.password,
+  }));
+
 module.exports = {
   createCashierSchema,
   updateCashierSchema,
@@ -75,4 +91,5 @@ module.exports = {
   changeCashierPasswordSchema,
   listCashiersSchema,
   updateCashierProfileSchema,
+  loginCashierSchema,
 };

@@ -6,6 +6,11 @@ const {
   removeUploadedFile,
 } = require('../../../middlewares/upload.middleware');
 
+const login = asyncHandler(async (req, res) => {
+  const result = await cashierService.login(req.body);
+  return sendSuccess(res, result);
+});
+
 const createCashier = asyncHandler(async (req, res) => {
   const result = await cashierService.createCashier(
     req.body,
@@ -87,15 +92,15 @@ const resetCashierPassword = asyncHandler(async (req, res) => {
 });
 
 const getCashierProfile = asyncHandler(async (req, res) => {
-  const cashier = await cashierService.getCashierProfile(req.user.id);
+  const cashier = await cashierService.getCashierProfile(req.cashier.id);
   return sendSuccess(res, { cashier });
 });
 
 const updateCashierProfile = asyncHandler(async (req, res) => {
   const result = await cashierService.updateCashierProfile(
-    req.user.id,
+    req.cashier.id,
     req.body,
-    req.user.id,
+    req.cashier.id,
     req.ip,
     req.headers['user-agent'],
   );
@@ -104,10 +109,10 @@ const updateCashierProfile = asyncHandler(async (req, res) => {
 
 const changeCashierPassword = asyncHandler(async (req, res) => {
   const result = await cashierService.changeCashierPassword(
-    req.user.id,
+    req.cashier.id,
     req.body.currentPassword,
     req.body.newPassword,
-    req.user.id,
+    req.cashier.id,
     req.ip,
     req.headers['user-agent'],
   );
@@ -137,6 +142,7 @@ const uploadProfileImage = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  login,
   createCashier,
   getCashiers,
   getCashierById,

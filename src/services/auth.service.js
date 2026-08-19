@@ -10,6 +10,8 @@ const roleRepository = require('../repositories/role.repository');
 const refreshTokenRepository = require('../repositories/refreshToken.repository');
 const businessRepository = require('../modules/business/repositories/business.repository');
 const redisService = require('./redis.service');
+const emailService = require('./email.service');
+const { OTP_PURPOSES } = emailService;
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { generateOtp } = require('../utils/otp');
@@ -115,9 +117,7 @@ class AuthService {
     // Generate and store email verification OTP in Redis
     const otp = generateOtp();
     await redisService.storeEmailOtp(user.id, otp);
-
-    // In production, send OTP via email service. Log OTP for testing when email is not configured.
-    logger.info(`Email verification OTP for ${email}: ${otp}`);
+    await emailService.sendOtp(email, otp, OTP_PURPOSES.EMAIL_VERIFICATION);
 
     return {
       message: SUCCESS_MESSAGES.REGISTRATION_SUCCESS,
@@ -235,10 +235,7 @@ class AuthService {
 
     const otp = generateOtp();
     await redisService.storeEmailOtp(user.id, otp);
-
-    if (config.env === 'development') {
-      logger.info(`Resent email verification OTP for ${email}: ${otp}`);
-    }
+    await emailService.sendOtp(email, otp, OTP_PURPOSES.EMAIL_VERIFICATION);
 
     return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT };
   }
@@ -373,10 +370,7 @@ class AuthService {
     if (user) {
       const otp = generateOtp();
       await redisService.storePasswordResetOtp(user.id, otp);
-
-      if (config.env === 'development') {
-        logger.info(`Password reset OTP for ${email}: ${otp}`);
-      }
+      await emailService.sendOtp(email, otp, OTP_PURPOSES.PASSWORD_RESET);
     }
 
     // Always return same message to prevent email enumeration
