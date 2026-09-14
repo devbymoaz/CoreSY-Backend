@@ -7,7 +7,7 @@ const app = require('./app');
 const config = require('./config');
 const logger = require('./utils/logger');
 const { connectDatabase, disconnectDatabase } = require('./config/database');
-const { disconnectRedis } = require('./config/redis');
+const { connectRedis, disconnectRedis } = require('./config/redis');
 
 let server = null;
 
@@ -24,6 +24,15 @@ const startServer = async () => {
       logger.info('Database connected successfully');
     } catch (dbError) {
       logger.error('Database connection failed:', dbError.message);
+    }
+
+    try {
+      await connectRedis();
+      if (config.redis.url || config.redis.host) {
+        logger.info('Redis connection initialized');
+      }
+    } catch (redisError) {
+      logger.warn('Redis connection failed (continuing without Redis):', redisError.message);
     }
 
     // Start HTTP server immediately - super simple and reliable
