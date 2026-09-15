@@ -568,8 +568,8 @@ const ERROR_MESSAGES = {
 
 const SUCCESS_MESSAGES = {
   HEALTH_CHECK: 'CoreSY API is running',
-  REGISTRATION_SUCCESS: 'Registration successful. Please verify your email.',
-  EMAIL_VERIFIED: 'Email verified successfully. You can now log in.',
+  REGISTRATION_SUCCESS: 'Registration started. Please verify your email to complete signup.',
+  EMAIL_VERIFIED: 'Email verified successfully. Your account is now registered. You can log in.',
   VERIFICATION_EMAIL_SENT: 'Verification code sent to your email.',
   LOGIN_SUCCESS: 'Login successful.',
   LOGOUT_SUCCESS: 'Logged out successfully.',

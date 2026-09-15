@@ -545,6 +545,26 @@ model User {
   @@map("users")
 }
 
+// Temporary registration data — real User is created only after OTP verification
+model PendingRegistration {
+  id                 String   @id @default(uuid())
+  fullName           String   @map("full_name")
+  email              String   @unique
+  phoneNumber        String   @unique @map("phone_number")
+  smartAssistantName String?  @map("smart_assistant_name")
+  password           String
+  governorateId      String   @map("governorate_id")
+  acceptTerms        Boolean  @default(true) @map("accept_terms")
+  expiresAt          DateTime @map("expires_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([expiresAt])
+  @@map("pending_registrations")
+}
+
 // Secure refresh token storage with rotation support
 model RefreshToken {
   id        String   @id @default(uuid())

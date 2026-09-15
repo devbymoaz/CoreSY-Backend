@@ -32,8 +32,8 @@ const router = express.Router();
  * @swagger
  * /auth/register:
  *   post:
- *     summary: Register a new user account
- *     description: Creates a new CoreSY account shared across Pass, Care, and Go. Requires email verification.
+ *     summary: Start user registration (temporary)
+ *     description: Stores signup data temporarily and emails an OTP. The real user account is created only after POST /auth/verify-email succeeds.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -63,11 +63,14 @@ const router = express.Router();
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: Registration successful. Please verify your email.
+ *                   example: Registration started. Please verify your email to complete signup.
  *                 data:
  *                   type: object
  *                   properties:
  *                     requiresEmailVerification:
+ *                       type: boolean
+ *                       example: true
+ *                     isTemporary:
  *                       type: boolean
  *                       example: true
  *                     user:
@@ -83,8 +86,8 @@ router.post('/register', validate(validateRegister), authController.register);
  * @swagger
  * /auth/verify-email:
  *   post:
- *     summary: Verify email address
- *     description: Verifies user email using OTP sent during registration
+ *     summary: Verify email and complete registration
+ *     description: Verifies OTP from signup. Creates the real user account only after successful verification.
  *     tags: [Auth]
  *     requestBody:
  *       required: true

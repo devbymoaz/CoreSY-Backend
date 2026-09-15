@@ -117,6 +117,15 @@ class UserRepository {
       include: USER_INCLUDE,
     });
   }
+
+  /**
+   * Hard-delete an unverified signup stub so registration can move to pending_registrations.
+   * @param {string} id - User UUID
+   * @returns {Promise<Object>}
+   */
+  async deleteById(id) {
+    return prisma.user.delete({ where: { id } });
+  }
 }
 
 module.exports = new UserRepository();

@@ -4,6 +4,7 @@
  */
 
 const userRepository = require('../repositories/user.repository');
+const pendingRegistrationRepository = require('../repositories/pending-registration.repository');
 const { removePublicUpload } = require('../middlewares/upload.middleware');
 const governorateRepository = require('../repositories/governorate.repository');
 const roleRepository = require('../repositories/role.repository');
@@ -42,12 +43,9 @@ class AuthService {
    * @returns {Promise<Object>}
    */
   async register(data) {
-    // Try real registration first
     try {
       return await this._registerReal(data);
     } catch (error) {
-      // Never report an in-memory registration as successful in production,
-      // and never hide expected validation/business errors.
       if (config.env === 'production' || error instanceof AppError) {
         throw error;
       }
@@ -58,7 +56,8 @@ class AuthService {
   }
 
   /**
-   * Real registration with database
+   * Start registration: store data temporarily until email OTP is verified.
+   * A real User row is created only in verifyEmail.
    */
   async _registerReal(data) {
     const {
@@ -71,7 +70,6 @@ class AuthService {
       acceptTerms,
     } = data;
 
-    // Validate governorate exists (supports UUID or static-damascus style IDs)
     const governorate = await governorateRepository.resolveByIdOrStatic(governorateId);
     if (!governorate || !governorate.isActive) {
       throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
@@ -79,50 +77,52 @@ class AuthService {
 
     const resolvedGovernorateId = governorate.id;
 
-    // Check uniqueness
-    if (await userRepository.emailExists(email)) {
-      throw new AppError(ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
+    const existingUser = await userRepository.findByEmail(email);
+    if (existingUser) {
+      if (existingUser.emailVerified || existingUser.status === USER_STATUS.ACTIVE) {
+        throw new AppError(ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
+      }
+      await userRepository.deleteById(existingUser.id);
     }
 
-    if (await userRepository.phoneExists(phoneNumber)) {
-      throw new AppError(ERROR_MESSAGES.PHONE_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
+    const phoneOwner = await userRepository.findByPhone(phoneNumber);
+    if (phoneOwner) {
+      if (phoneOwner.emailVerified || phoneOwner.status === USER_STATUS.ACTIVE) {
+        throw new AppError(ERROR_MESSAGES.PHONE_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
+      }
+      await userRepository.deleteById(phoneOwner.id);
     }
 
-    // Get default USER role
-    const userRole = await roleRepository.findByName(ROLES.USER);
-    if (!userRole) {
-      throw new AppError(ERROR_MESSAGES.ROLE_NOT_FOUND, HTTP_STATUS.INTERNAL_SERVER_ERROR, false);
+    const pendingWithPhone = await pendingRegistrationRepository.findByPhone(phoneNumber);
+    if (pendingWithPhone && pendingWithPhone.email !== email) {
+      await pendingRegistrationRepository.deleteById(pendingWithPhone.id);
     }
 
-    // Generate Pass ID and hash password
-    const passId = await governorateRepository.generatePassId(resolvedGovernorateId);
+    await pendingRegistrationRepository.deleteExpired();
+
     const hashedPassword = await hashPassword(password);
+    const expiresAt = new Date(Date.now() + config.auth.otpExpirySeconds * 1000);
 
-    const user = await userRepository.create({
-      passId,
+    const pending = await pendingRegistrationRepository.upsertByEmail({
       fullName,
       email,
       phoneNumber,
       smartAssistantName,
       password: hashedPassword,
-      emailVerified: false,
-      phoneVerified: false,
-      status: USER_STATUS.PENDING_VERIFICATION,
-      subscription: SUBSCRIPTION_TIERS.FREE,
-      acceptTerms,
       governorateId: resolvedGovernorateId,
-      roleId: userRole.id,
+      acceptTerms,
+      expiresAt,
     });
 
-    // Generate and store email verification OTP in Redis
     const otp = generateOtp();
-    await redisService.storeEmailOtp(user.id, otp);
+    await redisService.storeEmailOtp(pending.id, otp);
     await emailService.sendOtp(email, otp, OTP_PURPOSES.EMAIL_VERIFICATION);
 
     return {
       message: SUCCESS_MESSAGES.REGISTRATION_SUCCESS,
-      user: toUserResponse(user),
+      user: this._toPendingUserResponse(pending, governorate),
       requiresEmailVerification: true,
+      isTemporary: true,
     };
   }
 
@@ -132,22 +132,18 @@ class AuthService {
   async _registerDemo(data) {
     const { fullName, email, phoneNumber, smartAssistantName, governorateId } = data;
 
-    // Check if user already exists in demo store
     if (DEMO_USERS.has(email)) {
       throw new AppError(ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
     }
 
-    // Get governorate from static data
     const governorate = SYRIAN_GOVERNORATES.find((g) => g.id === governorateId);
     if (!governorate) {
       throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
     }
 
-    // Generate a simple demo user ID
     const userId = `demo-user-${++DEMO_USER_ID_COUNTER}`;
     const passId = `${governorate.code}-${String(DEMO_USER_ID_COUNTER).padStart(6, '0')}`;
 
-    // Create demo user
     const demoUser = {
       id: userId,
       passId,
@@ -165,10 +161,8 @@ class AuthService {
       updatedAt: new Date(),
     };
 
-    // Store in demo store
     DEMO_USERS.set(email, demoUser);
 
-    // Generate OTP (just log it for demo)
     const otp = generateOtp();
     logger.info(`DEMO MODE: Email verification OTP for ${email}: ${otp}`);
 
@@ -176,18 +170,42 @@ class AuthService {
       message: 'Registration successful (demo mode - no database!)',
       user: demoUser,
       requiresEmailVerification: true,
+      isTemporary: true,
       demoMode: true,
     };
   }
 
   /**
-   * Verify user email with OTP.
+   * Verify email OTP and create the real user account.
    * @param {Object} data - Email and OTP
    * @returns {Promise<Object>}
    */
   async verifyEmail(data) {
     const { email, otp } = data;
 
+    const pending = await pendingRegistrationRepository.findByEmail(email);
+    if (pending) {
+      if (pending.expiresAt < new Date()) {
+        await pendingRegistrationRepository.deleteById(pending.id);
+        throw new AppError(ERROR_MESSAGES.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
+      }
+
+      const isValid = await redisService.verifyEmailOtp(pending.id, otp);
+      if (!isValid) {
+        throw new AppError(ERROR_MESSAGES.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
+      }
+
+      const user = await this._createUserFromPending(pending);
+      await pendingRegistrationRepository.deleteById(pending.id);
+
+      return {
+        message: SUCCESS_MESSAGES.EMAIL_VERIFIED,
+        user: toUserResponse(user),
+        isTemporary: false,
+      };
+    }
+
+    // Legacy path: older signups already stored in users as PENDING_VERIFICATION
     const user = await userRepository.findByEmail(email);
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
@@ -223,13 +241,33 @@ class AuthService {
 
     await redisService.checkResendRateLimit(email);
 
-    const user = await userRepository.findByEmail(email);
-    if (!user) {
-      // Return success to prevent email enumeration
+    const pending = await pendingRegistrationRepository.findByEmail(email);
+    if (pending) {
+      if (pending.expiresAt < new Date()) {
+        await pendingRegistrationRepository.deleteById(pending.id);
+        return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT };
+      }
+
+      const expiresAt = new Date(Date.now() + config.auth.otpExpirySeconds * 1000);
+      await pendingRegistrationRepository.upsertByEmail({
+        fullName: pending.fullName,
+        email: pending.email,
+        phoneNumber: pending.phoneNumber,
+        smartAssistantName: pending.smartAssistantName,
+        password: pending.password,
+        governorateId: pending.governorateId,
+        acceptTerms: pending.acceptTerms,
+        expiresAt,
+      });
+
+      const otp = generateOtp();
+      await redisService.storeEmailOtp(pending.id, otp);
+      await emailService.sendOtp(email, otp, OTP_PURPOSES.EMAIL_VERIFICATION);
       return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT };
     }
 
-    if (user.emailVerified) {
+    const user = await userRepository.findByEmail(email);
+    if (!user || user.emailVerified) {
       return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT };
     }
 
@@ -250,9 +288,6 @@ class AuthService {
 
     let user = await userRepository.findByEmailOrPhone(identifier);
 
-    // A business email may be used as an alias for its linked owner account.
-    // The ownerEmail match prevents legacy businesses linked to an admin from
-    // accidentally authenticating as that admin.
     if (!user && identifier.includes('@')) {
       const business = await businessRepository.findByBusinessEmail(identifier);
       if (
@@ -264,6 +299,12 @@ class AuthService {
     }
 
     if (!user) {
+      if (identifier.includes('@')) {
+        const pending = await pendingRegistrationRepository.findByEmail(identifier);
+        if (pending) {
+          throw new AppError(ERROR_MESSAGES.EMAIL_NOT_VERIFIED, HTTP_STATUS.FORBIDDEN);
+        }
+      }
       throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, HTTP_STATUS.UNAUTHORIZED);
     }
 
@@ -292,11 +333,6 @@ class AuthService {
     };
   }
 
-  /**
-   * Refresh access token using refresh token with rotation.
-   * @param {Object} data - Refresh token
-   * @returns {Promise<Object>}
-   */
   async refreshToken(data) {
     const { refreshToken } = data;
 
@@ -318,12 +354,10 @@ class AuthService {
 
     const tokenHash = hashToken(refreshToken);
     if (storedToken.tokenHash !== tokenHash) {
-      // Possible token reuse attack - revoke all tokens for user
       await refreshTokenRepository.revokeAllForUser(storedToken.userId);
       throw new AppError(ERROR_MESSAGES.INVALID_REFRESH_TOKEN, HTTP_STATUS.UNAUTHORIZED);
     }
 
-    // Rotate: revoke old token
     await refreshTokenRepository.revokeByJti(decoded.jti);
 
     const user = storedToken.user;
@@ -339,11 +373,6 @@ class AuthService {
     };
   }
 
-  /**
-   * Logout user by revoking refresh token.
-   * @param {Object} data - Refresh token
-   * @returns {Promise<Object>}
-   */
   async logout(data) {
     const { refreshToken } = data;
 
@@ -357,11 +386,6 @@ class AuthService {
     return { message: SUCCESS_MESSAGES.LOGOUT_SUCCESS };
   }
 
-  /**
-   * Initiate password reset by sending OTP to email.
-   * @param {Object} data - Email
-   * @returns {Promise<Object>}
-   */
   async forgotPassword(data) {
     const { email } = data;
 
@@ -373,15 +397,9 @@ class AuthService {
       await emailService.sendOtp(email, otp, OTP_PURPOSES.PASSWORD_RESET);
     }
 
-    // Always return same message to prevent email enumeration
     return { message: SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT };
   }
 
-  /**
-   * Reset password using OTP.
-   * @param {Object} data - Email, OTP, and new password
-   * @returns {Promise<Object>}
-   */
   async resetPassword(data) {
     const { email, otp, newPassword } = data;
 
@@ -397,19 +415,11 @@ class AuthService {
 
     const hashedPassword = await hashPassword(newPassword);
     await userRepository.update(user.id, { password: hashedPassword });
-
-    // Revoke all refresh tokens on password reset
     await refreshTokenRepository.revokeAllForUser(user.id);
 
     return { message: SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS };
   }
 
-  /**
-   * Change password for authenticated user.
-   * @param {string} userId - Authenticated user ID
-   * @param {Object} data - Current and new password
-   * @returns {Promise<Object>}
-   */
   async changePassword(userId, data) {
     const { currentPassword, newPassword } = data;
 
@@ -425,18 +435,11 @@ class AuthService {
 
     const hashedPassword = await hashPassword(newPassword);
     await userRepository.update(userId, { password: hashedPassword });
-
-    // Revoke all refresh tokens on password change
     await refreshTokenRepository.revokeAllForUser(userId);
 
     return { message: SUCCESS_MESSAGES.PASSWORD_CHANGED };
   }
 
-  /**
-   * Get authenticated user profile.
-   * @param {string} userId - User UUID
-   * @returns {Promise<Object>}
-   */
   async getProfile(userId) {
     const user = await userRepository.findById(userId);
     if (!user) {
@@ -464,12 +467,6 @@ class AuthService {
     };
   }
 
-  /**
-   * Update authenticated user profile.
-   * @param {string} userId - User UUID
-   * @param {Object} data - Profile fields to update
-   * @returns {Promise<Object>}
-   */
   async updateProfile(userId, data) {
     if (data.phoneNumber) {
       const existingPhone = await userRepository.findByPhone(data.phoneNumber);
@@ -487,11 +484,66 @@ class AuthService {
   }
 
   /**
-   * Generate access and refresh token pair with secure storage.
-   * @param {Object} user - User record with role
-   * @returns {Promise<{accessToken: string, refreshToken: string, expiresIn: string}>}
+   * Create ACTIVE verified user from a pending registration.
    * @private
    */
+  async _createUserFromPending(pending) {
+    const userRole = await roleRepository.findByName(ROLES.USER);
+    if (!userRole) {
+      throw new AppError(ERROR_MESSAGES.ROLE_NOT_FOUND, HTTP_STATUS.INTERNAL_SERVER_ERROR, false);
+    }
+
+    const passId = await governorateRepository.generatePassId(pending.governorateId);
+
+    return userRepository.create({
+      passId,
+      fullName: pending.fullName,
+      email: pending.email,
+      phoneNumber: pending.phoneNumber,
+      smartAssistantName: pending.smartAssistantName,
+      password: pending.password,
+      emailVerified: true,
+      phoneVerified: false,
+      status: USER_STATUS.ACTIVE,
+      subscription: SUBSCRIPTION_TIERS.FREE,
+      acceptTerms: pending.acceptTerms,
+      governorateId: pending.governorateId,
+      roleId: userRole.id,
+    });
+  }
+
+  /**
+   * Shape temporary pending signup for Flutter (not a real users row yet).
+   * @private
+   */
+  _toPendingUserResponse(pending, governorate) {
+    return {
+      id: pending.id,
+      passId: null,
+      fullName: pending.fullName,
+      email: pending.email,
+      phoneNumber: pending.phoneNumber,
+      smartAssistantName: pending.smartAssistantName,
+      profileImage: null,
+      emailVerified: false,
+      phoneVerified: false,
+      status: USER_STATUS.PENDING_VERIFICATION,
+      subscription: SUBSCRIPTION_TIERS.FREE,
+      governorate: governorate
+        ? {
+            id: governorate.id,
+            name: governorate.name,
+            nameAr: governorate.nameAr,
+            code: governorate.code,
+          }
+        : null,
+      role: null,
+      roles: [],
+      createdAt: pending.createdAt,
+      updatedAt: pending.updatedAt,
+    };
+  }
+
   async _generateTokenPair(user) {
     const accessPayload = {
       sub: user.id,
@@ -526,12 +578,6 @@ class AuthService {
     };
   }
 
-  /**
-   * Parse JWT expiry string to Date.
-   * @param {string} expiresIn - Expiry string (e.g., 30d, 7d, 24h)
-   * @returns {Date}
-   * @private
-   */
   _parseTokenExpiry(expiresIn) {
     const match = String(expiresIn).match(/^(\d+)([dhms])$/);
     if (!match) {
