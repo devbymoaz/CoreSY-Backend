@@ -446,6 +446,7 @@ const SUBSCRIPTION_TIERS = {
 const REDIS_KEYS = {
   EMAIL_OTP: (userId) => `email_otp:${userId}`,
   PASSWORD_RESET_OTP: (userId) => `password_reset_otp:${userId}`,
+  PASSWORD_RESET_TOKEN: (userId) => `password_reset_token:${userId}`,
   RESEND_RATE_LIMIT: (email) => `resend_rate:${email}`,
 };
 
@@ -469,6 +470,7 @@ const ERROR_MESSAGES = {
   ACCOUNT_SUSPENDED: 'Your account has been suspended.',
   GOVERNORATE_NOT_FOUND: 'The selected governorate does not exist.',
   INVALID_OTP: 'Invalid or expired verification code.',
+  INVALID_RESET_TOKEN: 'Invalid or expired password reset token. Please verify OTP again.',
   OTP_EXPIRED: 'Verification code has expired. Please request a new one.',
   PASSWORD_MISMATCH: 'Passwords do not match.',
   WEAK_PASSWORD:
@@ -586,6 +588,7 @@ const SUCCESS_MESSAGES = {
   LOGOUT_SUCCESS: 'Logged out successfully.',
   TOKEN_REFRESHED: 'Token refreshed successfully.',
   PASSWORD_RESET_EMAIL_SENT: 'If the email exists, a reset code has been sent.',
+  PASSWORD_RESET_OTP_VERIFIED: 'OTP verified successfully. You can now reset your password.',
   PASSWORD_RESET_SUCCESS: 'Password reset successfully.',
   PASSWORD_CHANGED: 'Password changed successfully.',
   PROFILE_UPDATED: 'Profile updated successfully.',

@@ -225,7 +225,35 @@ const validateForgotPassword = (data) => {
 };
 
 /**
+ * Validate password-reset OTP verification.
+ * @param {Object} data - Request body
+ * @returns {{ error: Object|null, value: Object }}
+ */
+const validateVerifyPasswordResetOtp = (data) => {
+  const errors = [];
+
+  if (!data.email || !isValidEmail(data.email)) {
+    addError(errors, 'email', 'A valid email address is required');
+  }
+
+  const otp = data.otp != null ? String(data.otp).trim() : '';
+  if (!otp || otp.length < 4) {
+    addError(errors, 'otp', 'A valid verification code is required');
+  }
+
+  if (errors.length > 0) {
+    return validationFailure(errors);
+  }
+
+  return validationSuccess({
+    email: data.email.toLowerCase().trim(),
+    otp,
+  });
+};
+
+/**
  * Validate reset password request.
+ * Requires either resetToken (from verify-password-reset-otp) or otp.
  * @param {Object} data - Request body
  * @returns {{ error: Object|null, value: Object }}
  */
@@ -236,8 +264,14 @@ const validateResetPassword = (data) => {
     addError(errors, 'email', 'A valid email address is required');
   }
 
-  if (!data.otp || typeof data.otp !== 'string') {
-    addError(errors, 'otp', 'Verification code is required');
+  const otp = data.otp != null ? String(data.otp).trim() : '';
+  const resetToken =
+    typeof data.resetToken === 'string' && data.resetToken.trim()
+      ? data.resetToken.trim()
+      : '';
+
+  if (!resetToken && !otp) {
+    addError(errors, 'resetToken', 'resetToken or otp is required');
   }
 
   const passwordError = getPasswordStrengthError(data.newPassword);
@@ -255,7 +289,8 @@ const validateResetPassword = (data) => {
 
   return validationSuccess({
     email: data.email.toLowerCase().trim(),
-    otp: data.otp.trim(),
+    otp: otp || undefined,
+    resetToken: resetToken || undefined,
     newPassword: data.newPassword,
   });
 };
@@ -348,6 +383,7 @@ module.exports = {
   validateRefreshToken,
   validateLogout,
   validateForgotPassword,
+  validateVerifyPasswordResetOtp,
   validateResetPassword,
   validateChangePassword,
   validateUpdateProfile,

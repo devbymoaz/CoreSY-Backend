@@ -43,6 +43,11 @@ const forgotPassword = asyncHandler(async (req, res) => {
   return sendSuccess(res, { message: result.message });
 });
 
+const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
+  const result = await authService.verifyPasswordResetOtp(req.body);
+  return sendSuccess(res, { message: result.message, data: result });
+});
+
 const resetPassword = asyncHandler(async (req, res) => {
   const result = await authService.resetPassword(req.body);
   return sendSuccess(res, { message: result.message });
@@ -84,6 +89,7 @@ module.exports = {
   refreshToken,
   logout,
   forgotPassword,
+  verifyPasswordResetOtp,
   resetPassword,
   changePassword,
   getProfile,

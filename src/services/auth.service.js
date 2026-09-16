@@ -400,8 +400,12 @@ class AuthService {
     return { message: SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT };
   }
 
-  async resetPassword(data) {
-    const { email, otp, newPassword } = data;
+  /**
+   * Verify password-reset OTP and issue a short-lived reset token.
+   * Incorrect OTP always fails — password is not changed here.
+   */
+  async verifyPasswordResetOtp(data) {
+    const { email, otp } = data;
 
     const user = await userRepository.findByEmail(email);
     if (!user) {
@@ -413,9 +417,53 @@ class AuthService {
       throw new AppError(ERROR_MESSAGES.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
     }
 
+    const resetToken = generateJti();
+    await redisService.storePasswordResetToken(user.id, resetToken);
+
+    return {
+      message: SUCCESS_MESSAGES.PASSWORD_RESET_OTP_VERIFIED,
+      email: user.email,
+      resetToken,
+      expiresInSeconds: config.auth.passwordResetOtpExpirySeconds,
+    };
+  }
+
+  /**
+   * Reset password using verified resetToken (preferred) or one-time OTP.
+   * Wrong OTP/token never resets the password.
+   */
+  async resetPassword(data) {
+    const { email, otp, resetToken, newPassword } = data;
+
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      throw new AppError(ERROR_MESSAGES.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    let authorized = false;
+
+    if (resetToken) {
+      authorized = await redisService.verifyPasswordResetToken(user.id, resetToken);
+      if (!authorized) {
+        throw new AppError(ERROR_MESSAGES.INVALID_RESET_TOKEN, HTTP_STATUS.BAD_REQUEST);
+      }
+    } else if (otp) {
+      authorized = await redisService.verifyPasswordResetOtp(user.id, otp);
+      if (!authorized) {
+        throw new AppError(ERROR_MESSAGES.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
+      }
+    } else {
+      throw new AppError(ERROR_MESSAGES.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!authorized) {
+      throw new AppError(ERROR_MESSAGES.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
+    }
+
     const hashedPassword = await hashPassword(newPassword);
     await userRepository.update(user.id, { password: hashedPassword });
     await refreshTokenRepository.revokeAllForUser(user.id);
+    await redisService.clearPasswordResetToken(user.id);
 
     return { message: SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS };
   }

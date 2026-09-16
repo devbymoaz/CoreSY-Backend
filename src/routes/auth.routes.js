@@ -21,6 +21,7 @@ const {
   validateRefreshToken,
   validateLogout,
   validateForgotPassword,
+  validateVerifyPasswordResetOtp,
   validateResetPassword,
   validateChangePassword,
   validateUpdateProfile,
@@ -279,10 +280,10 @@ router.post('/forgot-password', validate(validateForgotPassword), authController
 
 /**
  * @swagger
- * /auth/reset-password:
+ * /auth/verify-password-reset-otp:
  *   post:
- *     summary: Reset password
- *     description: Reset password using OTP received via email
+ *     summary: Verify password reset OTP
+ *     description: Verifies the OTP from forgot-password. Returns a resetToken required for reset-password. Wrong OTP always fails.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -290,7 +291,7 @@ router.post('/forgot-password', validate(validateForgotPassword), authController
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, otp, newPassword, confirmPassword]
+ *             required: [email, otp]
  *             properties:
  *               email:
  *                 type: string
@@ -298,6 +299,47 @@ router.post('/forgot-password', validate(validateForgotPassword), authController
  *                 example: ahmad@example.com
  *               otp:
  *                 type: string
+ *                 example: "123456"
+ *           example:
+ *             email: ahmad@example.com
+ *             otp: "123456"
+ *     responses:
+ *       200:
+ *         description: OTP verified, resetToken issued
+ *       400:
+ *         description: Invalid or expired OTP
+ */
+router.post(
+  '/verify-password-reset-otp',
+  validate(validateVerifyPasswordResetOtp),
+  authController.verifyPasswordResetOtp,
+);
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password
+ *     description: Reset password using resetToken from verify-password-reset-otp (preferred) or OTP. Wrong OTP/token never resets password.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, newPassword, confirmPassword]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: ahmad@example.com
+ *               resetToken:
+ *                 type: string
+ *                 description: Token from verify-password-reset-otp (preferred)
+ *               otp:
+ *                 type: string
+ *                 description: Optional fallback if resetToken was not used
  *                 example: "123456"
  *               newPassword:
  *                 type: string
@@ -309,14 +351,14 @@ router.post('/forgot-password', validate(validateForgotPassword), authController
  *                 example: "SecurePass1!"
  *           example:
  *             email: ahmad@example.com
- *             otp: "123456"
+ *             resetToken: "uuid-reset-token"
  *             newPassword: "SecurePass1!"
  *             confirmPassword: "SecurePass1!"
  *     responses:
  *       200:
  *         description: Password reset successfully
  *       400:
- *         description: Invalid or expired OTP
+ *         description: Invalid or expired OTP/resetToken
  */
 router.post('/reset-password', validate(validateResetPassword), authController.resetPassword);
 
