@@ -63,6 +63,17 @@ enum BusinessType {
   OTHER
 }
 
+enum ReservationType {
+  WITH_RESERVATION
+  WITHOUT_RESERVATION
+}
+
+enum AssociatedApp {
+  PASS
+  GO
+  CARE
+}
+
 enum BranchStatus {
   PENDING
   ACTIVE
@@ -644,36 +655,38 @@ model Notification {
 
 // Business (Establishment) model
 model Business {
-  id                 String         @id @default(uuid())
-  name               String         @map("name")
-  type               BusinessType   @map("type")
-  category           String         @map("category")
-  description        String         @map("description")
-  ownerName          String         @map("owner_name")
-  ownerEmail         String         @map("owner_email")
-  ownerPhone         String         @map("owner_phone")
-  businessEmail      String         @unique @map("business_email")
-  businessPhone      String         @map("business_phone")
-  logo               String?        @map("logo")
-  coverImage         String?        @map("cover_image")
-  registrationNumber String         @unique @map("registration_number")
-  taxNumber          String?        @map("tax_number")
-  website            String?        @map("website")
-  governorateId      String         @map("governorate_id")
-  governorate        Governorate    @relation(fields: [governorateId], references: [id])
-  city               String         @map("city")
-  address            String         @map("address")
-  latitude           Decimal?       @map("latitude")
-  longitude          Decimal?       @map("longitude")
-  workingHours       Json?          @map("working_hours")
-  facebook           String?        @map("facebook")
-  instagram          String?        @map("instagram")
-  whatsApp           String?        @map("whats_app")
-  status             BusinessStatus @default(PENDING) @map("status")
-  approvalDate       DateTime?      @map("approval_date")
-  approvedBy         String?        @map("approved_by")
-  ownerId            String         @map("owner_id")
-  owner              User           @relation(fields: [ownerId], references: [id])
+  id                 String            @id @default(uuid())
+  name               String            @map("name")
+  type               BusinessType      @map("type")
+  reservationType    ReservationType   @default(WITHOUT_RESERVATION) @map("reservation_type")
+  associatedApps     AssociatedApp[]   @default([]) @map("associated_apps")
+  category           String            @map("category")
+  description        String            @map("description")
+  ownerName          String            @map("owner_name")
+  ownerEmail         String            @map("owner_email")
+  ownerPhone         String            @map("owner_phone")
+  businessEmail      String            @unique @map("business_email")
+  businessPhone      String            @map("business_phone")
+  logo               String?           @map("logo")
+  coverImage         String?           @map("cover_image")
+  registrationNumber String            @unique @map("registration_number")
+  taxNumber          String?           @map("tax_number")
+  website            String?           @map("website")
+  governorateId      String            @map("governorate_id")
+  governorate        Governorate       @relation(fields: [governorateId], references: [id])
+  city               String            @map("city")
+  address            String            @map("address")
+  latitude           Decimal?          @map("latitude")
+  longitude          Decimal?          @map("longitude")
+  workingHours       Json?             @map("working_hours")
+  facebook           String?           @map("facebook")
+  instagram          String?           @map("instagram")
+  whatsApp           String?           @map("whats_app")
+  status             BusinessStatus    @default(PENDING) @map("status")
+  approvalDate       DateTime?         @map("approval_date")
+  approvedBy         String?           @map("approved_by")
+  ownerId            String            @map("owner_id")
+  owner              User              @relation(fields: [ownerId], references: [id])
   branches           Branch[]
   services           Service[]
   cashiers           Cashier[]

@@ -4,9 +4,11 @@ const userRepository = require('../../../repositories/user.repository');
 const roleRepository = require('../../../repositories/role.repository');
 const userRoleRepository = require('../../rbac/repositories/user-role.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
+const emailService = require('../../../services/email.service');
 const { hashPassword } = require('../../../utils/password');
 const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
+const logger = require('../../../utils/logger');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
@@ -20,7 +22,7 @@ const {
 class BusinessService {
   /**
    * Resolve or provision the login account used by a business owner.
-   * Roles are assigned server-side and are never trusted from login input.
+   * @returns {Promise<{owner: Object, isNewAccount: boolean, plainPassword: string|null}>}
    */
   async resolveOwnerAccount({
     ownerEmail,
@@ -43,13 +45,14 @@ class BusinessService {
       const shouldPreservePrimaryRole = protectedRoles.includes(existingOwner.role?.name);
 
       if (!shouldPreservePrimaryRole && existingOwner.roleId !== ownerRole.id) {
-        return userRepository.update(existingOwner.id, {
+        const owner = await userRepository.update(existingOwner.id, {
           roleId: ownerRole.id,
           updatedBy: createdBy,
         });
+        return { owner, isNewAccount: false, plainPassword: null };
       }
 
-      return existingOwner;
+      return { owner: existingOwner, isNewAccount: false, plainPassword: null };
     }
 
     if (!ownerPassword) {
@@ -82,7 +85,7 @@ class BusinessService {
     });
 
     await userRoleRepository.assignRole(owner.id, ownerRole.id);
-    return owner;
+    return { owner, isNewAccount: true, plainPassword: ownerPassword };
   }
 
   async createBusiness(data, userId, ipAddress, userAgent) {
@@ -90,24 +93,24 @@ class BusinessService {
     const businessData = { ...data };
     delete businessData.ownerPassword;
     delete businessData.password;
+    delete businessData.withReservation;
+    delete businessData.associatedApplications;
+    delete businessData.apps;
 
-    // Check if business email exists
     if (await businessRepository.findByBusinessEmail(businessData.businessEmail)) {
       throw new AppError(ERROR_MESSAGES.BUSINESS_EMAIL_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
     }
 
-    // Check if registration number exists
     if (await businessRepository.findByRegistrationNumber(businessData.registrationNumber)) {
       throw new AppError(ERROR_MESSAGES.REGISTRATION_NUMBER_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
     }
 
-    // Check if governorate exists
     const governorate = await governorateRepository.findById(businessData.governorateId);
     if (!governorate) {
       throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
     }
 
-    const owner = await this.resolveOwnerAccount({
+    const { owner, isNewAccount, plainPassword } = await this.resolveOwnerAccount({
       ownerEmail: businessData.ownerEmail,
       ownerName: businessData.ownerName,
       ownerPhone: businessData.ownerPhone,
@@ -116,14 +119,12 @@ class BusinessService {
       createdBy: userId,
     });
 
-    // Create business
     const business = await businessRepository.create({
       ...businessData,
       ownerId: owner.id,
       createdBy: userId,
     });
 
-    // Create audit log
     await auditLogService.create({
       userId,
       action: 'BUSINESS_CREATED',
@@ -133,21 +134,30 @@ class BusinessService {
       payload: { businessId: business.id, businessEmail: business.businessEmail },
     });
 
-    // TODO: Create notification for owner
+    try {
+      await emailService.sendBusinessOwnerCredentials({
+        to: business.ownerEmail,
+        ownerName: business.ownerName,
+        businessName: business.name,
+        loginEmail: business.ownerEmail,
+        password: plainPassword,
+        isNewAccount,
+        reservationType: business.reservationType,
+        associatedApps: business.associatedApps,
+      });
+    } catch (error) {
+      logger.error(`Failed to email business owner credentials for ${business.id}:`, error);
+    }
 
     return { message: SUCCESS_MESSAGES.BUSINESS_CREATED, business };
   }
 
   async getBusinesses(query, user) {
-    const where = { ...query };
-
-    // If user is Business Owner, only their businesses
     if (user.roles.includes(ROLES.BUSINESS_OWNER)) {
-      // We'll handle this in findByOwnerId instead
       return businessRepository.findByOwnerId(user.id, query);
     }
 
-    return businessRepository.findAll(where);
+    return businessRepository.findAll(query);
   }
 
   async getBusinessById(id, user) {
@@ -156,7 +166,6 @@ class BusinessService {
       throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    // Check permissions
     if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
@@ -174,7 +183,6 @@ class BusinessService {
       throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    // Check permissions
     if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== userId) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
@@ -183,8 +191,10 @@ class BusinessService {
     const businessData = { ...data };
     delete businessData.ownerPassword;
     delete businessData.password;
+    delete businessData.withReservation;
+    delete businessData.associatedApplications;
+    delete businessData.apps;
 
-    // Check for unique constraints if fields are being updated
     if (businessData.businessEmail && businessData.businessEmail !== business.businessEmail) {
       if (await businessRepository.findByBusinessEmail(businessData.businessEmail)) {
         throw new AppError(ERROR_MESSAGES.BUSINESS_EMAIL_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
@@ -206,7 +216,7 @@ class BusinessService {
       requestedOwnerEmail !== business.owner?.email || Boolean(ownerPassword);
 
     if (ownerNeedsRelinking) {
-      const owner = await this.resolveOwnerAccount({
+      const { owner } = await this.resolveOwnerAccount({
         ownerEmail: requestedOwnerEmail,
         ownerName: businessData.ownerName || business.ownerName,
         ownerPhone: businessData.ownerPhone || business.ownerPhone,
@@ -241,7 +251,6 @@ class BusinessService {
       throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    // Only Super Admin or Business Owner can delete
     if (!user.roles.includes(ROLES.SUPER_ADMIN) && business.ownerId !== userId) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
@@ -306,8 +315,6 @@ class BusinessService {
       payload: { businessId: id },
     });
 
-    // TODO: Create notification for owner
-
     return { message: SUCCESS_MESSAGES.BUSINESS_APPROVED, business: updatedBusiness };
   }
 
@@ -330,8 +337,6 @@ class BusinessService {
       userAgent,
       payload: { businessId: id },
     });
-
-    // TODO: Create notification for owner
 
     return { message: SUCCESS_MESSAGES.BUSINESS_REJECTED, business: updatedBusiness };
   }

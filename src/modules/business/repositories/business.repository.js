@@ -56,6 +56,8 @@ class BusinessRepository {
     limit = PAGINATION.DEFAULT_LIMIT,
     search,
     type,
+    reservationType,
+    associatedApp,
     status,
     governorateId,
     category,
@@ -79,6 +81,14 @@ class BusinessRepository {
 
     if (type) {
       where.type = type;
+    }
+
+    if (reservationType) {
+      where.reservationType = reservationType;
+    }
+
+    if (associatedApp) {
+      where.associatedApps = { has: associatedApp };
     }
 
     if (status) {

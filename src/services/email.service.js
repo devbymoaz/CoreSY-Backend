@@ -1,5 +1,5 @@
 /**
- * SMTP email delivery for authentication OTPs.
+ * SMTP email delivery for authentication OTPs and business owner notices.
  */
 
 const nodemailer = require('nodemailer');
@@ -61,6 +61,31 @@ class EmailService {
     }
   }
 
+  async _sendMail({ to, subject, text, html }) {
+    if (!this.isConfigured()) {
+      logger.warn(`SMTP is not configured. Email to ${to} skipped. Subject: ${subject}`);
+      if (config.env === 'production') {
+        throw new AppError(ERROR_MESSAGES.EMAIL_NOT_CONFIGURED, HTTP_STATUS.SERVICE_UNAVAILABLE);
+      }
+      return false;
+    }
+
+    try {
+      await this._getTransporter().sendMail({
+        from: config.smtp.from,
+        to,
+        subject,
+        text,
+        html,
+      });
+      logger.info(`Email sent to ${to}: ${subject}`);
+      return true;
+    } catch (error) {
+      logger.error(`Failed to send email to ${to}:`, error);
+      throw new AppError(ERROR_MESSAGES.EMAIL_SEND_FAILED, HTTP_STATUS.SERVICE_UNAVAILABLE);
+    }
+  }
+
   /**
    * Send an OTP email. Logs the OTP when SMTP is not configured in development.
    * @param {string} to
@@ -80,20 +105,89 @@ class EmailService {
       return false;
     }
 
-    try {
-      await this._getTransporter().sendMail({
-        from: config.smtp.from,
-        to,
-        subject,
-        text,
-        html: `<p>${text}</p><p style="font-size:24px;letter-spacing:4px;"><strong>${otp}</strong></p>`,
-      });
-      logger.info(`OTP email sent to ${to} (${purpose})`);
-      return true;
-    } catch (error) {
-      logger.error(`Failed to send OTP email to ${to}:`, error);
-      throw new AppError(ERROR_MESSAGES.EMAIL_SEND_FAILED, HTTP_STATUS.SERVICE_UNAVAILABLE);
+    return this._sendMail({
+      to,
+      subject,
+      text,
+      html: `<p>${text}</p><p style="font-size:24px;letter-spacing:4px;"><strong>${otp}</strong></p>`,
+    });
+  }
+
+  /**
+   * Email business owner their CoreSY login details after business creation.
+   * @param {Object} params
+   */
+  async sendBusinessOwnerCredentials({
+    to,
+    ownerName,
+    businessName,
+    loginEmail,
+    password,
+    isNewAccount,
+    reservationType,
+    associatedApps,
+  }) {
+    const appsLabel = Array.isArray(associatedApps) ? associatedApps.join(', ') : '';
+    const reservationLabel =
+      reservationType === 'WITH_RESERVATION' ? 'With reservation' : 'Without reservation';
+
+    const subject = `${config.appName}: ${businessName} account ready`;
+    const passwordLine = isNewAccount
+      ? `Password: ${password}`
+      : 'Password: use your existing CoreSY password (contact support if you need a reset).';
+
+    const text = [
+      `Hello ${ownerName},`,
+      '',
+      `Your business "${businessName}" has been registered on ${config.appName}.`,
+      `Reservation type: ${reservationLabel}`,
+      appsLabel ? `Associated apps: ${appsLabel}` : null,
+      '',
+      'Login details:',
+      `Email: ${loginEmail}`,
+      passwordLine,
+      '',
+      `API login: POST ${config.apiBaseUrl}/auth/login`,
+      '',
+      `Thank you,`,
+      `${config.appName} Team`,
+    ]
+      .filter((line) => line !== null)
+      .join('\n');
+
+    const html = `
+      <p>Hello <strong>${ownerName}</strong>,</p>
+      <p>Your business <strong>${businessName}</strong> has been registered on ${config.appName}.</p>
+      <ul>
+        <li><strong>Reservation type:</strong> ${reservationLabel}</li>
+        ${appsLabel ? `<li><strong>Associated apps:</strong> ${appsLabel}</li>` : ''}
+      </ul>
+      <p><strong>Login details</strong></p>
+      <ul>
+        <li><strong>Email:</strong> ${loginEmail}</li>
+        <li><strong>${isNewAccount ? 'Password' : 'Password note'}:</strong> ${
+          isNewAccount
+            ? password
+            : 'Use your existing CoreSY password (contact support if you need a reset).'
+        }</li>
+      </ul>
+      <p>You can sign in with <code>POST ${config.apiBaseUrl}/auth/login</code>.</p>
+      <p>Thank you,<br/>${config.appName} Team</p>
+    `;
+
+    if (!this.isConfigured()) {
+      logger.warn(
+        `SMTP is not configured. Business owner credentials for ${to}: email=${loginEmail}, newAccount=${isNewAccount}${
+          isNewAccount ? `, password=${password}` : ''
+        }`,
+      );
+      if (config.env === 'production') {
+        throw new AppError(ERROR_MESSAGES.EMAIL_NOT_CONFIGURED, HTTP_STATUS.SERVICE_UNAVAILABLE);
+      }
+      return false;
     }
+
+    return this._sendMail({ to, subject, text, html });
   }
 }
 

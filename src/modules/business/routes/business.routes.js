@@ -114,6 +114,8 @@ router.get('/:id', getBusinessById);
  *             required:
  *               - name
  *               - type
+ *               - reservationType
+ *               - associatedApps
  *               - category
  *               - description
  *               - ownerName
@@ -133,6 +135,26 @@ router.get('/:id', getBusinessById);
  *               type:
  *                 type: string
  *                 enum: [RESTAURANT, CAFE, BAR, MEDICAL_CLINIC, HOSPITAL, DENTAL_CLINIC, PHARMACY, BEAUTY_SALON, SPA, GYM, SPORTS_CLUB, ENTERTAINMENT_CENTER, JUICE_SHOP, SWEET_SHOP, SUPERMARKET, RETAIL_STORE, OTHER]
+ *               reservationType:
+ *                 type: string
+ *                 enum: [WITH_RESERVATION, WITHOUT_RESERVATION]
+ *                 description: Whether the business supports reservations
+ *               withReservation:
+ *                 type: boolean
+ *                 description: Optional alias for reservationType (true = WITH_RESERVATION)
+ *               associatedApps:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: string
+ *                   enum: [PASS, GO, CARE]
+ *                 description: CoreSY apps this business belongs to
+ *               associatedApplications:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [PASS, GO, CARE]
+ *                 description: Alias for associatedApps
  *               category:
  *                 type: string
  *                 minLength: 2
@@ -213,6 +235,8 @@ router.get('/:id', getBusinessById);
  *           example:
  *             name: Damascus Grill
  *             type: RESTAURANT
+ *             reservationType: WITH_RESERVATION
+ *             associatedApps: [PASS, CARE]
  *             category: Food & Beverage
  *             description: A popular restaurant serving traditional Syrian cuisine.
  *             ownerName: Ahmad Hassan
