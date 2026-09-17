@@ -31,7 +31,8 @@ router.use(authenticate);
  * /slots/dashboard:
  *   get:
  *     summary: Get slot dashboard stats
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -58,7 +59,8 @@ router.get('/dashboard', getDashboardStats);
  * /slots/services/{serviceId}:
  *   get:
  *     summary: Get slots for a service
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -79,7 +81,8 @@ router.get('/services/:serviceId', getServiceSlots);
  * /slots/branches/{branchId}:
  *   get:
  *     summary: Get slots for a branch
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -100,7 +103,8 @@ router.get('/branches/:branchId', getBranchSlots);
  * /slots:
  *   get:
  *     summary: Get all slots
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -114,7 +118,8 @@ router.get('/', validate({ query: listSlotsSchema }), getSlots);
  * /slots/{id}:
  *   get:
  *     summary: Get slot by ID
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -135,7 +140,8 @@ router.get('/:id', getSlotById);
  * /slots:
  *   post:
  *     summary: Create a new slot
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -235,7 +241,8 @@ router.post('/', validate({ body: createSlotSchema }), createSlot);
  * /slots/recurring:
  *   post:
  *     summary: Create recurring slots
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -337,7 +344,8 @@ router.post('/recurring', validate({ body: createRecurringSlotsSchema }), create
  * /slots/{id}/duplicate:
  *   post:
  *     summary: Duplicate a slot
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -372,7 +380,8 @@ router.post('/:id/duplicate', validate({ body: duplicateSlotSchema }), duplicate
  * /slots/{id}:
  *   patch:
  *     summary: Update slot
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -449,7 +458,8 @@ router.patch('/:id', validate({ body: updateSlotSchema }), updateSlot);
  * /slots/{id}/status:
  *   patch:
  *     summary: Update slot status
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -485,7 +495,8 @@ router.patch('/:id/status', validate({ body: updateSlotStatusSchema }), updateSl
  * /slots/{id}:
  *   delete:
  *     summary: Delete slot
- *     tags: [Slots]
+ *     tags: [Slots, Reservations]
+ *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
  *     parameters:

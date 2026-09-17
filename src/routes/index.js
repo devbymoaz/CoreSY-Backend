@@ -52,6 +52,7 @@ router.use('/branches', branchRoutes);
 router.use('/services', serviceRoutes);
 router.use('/cashiers', cashierRoutes);
 router.use('/slots', slotRoutes);
+router.use('/reservations', slotRoutes); // Alias for Flutter Care/Pass business reservations
 router.use('/bookings', bookingRoutes);
 router.use('/qr', qrRoutes);
 router.use('/products', productRoutes);

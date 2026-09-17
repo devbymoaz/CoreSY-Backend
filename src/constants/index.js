@@ -502,6 +502,8 @@ const ERROR_MESSAGES = {
   EMAIL_SEND_FAILED: 'Failed to send email. Please try again later.',
   SLOT_NOT_FOUND: 'Slot not found.',
   SLOT_OVERLAP: 'Slot overlaps with an existing slot.',
+  BUSINESS_RESERVATIONS_DISABLED:
+    'This business does not support reservations. Set reservationType to WITH_RESERVATION (Care/Pass).',
   BOOKING_NOT_FOUND: 'Booking not found.',
   BOOKING_NUMBER_EXISTS: 'Booking number already exists.',
   SLOT_NOT_AVAILABLE: 'This slot is not available for booking.',

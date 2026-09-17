@@ -4,9 +4,40 @@ const branchRepository = require('../../branch/repositories/branch.repository');
 const serviceRepository = require('../../service/repositories/service.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
-const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, ROLES } = require('../../../constants');
+const {
+  HTTP_STATUS,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  ROLES,
+  RESERVATION_TYPE,
+  BOOKING_TYPE,
+  ASSOCIATED_APP,
+} = require('../../../constants');
 
 class SlotService {
+  /**
+   * Care/Pass reservation slots require business.reservationType = WITH_RESERVATION.
+   */
+  _assertBusinessAllowsReservations(business, bookingType) {
+    if (bookingType !== BOOKING_TYPE.RESERVATION && bookingType !== BOOKING_TYPE.APPOINTMENT) {
+      return;
+    }
+
+    if (business.reservationType !== RESERVATION_TYPE.WITH_RESERVATION) {
+      throw new AppError(ERROR_MESSAGES.BUSINESS_RESERVATIONS_DISABLED, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const apps = business.associatedApps || [];
+    const supportsCareOrPass =
+      apps.includes(ASSOCIATED_APP.CARE) || apps.includes(ASSOCIATED_APP.PASS);
+    if (apps.length > 0 && !supportsCareOrPass) {
+      throw new AppError(
+        'Reservation slots are for Care/Pass businesses. Include CARE or PASS in associatedApps.',
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+  }
+
   async createSlot(data, userId, ipAddress, userAgent, user) {
     const business = await businessRepository.findById(data.businessId);
     if (!business) throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
@@ -20,6 +51,8 @@ class SlotService {
     if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
+
+    this._assertBusinessAllowsReservations(business, data.bookingType);
 
     const slotDate = new Date(data.slotDate);
     const overlappingSlots = await slotRepository.checkForOverlap(
@@ -81,6 +114,8 @@ class SlotService {
     if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
+
+    this._assertBusinessAllowsReservations(business, data.bookingType);
 
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
