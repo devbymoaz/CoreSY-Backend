@@ -35,8 +35,12 @@ class ServiceRepository {
   }
 
   async findByNameAndBranchId(name, branchId, excludeId = null) {
+    if (!name || !branchId) {
+      return null;
+    }
+
     const where = {
-      name,
+      name: { equals: name.trim(), mode: 'insensitive' },
       branchId,
       deletedAt: null,
     };

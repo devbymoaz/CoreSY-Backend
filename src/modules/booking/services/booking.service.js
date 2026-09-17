@@ -5,7 +5,9 @@ const branchRepository = require('../../branch/repositories/branch.repository');
 const serviceRepository = require('../../service/repositories/service.repository');
 const qrRepository = require('../../qr/repositories/qr.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
+const notificationService = require('../../notification/services/notification.service');
 const AppError = require('../../../utils/AppError');
+const logger = require('../../../utils/logger');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
@@ -15,6 +17,8 @@ const {
   PAYMENT_STATUS,
   BOOKING_SOURCE,
   QR_STATUS,
+  NOTIFICATION_CHANNEL,
+  NOTIFICATION_PRIORITY,
 } = require('../../../constants');
 const { prisma } = require('../../../prisma');
 const crypto = require('crypto');
@@ -43,6 +47,14 @@ function generateBookingNumber() {
 }
 
 class BookingService {
+  async _notifySafe(payload) {
+    try {
+      await notificationService.send(payload);
+    } catch (error) {
+      logger.error('Booking notification failed:', error.message || error);
+    }
+  }
+
   async createBooking(data, userId, ipAddress, userAgent, _user) {
     const slot = await slotRepository.findById(data.slotId);
     if (!slot) throw new AppError(ERROR_MESSAGES.SLOT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
@@ -116,6 +128,26 @@ class BookingService {
       userAgent,
       payload: { bookingId: booking.id, bookingNumber: booking.bookingNumber },
     });
+
+    // Notify business owner about new reservation request
+    if (booking.business?.ownerId) {
+      await this._notifySafe({
+        userId: booking.business.ownerId,
+        senderId: userId,
+        title: 'New reservation request',
+        message: `${booking.customer?.fullName || 'A customer'} requested ${booking.service?.name || 'a service'} (${booking.bookingNumber}) on ${new Date(booking.reservationDate).toISOString().slice(0, 10)} at ${booking.startTime}.`,
+        type: 'BOOKING_CREATED',
+        channel: NOTIFICATION_CHANNEL.IN_APP,
+        priority: NOTIFICATION_PRIORITY.HIGH,
+        module: 'Bookings',
+        referenceId: booking.id,
+        data: {
+          bookingId: booking.id,
+          bookingNumber: booking.bookingNumber,
+          status: booking.status,
+        },
+      });
+    }
 
     return { message: SUCCESS_MESSAGES.BOOKING_CREATED, booking };
   }
@@ -254,6 +286,27 @@ class BookingService {
       userAgent,
       payload: { bookingId: id },
     });
+
+    // Notify the other party about cancellation
+    const cancelRecipientId = isOwner ? booking.business?.ownerId : booking.customerId;
+    if (cancelRecipientId) {
+      await this._notifySafe({
+        userId: cancelRecipientId,
+        senderId: userId,
+        title: 'Reservation cancelled',
+        message: `Reservation ${booking.bookingNumber} was cancelled${data.cancellationReason ? `: ${data.cancellationReason}` : '.'}`,
+        type: 'BOOKING_CANCELLED',
+        channel: NOTIFICATION_CHANNEL.IN_APP,
+        priority: NOTIFICATION_PRIORITY.HIGH,
+        module: 'Bookings',
+        referenceId: booking.id,
+        data: {
+          bookingId: booking.id,
+          bookingNumber: booking.bookingNumber,
+          status: BOOKING_STATUS.CANCELLED,
+        },
+      });
+    }
 
     return { message: SUCCESS_MESSAGES.BOOKING_CANCELLED, booking: updatedBooking };
   }
@@ -447,6 +500,26 @@ class BookingService {
       payload: { bookingId: id },
     });
 
+    // Notify customer that business owner confirmed the reservation
+    if (updatedBooking.customerId) {
+      await this._notifySafe({
+        userId: updatedBooking.customerId,
+        senderId: userId,
+        title: 'Reservation confirmed',
+        message: `Your reservation ${updatedBooking.bookingNumber} for ${updatedBooking.service?.name || 'the service'} has been confirmed by ${updatedBooking.business?.name || 'the business'}.`,
+        type: 'BOOKING_CONFIRMED',
+        channel: NOTIFICATION_CHANNEL.IN_APP,
+        priority: NOTIFICATION_PRIORITY.HIGH,
+        module: 'Bookings',
+        referenceId: updatedBooking.id,
+        data: {
+          bookingId: updatedBooking.id,
+          bookingNumber: updatedBooking.bookingNumber,
+          status: BOOKING_STATUS.CONFIRMED,
+        },
+      });
+    }
+
     return { message: SUCCESS_MESSAGES.BOOKING_CONFIRMED, booking: updatedBooking };
   }
 
@@ -580,6 +653,26 @@ class BookingService {
       userAgent,
       payload: { bookingId: id },
     });
+
+    // Notify customer that business owner rejected the reservation
+    if (updatedBooking.customerId) {
+      await this._notifySafe({
+        userId: updatedBooking.customerId,
+        senderId: userId,
+        title: 'Reservation declined',
+        message: `Your reservation ${updatedBooking.bookingNumber} for ${updatedBooking.service?.name || 'the service'} was declined by ${updatedBooking.business?.name || 'the business'}.`,
+        type: 'BOOKING_REJECTED',
+        channel: NOTIFICATION_CHANNEL.IN_APP,
+        priority: NOTIFICATION_PRIORITY.HIGH,
+        module: 'Bookings',
+        referenceId: updatedBooking.id,
+        data: {
+          bookingId: updatedBooking.id,
+          bookingNumber: updatedBooking.bookingNumber,
+          status: BOOKING_STATUS.REJECTED,
+        },
+      });
+    }
 
     return { message: SUCCESS_MESSAGES.BOOKING_REJECTED, booking: updatedBooking };
   }

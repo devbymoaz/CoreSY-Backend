@@ -14,26 +14,11 @@ const {
 
 class ServiceService {
   async generateServiceCode(branchId) {
-    const latestService = await serviceRepository.findAll({
-      page: 1,
-      limit: 1,
-      branchId,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    });
-
-    let nextNumber = 1;
-    if (latestService.services.length > 0) {
-      const latestCode = latestService.services[0].code;
-      const match = latestCode.match(/(\d+)$/);
-      if (match) {
-        nextNumber = parseInt(match[1]) + 1;
-      }
-    }
-
     const branch = await branchRepository.findById(branchId);
-    const prefix = branch?.code?.substring(0, 3) || 'SRV';
-    return `${prefix}-${String(nextNumber).padStart(4, '0')}`;
+    const prefix = (branch?.code || 'SRV').replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase() || 'SRV';
+    const stamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 900) + 100;
+    return `${prefix}-${stamp}${random}`;
   }
 
   async createService(data, userId, ipAddress, userAgent, user) {
@@ -49,26 +34,46 @@ class ServiceService {
       throw new AppError(ERROR_MESSAGES.BRANCH_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
+    if (branch.businessId !== data.businessId) {
+      throw new AppError(
+        'branchId does not belong to the given businessId.',
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
     // Check permissions
     if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
-    // Check if service name already exists for this branch
-    const existingService = await serviceRepository.findByNameAndBranchId(data.name, data.branchId);
-    if (existingService) {
-      throw new AppError(ERROR_MESSAGES.SERVICE_NAME_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
+    // Name may repeat on a branch; uniqueness is enforced by service code only.
+    // Create with retry if generated code collides with a soft-deleted row.
+    let service;
+    let lastError;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const code = await this.generateServiceCode(data.branchId);
+      try {
+        service = await serviceRepository.create({
+          ...data,
+          name: data.name.trim(),
+          code,
+          createdBy: userId,
+        });
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+        const target = error?.meta?.target;
+        const targetText = Array.isArray(target) ? target.join(',') : String(target || '');
+        if (error?.code === 'P2002' && targetText.toLowerCase().includes('code')) {
+          continue;
+        }
+        throw error;
+      }
     }
-
-    // Generate service code
-    const code = await this.generateServiceCode(data.branchId);
-
-    // Create service
-    const service = await serviceRepository.create({
-      ...data,
-      code,
-      createdBy: userId,
-    });
+    if (!service) {
+      throw lastError || new AppError(ERROR_MESSAGES.SERVICE_CODE_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
+    }
 
     // Create audit log
     await auditLogService.create({
@@ -141,20 +146,9 @@ class ServiceService {
       throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
     }
 
-    // Check unique name if name is being updated
-    if (data.name) {
-      const existingService = await serviceRepository.findByNameAndBranchId(
-        data.name,
-        service.branchId,
-        id,
-      );
-      if (existingService) {
-        throw new AppError(ERROR_MESSAGES.SERVICE_NAME_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
-      }
-    }
-
     const updatedService = await serviceRepository.update(id, {
       ...data,
+      ...(data.name ? { name: data.name.trim() } : {}),
       updatedBy: userId,
     });
 
