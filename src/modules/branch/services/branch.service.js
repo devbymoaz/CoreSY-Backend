@@ -4,12 +4,14 @@ const governorateRepository = require('../../../repositories/governorate.reposit
 const auditLogService = require('../../rbac/services/audit-log.service');
 const { removePublicUpload } = require('../../../middlewares/upload.middleware');
 const AppError = require('../../../utils/AppError');
+const { haversineDistanceKm } = require('../../../utils/geo');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
   ROLES,
   BUSINESS_TYPE,
+  BRANCH_STATUS,
 } = require('../../../constants');
 
 class BranchService {
@@ -170,6 +172,72 @@ class BranchService {
     }
 
     return branchRepository.findByBusinessId(businessId, options);
+  }
+
+  async getBranchesByGovernorate(governorateId, query = {}) {
+    const governorate = await governorateRepository.findById(governorateId);
+    if (!governorate) {
+      throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    const result = await branchRepository.findByGovernorateId(governorateId, {
+      ...query,
+      status: query.status || BRANCH_STATUS.ACTIVE,
+    });
+
+    return {
+      governorate,
+      ...result,
+    };
+  }
+
+  /**
+   * Nearby branches by GPS. Branches must have latitude/longitude saved
+   * (not only a typed address string).
+   */
+  async getNearbyBranches(query) {
+    const latitude = Number(query.latitude);
+    const longitude = Number(query.longitude);
+    const radiusKm = Number(query.radiusKm || 10);
+    const limit = Number(query.limit || 50);
+
+    if (query.governorateId) {
+      const governorate = await governorateRepository.findById(query.governorateId);
+      if (!governorate) {
+        throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
+      }
+    }
+
+    const branches = await branchRepository.findWithCoordinates({
+      governorateId: query.governorateId,
+      businessId: query.businessId,
+      status: query.status || BRANCH_STATUS.ACTIVE,
+      city: query.city,
+    });
+
+    const withDistance = branches
+      .map((branch) => {
+        const branchLat = Number(branch.latitude);
+        const branchLng = Number(branch.longitude);
+        if (!Number.isFinite(branchLat) || !Number.isFinite(branchLng)) {
+          return null;
+        }
+        const distanceKm = haversineDistanceKm(latitude, longitude, branchLat, branchLng);
+        return {
+          ...branch,
+          distanceKm: Number(distanceKm.toFixed(3)),
+        };
+      })
+      .filter((branch) => branch && branch.distanceKm <= radiusKm)
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .slice(0, limit);
+
+    return {
+      origin: { latitude, longitude },
+      radiusKm,
+      count: withDistance.length,
+      branches: withDistance,
+    };
   }
 
   async updateBranch(id, data, userId, ipAddress, userAgent, user) {

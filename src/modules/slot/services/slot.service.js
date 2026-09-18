@@ -4,6 +4,7 @@ const branchRepository = require('../../branch/repositories/branch.repository');
 const serviceRepository = require('../../service/repositories/service.repository');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
+const { splitTimeRange, shouldSplitRange } = require('../../../utils/slot-time');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
@@ -12,6 +13,7 @@ const {
   RESERVATION_TYPE,
   BOOKING_TYPE,
   ASSOCIATED_APP,
+  SLOT_STATUS,
 } = require('../../../constants');
 
 class SlotService {
@@ -38,6 +40,100 @@ class SlotService {
     }
   }
 
+  _mapAvailability(slot) {
+    const activeBookings = slot.bookings || [];
+    const bookedGuests = activeBookings.reduce((sum, b) => sum + (b.numberOfGuests || 0), 0);
+    const isFull =
+      slot.status === SLOT_STATUS.FULL ||
+      slot.remainingCapacity <= 0 ||
+      bookedGuests >= slot.maxCapacity;
+    const isClosed =
+      slot.status === SLOT_STATUS.CLOSED ||
+      slot.status === SLOT_STATUS.CANCELLED ||
+      slot.status === SLOT_STATUS.INACTIVE;
+    const isAvailable = !isFull && !isClosed && slot.status === SLOT_STATUS.AVAILABLE;
+
+    let reason = null;
+    if (isClosed) reason = slot.status;
+    else if (isFull) reason = 'FULL';
+
+    return {
+      id: slot.id,
+      serviceId: slot.serviceId,
+      businessId: slot.businessId,
+      branchId: slot.branchId,
+      slotDate: slot.slotDate,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      duration: slot.duration,
+      maxCapacity: slot.maxCapacity,
+      remainingCapacity: slot.remainingCapacity,
+      status: slot.status,
+      bookingType: slot.bookingType,
+      isAvailable,
+      isUnavailable: !isAvailable,
+      reason,
+      activeBookingsCount: activeBookings.length,
+      bookedGuests,
+      bookings: activeBookings,
+      service: slot.service,
+      branch: slot.branch,
+      business: slot.business,
+    };
+  }
+
+  async _createIntervalSlots({
+    data,
+    intervals,
+    slotDate,
+    dayOfWeek,
+    userId,
+  }) {
+    const created = [];
+    const skipped = [];
+
+    for (const interval of intervals) {
+      const overlappingSlots = await slotRepository.checkForOverlap(
+        data.branchId,
+        slotDate,
+        interval.startTime,
+        interval.endTime,
+      );
+      if (overlappingSlots.length > 0) {
+        skipped.push({
+          startTime: interval.startTime,
+          endTime: interval.endTime,
+          reason: 'OVERLAP',
+        });
+        continue;
+      }
+
+      const slot = await slotRepository.create({
+        serviceId: data.serviceId,
+        businessId: data.businessId,
+        branchId: data.branchId,
+        slotDate,
+        dayOfWeek,
+        startTime: interval.startTime,
+        endTime: interval.endTime,
+        duration: interval.duration,
+        maxCapacity: data.maxCapacity,
+        remainingCapacity: data.maxCapacity,
+        bookingType: data.bookingType,
+        genderRestriction: data.genderRestriction,
+        minAge: data.minAge,
+        maxAge: data.maxAge,
+        isRecurring: data.isRecurring || false,
+        recurringType: data.recurringType || 'NONE',
+        recurringEndDate: data.recurringEndDate ? new Date(data.recurringEndDate) : null,
+        createdBy: userId,
+      });
+      created.push(slot);
+    }
+
+    return { created, skipped };
+  }
+
   async createSlot(data, userId, ipAddress, userAgent, user) {
     const business = await businessRepository.findById(data.businessId);
     if (!business) throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
@@ -55,39 +151,47 @@ class SlotService {
     this._assertBusinessAllowsReservations(business, data.bookingType);
 
     const slotDate = new Date(data.slotDate);
-    const overlappingSlots = await slotRepository.checkForOverlap(
-      data.branchId,
-      slotDate,
+    const dayOfWeek = slotDate.getDay();
+    const doSplit = shouldSplitRange(
       data.startTime,
       data.endTime,
+      data.duration,
+      data.splitIntoIntervals,
     );
-    if (overlappingSlots.length > 0) {
-      throw new AppError(ERROR_MESSAGES.SLOT_OVERLAP, HTTP_STATUS.CONFLICT);
+
+    let intervals;
+    try {
+      intervals = doSplit
+        ? splitTimeRange(data.startTime, data.endTime, data.duration)
+        : [
+            {
+              startTime: data.startTime,
+              endTime: data.endTime,
+              duration: data.duration,
+            },
+          ];
+    } catch (error) {
+      throw new AppError(error.message, HTTP_STATUS.BAD_REQUEST);
     }
 
-    const dayOfWeek = slotDate.getDay();
-    const slotData = {
-      serviceId: data.serviceId,
-      businessId: data.businessId,
-      branchId: data.branchId,
+    if (intervals.length === 0) {
+      throw new AppError(
+        'No intervals generated. Check startTime, endTime, and duration (e.g. 10:00-21:00 with duration 60).',
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    const { created, skipped } = await this._createIntervalSlots({
+      data,
+      intervals,
       slotDate,
       dayOfWeek,
-      startTime: data.startTime,
-      endTime: data.endTime,
-      duration: data.duration,
-      maxCapacity: data.maxCapacity,
-      remainingCapacity: data.maxCapacity,
-      bookingType: data.bookingType,
-      genderRestriction: data.genderRestriction,
-      minAge: data.minAge,
-      maxAge: data.maxAge,
-      isRecurring: data.isRecurring || false,
-      recurringType: data.recurringType || 'NONE',
-      recurringEndDate: data.recurringEndDate ? new Date(data.recurringEndDate) : null,
-      createdBy: userId,
-    };
+      userId,
+    });
 
-    const slot = await slotRepository.create(slotData);
+    if (created.length === 0) {
+      throw new AppError(ERROR_MESSAGES.SLOT_OVERLAP, HTTP_STATUS.CONFLICT);
+    }
 
     await auditLogService.create({
       userId,
@@ -95,10 +199,35 @@ class SlotService {
       module: 'Slots',
       ipAddress,
       userAgent,
-      payload: { slotId: slot.id },
+      payload: { count: created.length, skipped: skipped.length },
     });
 
-    return { message: SUCCESS_MESSAGES.SLOT_CREATED, slot };
+    return {
+      message: SUCCESS_MESSAGES.SLOT_CREATED,
+      count: created.length,
+      skippedCount: skipped.length,
+      skipped,
+      slot: created[0],
+      slots: created,
+    };
+  }
+
+  /**
+   * Explicit hourly/interval generator for Flutter (same as create with split).
+   * Body: startTime/endTime window + duration (default 60).
+   */
+  async generateHourlySlots(data, userId, ipAddress, userAgent, user) {
+    return this.createSlot(
+      {
+        ...data,
+        duration: data.duration || 60,
+        splitIntoIntervals: true,
+      },
+      userId,
+      ipAddress,
+      userAgent,
+      user,
+    );
   }
 
   async createRecurringSlots(data, userId, ipAddress, userAgent, user) {
@@ -119,38 +248,69 @@ class SlotService {
 
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
-    const slots = [];
+    const doSplit = shouldSplitRange(
+      data.startTime,
+      data.endTime,
+      data.duration,
+      data.splitIntoIntervals,
+    );
 
+    let intervals;
+    try {
+      intervals = doSplit
+        ? splitTimeRange(data.startTime, data.endTime, data.duration)
+        : [
+            {
+              startTime: data.startTime,
+              endTime: data.endTime,
+              duration: data.duration,
+            },
+          ];
+    } catch (error) {
+      throw new AppError(error.message, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (intervals.length === 0) {
+      throw new AppError(
+        'No intervals generated. Check startTime, endTime, and duration.',
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    const slots = [];
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      if (data.daysOfWeek.includes(d.getDay())) {
+      if (!data.daysOfWeek.includes(d.getDay())) continue;
+      const slotDate = new Date(d);
+
+      for (const interval of intervals) {
         const overlappingSlots = await slotRepository.checkForOverlap(
           data.branchId,
-          new Date(d),
-          data.startTime,
-          data.endTime,
+          slotDate,
+          interval.startTime,
+          interval.endTime,
         );
-        if (overlappingSlots.length === 0) {
-          slots.push({
-            serviceId: data.serviceId,
-            businessId: data.businessId,
-            branchId: data.branchId,
-            slotDate: new Date(d),
-            dayOfWeek: d.getDay(),
-            startTime: data.startTime,
-            endTime: data.endTime,
-            duration: data.duration,
-            maxCapacity: data.maxCapacity,
-            remainingCapacity: data.maxCapacity,
-            bookingType: data.bookingType,
-            genderRestriction: data.genderRestriction,
-            minAge: data.minAge,
-            maxAge: data.maxAge,
-            isRecurring: true,
-            recurringType: 'DAILY',
-            recurringEndDate: endDate,
-            createdBy: userId,
-          });
-        }
+        if (overlappingSlots.length > 0) continue;
+
+        slots.push({
+          serviceId: data.serviceId,
+          businessId: data.businessId,
+          branchId: data.branchId,
+          slotDate: new Date(slotDate),
+          dayOfWeek: slotDate.getDay(),
+          startTime: interval.startTime,
+          endTime: interval.endTime,
+          duration: interval.duration,
+          maxCapacity: data.maxCapacity,
+          remainingCapacity: data.maxCapacity,
+          bookingType: data.bookingType,
+          genderRestriction: data.genderRestriction,
+          minAge: data.minAge,
+          maxAge: data.maxAge,
+          isRecurring: true,
+          recurringType: 'DAILY',
+          recurringEndDate: endDate,
+          createdBy: userId,
+        });
       }
     }
 
@@ -330,6 +490,48 @@ class SlotService {
     });
 
     return { message: SUCCESS_MESSAGES.SLOT_STATUS_UPDATED, slot: updatedSlot };
+  }
+
+  async getAvailability(query) {
+    if (!query.date) {
+      throw new AppError('date is required (YYYY-MM-DD).', HTTP_STATUS.BAD_REQUEST);
+    }
+    if (!query.serviceId && !query.branchId && !query.businessId) {
+      throw new AppError(
+        'Provide at least one of serviceId, branchId, or businessId.',
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    const slots = await slotRepository.findAvailability({
+      serviceId: query.serviceId,
+      branchId: query.branchId,
+      businessId: query.businessId,
+      date: query.date,
+    });
+
+    const mapped = slots.map((slot) => this._mapAvailability(slot));
+    const available = mapped.filter((s) => s.isAvailable);
+    const unavailable = mapped.filter((s) => s.isUnavailable);
+
+    return {
+      date: query.date,
+      total: mapped.length,
+      availableCount: available.length,
+      unavailableCount: unavailable.length,
+      slots: mapped,
+      availableSlots: available,
+      unavailableSlots: unavailable,
+    };
+  }
+
+  async getUnavailableSlots(query) {
+    const result = await this.getAvailability(query);
+    return {
+      date: result.date,
+      count: result.unavailableCount,
+      slots: result.unavailableSlots,
+    };
   }
 
   async getDashboardStats(businessId = null, branchId = null, user) {

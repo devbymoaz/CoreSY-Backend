@@ -36,6 +36,16 @@ const getBusinessBranches = asyncHandler(async (req, res) => {
   return sendSuccess(res, result);
 });
 
+const getBranchesByGovernorate = asyncHandler(async (req, res) => {
+  const result = await branchService.getBranchesByGovernorate(req.params.governorateId, req.query);
+  return sendSuccess(res, result);
+});
+
+const getNearbyBranches = asyncHandler(async (req, res) => {
+  const result = await branchService.getNearbyBranches(req.query);
+  return sendSuccess(res, result);
+});
+
 const updateBranch = asyncHandler(async (req, res) => {
   const result = await branchService.updateBranch(
     req.params.id,
@@ -127,6 +137,8 @@ module.exports = {
   getBranches,
   getBranchById,
   getBusinessBranches,
+  getBranchesByGovernorate,
+  getNearbyBranches,
   updateBranch,
   deleteBranch,
   updateBranchStatus,

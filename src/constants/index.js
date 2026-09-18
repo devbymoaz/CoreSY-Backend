@@ -643,6 +643,7 @@ const SUCCESS_MESSAGES = {
   SLOT_DELETED: 'Slot deleted successfully.',
   SLOT_STATUS_UPDATED: 'Slot status updated successfully.',
   SLOT_RECURRING_CREATED: 'Recurring slots created successfully.',
+  SLOT_HOURLY_GENERATED: 'Hourly slots generated successfully.',
   SLOT_DUPLICATED: 'Slot duplicated successfully.',
   BOOKING_CREATED: 'Booking created successfully.',
   BOOKING_UPDATED: 'Booking updated successfully.',

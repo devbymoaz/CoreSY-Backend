@@ -103,7 +103,7 @@ class BranchRepository {
     }
 
     if (city) {
-      where.city = city;
+      where.city = { equals: city, mode: 'insensitive' };
     }
 
     if (typeof isMain === 'boolean') {
@@ -138,6 +138,9 @@ class BranchRepository {
       limit = PAGINATION.DEFAULT_LIMIT,
       sortBy = 'createdAt',
       sortOrder = 'desc',
+      governorateId,
+      status,
+      city,
     } = options;
 
     const skip = (page - 1) * limit;
@@ -145,6 +148,10 @@ class BranchRepository {
       businessId,
       deletedAt: null,
     };
+
+    if (governorateId) where.governorateId = governorateId;
+    if (status) where.status = status;
+    if (city) where.city = { equals: city, mode: 'insensitive' };
 
     const [branches, total] = await Promise.all([
       prisma.branch.findMany({
@@ -166,6 +173,70 @@ class BranchRepository {
         pages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async findByGovernorateId(governorateId, options = {}) {
+    const {
+      page = PAGINATION.DEFAULT_PAGE,
+      limit = PAGINATION.DEFAULT_LIMIT,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      status = 'ACTIVE',
+      businessId,
+      city,
+    } = options;
+
+    const skip = (page - 1) * limit;
+    const where = {
+      governorateId,
+      deletedAt: null,
+    };
+
+    if (status) where.status = status;
+    if (businessId) where.businessId = businessId;
+    if (city) where.city = { equals: city, mode: 'insensitive' };
+
+    const [branches, total] = await Promise.all([
+      prisma.branch.findMany({
+        where,
+        include: BRANCH_INCLUDE,
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      prisma.branch.count({ where }),
+    ]);
+
+    return {
+      branches,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Branches that have coordinates (for client-side / server nearby filtering).
+   */
+  async findWithCoordinates({ governorateId, businessId, status = 'ACTIVE', city } = {}) {
+    const where = {
+      deletedAt: null,
+      latitude: { not: null },
+      longitude: { not: null },
+    };
+
+    if (governorateId) where.governorateId = governorateId;
+    if (businessId) where.businessId = businessId;
+    if (status) where.status = status;
+    if (city) where.city = { equals: city, mode: 'insensitive' };
+
+    return prisma.branch.findMany({
+      where,
+      include: BRANCH_INCLUDE,
+    });
   }
 
   async update(id, data) {

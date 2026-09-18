@@ -124,6 +124,59 @@ class SlotRepository {
     return { slots, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
   }
 
+  /**
+   * Availability for a calendar day — used by Flutter to disable booked hours.
+   */
+  async findAvailability({
+    serviceId,
+    branchId,
+    businessId,
+    date,
+    status,
+  }) {
+    const dayStart = new Date(date);
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+
+    const where = {
+      deletedAt: null,
+      slotDate: {
+        gte: dayStart,
+        lt: dayEnd,
+      },
+    };
+
+    if (serviceId) where.serviceId = serviceId;
+    if (branchId) where.branchId = branchId;
+    if (businessId) where.businessId = businessId;
+    if (status) where.status = status;
+
+    return prisma.slot.findMany({
+      where,
+      include: {
+        ...SLOT_INCLUDE,
+        bookings: {
+          where: {
+            deletedAt: null,
+            status: {
+              in: ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS'],
+            },
+          },
+          select: {
+            id: true,
+            bookingNumber: true,
+            status: true,
+            numberOfGuests: true,
+            customerId: true,
+          },
+        },
+      },
+      orderBy: [{ startTime: 'asc' }],
+    });
+  }
+
+
   async checkForOverlap(branchId, slotDate, startTime, endTime, excludeId = null) {
     const where = {
       branchId,

@@ -60,9 +60,43 @@ const listBranchesSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });
 
+const listBusinessBranchesSchema = z.object({
+  page: z.string().transform(Number).pipe(z.number().int().min(1)).optional(),
+  limit: z.string().transform(Number).pipe(z.number().int().min(1).max(100)).optional(),
+  governorateId: z.string().uuid().optional(),
+  status: z.nativeEnum(BRANCH_STATUS).optional(),
+  city: z.string().optional(),
+  sortBy: z.string().optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
+const nearbyBranchesSchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  radiusKm: z.coerce.number().positive().max(200).default(10),
+  governorateId: z.string().uuid().optional(),
+  businessId: z.string().uuid().optional(),
+  status: z.nativeEnum(BRANCH_STATUS).optional(),
+  city: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+const listByGovernorateSchema = z.object({
+  page: z.string().transform(Number).pipe(z.number().int().min(1)).optional(),
+  limit: z.string().transform(Number).pipe(z.number().int().min(1).max(100)).optional(),
+  status: z.nativeEnum(BRANCH_STATUS).optional(),
+  businessId: z.string().uuid().optional(),
+  city: z.string().optional(),
+  sortBy: z.string().optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
 module.exports = {
   createBranchSchema,
   updateBranchSchema,
   updateBranchStatusSchema,
   listBranchesSchema,
+  listBusinessBranchesSchema,
+  nearbyBranchesSchema,
+  listByGovernorateSchema,
 };

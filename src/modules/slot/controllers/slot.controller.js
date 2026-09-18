@@ -13,8 +13,29 @@ const createSlot = asyncHandler(async (req, res) => {
   return sendCreated(res, result);
 });
 
+const generateHourlySlots = asyncHandler(async (req, res) => {
+  const result = await slotService.generateHourlySlots(
+    req.body,
+    req.user.id,
+    req.ip,
+    req.headers['user-agent'],
+    req.user,
+  );
+  return sendCreated(res, result);
+});
+
 const getSlots = asyncHandler(async (req, res) => {
   const result = await slotService.getSlots(req.query, req.user);
+  return sendSuccess(res, result);
+});
+
+const getSlotAvailability = asyncHandler(async (req, res) => {
+  const result = await slotService.getAvailability(req.query);
+  return sendSuccess(res, result);
+});
+
+const getUnavailableSlots = asyncHandler(async (req, res) => {
+  const result = await slotService.getUnavailableSlots(req.query);
   return sendSuccess(res, result);
 });
 
@@ -101,7 +122,10 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
 module.exports = {
   createSlot,
+  generateHourlySlots,
   getSlots,
+  getSlotAvailability,
+  getUnavailableSlots,
   getSlotById,
   getServiceSlots,
   getBranchSlots,

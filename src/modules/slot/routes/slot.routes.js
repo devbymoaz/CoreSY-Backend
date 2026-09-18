@@ -4,7 +4,10 @@ const authenticate = require('../../../middlewares/auth.middleware');
 const validate = require('../../../middlewares/zod-validate.middleware');
 const {
   createSlot,
+  generateHourlySlots,
   getSlots,
+  getSlotAvailability,
+  getUnavailableSlots,
   getSlotById,
   getServiceSlots,
   getBranchSlots,
@@ -22,6 +25,8 @@ const {
   listSlotsSchema,
   createRecurringSlotsSchema,
   duplicateSlotSchema,
+  generateHourlySlotsSchema,
+  slotAvailabilitySchema,
 } = require('../validators/slot.validator');
 
 router.use(authenticate);
@@ -32,27 +37,78 @@ router.use(authenticate);
  *   get:
  *     summary: Get slot dashboard stats
  *     tags: [Slots, Reservations]
- *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/dashboard', getDashboardStats);
+
+/**
+ * @swagger
+ * /slots/availability:
+ *   get:
+ *     summary: Get day slot availability (available + unavailable)
+ *     tags: [Slots, Reservations]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: businessId
- *         required: false
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "2026-09-18"
+ *       - in: query
+ *         name: serviceId
  *         schema:
  *           type: string
  *           format: uuid
  *       - in: query
  *         name: branchId
- *         required: false
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: businessId
  *         schema:
  *           type: string
  *           format: uuid
  *     responses:
  *       200:
- *         description: Dashboard stats
+ *         description: Slots with isAvailable / isUnavailable flags
  */
-router.get('/dashboard', getDashboardStats);
+router.get('/availability', validate({ query: slotAvailabilitySchema }), getSlotAvailability);
+
+/**
+ * @swagger
+ * /slots/unavailable:
+ *   get:
+ *     summary: Get only unavailable/booked slots for a day
+ *     tags: [Slots, Reservations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: serviceId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: businessId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ */
+router.get('/unavailable', validate({ query: slotAvailabilitySchema }), getUnavailableSlots);
 
 /**
  * @swagger
@@ -60,19 +116,8 @@ router.get('/dashboard', getDashboardStats);
  *   get:
  *     summary: Get slots for a service
  *     tags: [Slots, Reservations]
- *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: serviceId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: List of slots
  */
 router.get('/services/:serviceId', getServiceSlots);
 
@@ -82,19 +127,8 @@ router.get('/services/:serviceId', getServiceSlots);
  *   get:
  *     summary: Get slots for a branch
  *     tags: [Slots, Reservations]
- *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: branchId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: List of slots
  */
 router.get('/branches/:branchId', getBranchSlots);
 
@@ -104,12 +138,8 @@ router.get('/branches/:branchId', getBranchSlots);
  *   get:
  *     summary: Get all slots
  *     tags: [Slots, Reservations]
- *     description: Create a reservation/appointment slot for Care or Pass businesses (WITH_RESERVATION). Also available at POST /reservations.
  *     security:
  *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of slots
  */
 router.get('/', validate({ query: listSlotsSchema }), getSlots);
 
@@ -235,6 +265,22 @@ router.get('/:id', getSlotById);
  *         description: Slot created
  */
 router.post('/', validate({ body: createSlotSchema }), createSlot);
+
+/**
+ * @swagger
+ * /slots/generate-hourly:
+ *   post:
+ *     summary: Generate hourly (or duration) slots from a time window
+ *     description: startTime 10:00 endTime 21:00 duration 60 creates one slot per hour. Booking uses a single slotId.
+ *     tags: [Slots, Reservations]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post(
+  '/generate-hourly',
+  validate({ body: generateHourlySlotsSchema }),
+  generateHourlySlots,
+);
 
 /**
  * @swagger

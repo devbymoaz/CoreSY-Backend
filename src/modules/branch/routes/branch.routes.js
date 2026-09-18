@@ -8,6 +8,8 @@ const {
   getBranches,
   getBranchById,
   getBusinessBranches,
+  getBranchesByGovernorate,
+  getNearbyBranches,
   updateBranch,
   deleteBranch,
   updateBranchStatus,
@@ -21,6 +23,9 @@ const {
   updateBranchSchema,
   updateBranchStatusSchema,
   listBranchesSchema,
+  listBusinessBranchesSchema,
+  nearbyBranchesSchema,
+  listByGovernorateSchema,
 } = require('../validators/branch.validator');
 const { ROLES } = require('../../../constants');
 const {
@@ -53,6 +58,93 @@ router.get('/dashboard', authorizeRoles(ROLES.SUPER_ADMIN), getDashboardStats);
 
 /**
  * @swagger
+ * /branches/nearby:
+ *   get:
+ *     summary: Find nearby branches by GPS coordinates
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: latitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: longitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: radiusKm
+ *         schema:
+ *           type: number
+ *           default: 10
+ *       - in: query
+ *         name: governorateId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: businessId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Nearby branches sorted by distanceKm
+ */
+router.get('/nearby', validate({ query: nearbyBranchesSchema }), getNearbyBranches);
+
+/**
+ * @swagger
+ * /branches/governorate/{governorateId}:
+ *   get:
+ *     summary: Get registered (ACTIVE) branches in a governorate
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: governorateId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Defaults to ACTIVE
+ *       - in: query
+ *         name: businessId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Branches for the governorate
+ */
+router.get(
+  '/governorate/:governorateId',
+  validate({ query: listByGovernorateSchema }),
+  getBranchesByGovernorate,
+);
+
+/**
+ * @swagger
  * /branches/business/{businessId}:
  *   get:
  *     summary: Get branches for a specific business
@@ -67,6 +159,19 @@ router.get('/dashboard', authorizeRoles(ROLES.SUPER_ADMIN), getDashboardStats);
  *           type: string
  *           format: uuid
  *         description: Business ID
+ *       - in: query
+ *         name: governorateId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: List of branches
@@ -75,7 +180,11 @@ router.get('/dashboard', authorizeRoles(ROLES.SUPER_ADMIN), getDashboardStats);
  *       403:
  *         description: Forbidden
  */
-router.get('/business/:businessId', getBusinessBranches);
+router.get(
+  '/business/:businessId',
+  validate({ query: listBusinessBranchesSchema }),
+  getBusinessBranches,
+);
 
 /**
  * @swagger
