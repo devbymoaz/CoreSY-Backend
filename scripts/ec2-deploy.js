@@ -76,6 +76,9 @@ npm install --omit=dev
 echo "=== prisma generate ==="
 npx prisma generate
 
+echo "=== prisma db push ==="
+npx prisma db push
+
 echo "=== restart app ==="
 if command -v pm2 >/dev/null 2>&1; then
   # Production currently runs as PM2 app "coresy" (src/server.js).

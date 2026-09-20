@@ -36,6 +36,8 @@ const adminReviewRoutes = require('../modules/review/routes/admin-review.routes'
 const notificationRoutes = require('../modules/notification/routes/notification.routes');
 const reportRoutes = require('../modules/report/routes/report.routes');
 const dashboardRoutes = require('../modules/dashboard/routes/dashboard.routes');
+const offerRoutes = require('../modules/offer/routes/offer.routes');
+const rewardRoutes = require('../modules/reward/routes/reward.routes');
 
 const router = express.Router();
 
@@ -75,5 +77,7 @@ router.use('/admin/reviews', adminReviewRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/reports', reportRoutes);
 router.use('/admin/dashboard', dashboardRoutes);
+router.use('/offers', offerRoutes);
+router.use('/rewards', rewardRoutes);
 
 module.exports = router;

@@ -52,7 +52,7 @@ class ReviewService {
     }
   }
 
-  async _updateAggregates({ businessId, driverId, productId, serviceId }) {
+  async _updateAggregates({ businessId, branchId, driverId, productId, serviceId }) {
     if (driverId) {
       const stats = await reviewRepository.getAverageRating({ driverId });
       await prisma.driver.update({
@@ -60,8 +60,18 @@ class ReviewService {
         data: { rating: stats.averageRating },
       });
     }
+    if (branchId) {
+      const stats = await reviewRepository.getAverageRating({ branchId });
+      await prisma.branch.update({
+        where: { id: branchId },
+        data: {
+          rating: stats.averageRating || 0,
+          reviewCount: stats.totalReviews || 0,
+        },
+      });
+    }
     // Business/product/service ratings are computed from reviews for dashboards.
-    return { businessId, driverId, productId, serviceId };
+    return { businessId, branchId, driverId, productId, serviceId };
   }
 
   async createReview(data, userId, ipAddress, userAgent, user) {
@@ -143,7 +153,7 @@ class ReviewService {
       createdBy: userId,
     });
 
-    await this._updateAggregates({ businessId, driverId, productId, serviceId });
+    await this._updateAggregates({ businessId, branchId, driverId, productId, serviceId });
     await this._audit(userId, 'REVIEW_CREATED', { reviewId: review.id }, ipAddress, userAgent);
 
     if (businessId) {
@@ -206,6 +216,7 @@ class ReviewService {
 
     await this._updateAggregates({
       businessId: updated.businessId,
+      branchId: updated.branchId,
       driverId: updated.driverId,
       productId: updated.productId,
       serviceId: updated.serviceId,
@@ -262,6 +273,7 @@ class ReviewService {
     await Promise.all((review.images || []).map((image) => removePublicUpload(image)));
     await this._updateAggregates({
       businessId: review.businessId,
+      branchId: review.branchId,
       driverId: review.driverId,
       productId: review.productId,
       serviceId: review.serviceId,
@@ -376,6 +388,7 @@ class ReviewService {
 
     await this._updateAggregates({
       businessId: updated.businessId,
+      branchId: updated.branchId,
       driverId: updated.driverId,
       productId: updated.productId,
       serviceId: updated.serviceId,

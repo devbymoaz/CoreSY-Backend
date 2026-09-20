@@ -53,6 +53,7 @@ class ReviewRepository {
     driverId,
     productId,
     serviceId,
+    branchId,
     status,
     minRating,
     maxRating,
@@ -70,6 +71,7 @@ class ReviewRepository {
     if (driverId) where.driverId = driverId;
     if (productId) where.productId = productId;
     if (serviceId) where.serviceId = serviceId;
+    if (branchId) where.branchId = branchId;
     if (status) where.status = status;
 
     if (minRating !== undefined || maxRating !== undefined) {

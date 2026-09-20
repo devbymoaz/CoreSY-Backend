@@ -102,6 +102,45 @@ const getCashierDashboard = asyncHandler(async (req, res) => {
   return sendSuccess(res, { stats: result });
 });
 
+const getBookingQRPricing = asyncHandler(async (req, res) => {
+  const result = await qrService.getBookingQRPricing(req.body.token, {
+    discountPercent: req.body.discountPercent,
+    discountAmount: req.body.discountAmount,
+  });
+  return sendSuccess(res, result);
+});
+
+const createPaymentQR = asyncHandler(async (req, res) => {
+  const result = await qrService.createPaymentQR(req.body, req.user.id, req.user);
+  return sendCreated(res, result);
+});
+
+const getPaymentQR = asyncHandler(async (req, res) => {
+  const result = await qrService.getPaymentQR(req.params.token);
+  return sendSuccess(res, result);
+});
+
+const payPaymentQR = asyncHandler(async (req, res) => {
+  const result = await qrService.payPaymentQR(
+    req.params.token,
+    req.body.password,
+    req.user,
+    req.ip,
+    req.headers['user-agent'],
+  );
+  return sendSuccess(res, result);
+});
+
+const cancelPaymentQR = asyncHandler(async (req, res) => {
+  const result = await qrService.cancelPaymentQR(req.params.id, req.user.id, req.user);
+  return sendSuccess(res, result);
+});
+
+const listPaymentQRs = asyncHandler(async (req, res) => {
+  const result = await qrService.listPaymentQRs(req.query, req.user);
+  return sendSuccess(res, result);
+});
+
 module.exports = {
   generateQR,
   getQRByBookingId,
@@ -115,4 +154,10 @@ module.exports = {
   getCustomerDashboard,
   getBusinessDashboard,
   getCashierDashboard,
+  getBookingQRPricing,
+  createPaymentQR,
+  getPaymentQR,
+  payPaymentQR,
+  cancelPaymentQR,
+  listPaymentQRs,
 };

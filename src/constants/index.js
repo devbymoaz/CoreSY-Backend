@@ -220,6 +220,27 @@ const QR_STATUS = {
   INVALID: 'INVALID',
 };
 
+const PAYMENT_QR_STATUS = {
+  ACTIVE: 'ACTIVE',
+  PAID: 'PAID',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+};
+
+const OFFER_STATUS = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  EXPIRED: 'EXPIRED',
+  INACTIVE: 'INACTIVE',
+};
+
+const REWARD_STATUS = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  OUT_OF_STOCK: 'OUT_OF_STOCK',
+};
+
 const PRODUCT_STATUS = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',
@@ -435,6 +456,8 @@ const PERMISSION_MODULES = {
   POINTS: 'Points',
   REVIEWS: 'Reviews',
   QR: 'QR',
+  OFFERS: 'Offers',
+  REWARDS: 'Rewards',
 };
 
 const SUBSCRIPTION_TIERS = {
@@ -522,6 +545,14 @@ const ERROR_MESSAGES = {
   QR_ALREADY_SCANNED: 'QR code has already been scanned.',
   QR_NOT_ACTIVE: 'QR code is not active.',
   INVALID_QR_TOKEN: 'Invalid QR token.',
+  PAYMENT_QR_NOT_FOUND: 'Payment QR not found.',
+  PAYMENT_QR_ALREADY_PAID: 'This payment QR has already been paid.',
+  PAYMENT_QR_INACTIVE: 'This payment QR is not active.',
+  INVALID_PASSWORD: 'Incorrect password.',
+  OFFER_NOT_FOUND: 'Special offer not found.',
+  REWARD_NOT_FOUND: 'Reward not found.',
+  REWARD_OUT_OF_STOCK: 'Reward is out of stock.',
+  INSUFFICIENT_POINTS: 'Insufficient points to redeem this reward.',
   PRODUCT_NOT_FOUND: 'Product not found.',
   PRODUCT_SKU_ALREADY_EXISTS: 'A product with this SKU already exists for this business.',
   PRODUCT_CODE_ALREADY_EXISTS: 'A product with this code already exists.',
@@ -664,6 +695,16 @@ const SUCCESS_MESSAGES = {
   QR_CANCELLED: 'QR code cancelled successfully.',
   QR_EXPIRED: 'QR code marked as expired.',
   QR_DOWNLOADED: 'QR code downloaded successfully.',
+  PAYMENT_QR_CREATED: 'Payment QR created successfully.',
+  PAYMENT_QR_PAID: 'Payment completed successfully from wallet.',
+  PAYMENT_QR_CANCELLED: 'Payment QR cancelled successfully.',
+  OFFER_CREATED: 'Special offer created successfully.',
+  OFFER_UPDATED: 'Special offer updated successfully.',
+  OFFER_DELETED: 'Special offer deleted successfully.',
+  REWARD_CREATED: 'Reward created successfully.',
+  REWARD_UPDATED: 'Reward updated successfully.',
+  REWARD_DELETED: 'Reward deleted successfully.',
+  REWARD_REDEEMED: 'Reward redeemed successfully.',
   PRODUCT_CREATED: 'Product created successfully.',
   PRODUCT_UPDATED: 'Product updated successfully.',
   PRODUCT_DELETED: 'Product deleted successfully.',
@@ -767,6 +808,9 @@ module.exports = {
   PAYMENT_STATUS,
   BOOKING_SOURCE,
   QR_STATUS,
+  PAYMENT_QR_STATUS,
+  OFFER_STATUS,
+  REWARD_STATUS,
   PRODUCT_STATUS,
   PRODUCT_UNIT,
   ORDER_STATUS,

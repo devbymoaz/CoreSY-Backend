@@ -86,6 +86,7 @@ const listReviewsSchema = z.object({
   driverId: z.string().uuid().optional(),
   productId: z.string().uuid().optional(),
   serviceId: z.string().uuid().optional(),
+  branchId: z.string().uuid().optional(),
   status: z.nativeEnum(REVIEW_STATUS).optional(),
   minRating: z.string().transform(Number).pipe(z.number().min(1).max(5)).optional(),
   maxRating: z.string().transform(Number).pipe(z.number().min(1).max(5)).optional(),

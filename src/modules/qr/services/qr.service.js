@@ -1,7 +1,10 @@
 const qrRepository = require('../repositories/qr.repository');
+const paymentQRRepository = require('../repositories/payment-qr.repository');
 const bookingRepository = require('../../booking/repositories/booking.repository');
+const paymentService = require('../../payment/services/payment.service');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
+const { comparePassword } = require('../../../utils/password');
 const {
   HTTP_STATUS,
   ERROR_MESSAGES,
@@ -9,6 +12,8 @@ const {
   QR_STATUS,
   BOOKING_STATUS,
   ROLES,
+  PAYMENT_QR_STATUS,
+  PAYMENT_METHOD_TYPE,
 } = require('../../../constants');
 const { prisma } = require('../../../prisma');
 const crypto = require('crypto');
@@ -226,6 +231,26 @@ class QRService {
         payload: { qrId: qrCode.qrId, bookingId: qrCode.bookingId },
       });
 
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: qrCode.customerId,
+            title: 'Rate your visit',
+            message: 'Your booking is complete. Please rate and review the branch.',
+            type: 'REVIEW_REQUEST',
+            module: 'Reviews',
+            referenceId: qrCode.bookingId,
+            data: {
+              bookingId: qrCode.bookingId,
+              branchId: qrCode.branchId,
+              businessId: qrCode.businessId,
+            },
+          },
+        });
+      } catch (_e) {
+        // non-blocking
+      }
+
       return { message: SUCCESS_MESSAGES.QR_CHECKED_OUT, qrCode: updatedQR };
     });
   }
@@ -357,6 +382,273 @@ class QRService {
     if (new Date() > new Date(qrCode.expiryTime)) {
       throw new AppError(ERROR_MESSAGES.QR_EXPIRED, HTTP_STATUS.BAD_REQUEST);
     }
+  }
+
+  _computePayable(amount, discountPercent, discountAmount) {
+    const base = Number(amount);
+    let discount = 0;
+    if (discountPercent != null) {
+      discount += (base * Number(discountPercent)) / 100;
+    }
+    if (discountAmount != null) {
+      discount += Number(discountAmount);
+    }
+    discount = Math.min(discount, base);
+    const payableAmount = Number(Math.max(base - discount, 0).toFixed(2));
+    return {
+      amount: base,
+      discountPercent: discountPercent != null ? Number(discountPercent) : null,
+      discountAmount: Number(discount.toFixed(2)),
+      payableAmount,
+    };
+  }
+
+  /**
+   * Booking QR pricing preview — applies service discount / coresyDiscount.
+   * Optional cashier override via discountPercent / discountAmount.
+   */
+  async getBookingQRPricing(token, overrides = {}) {
+    const qrCode = await qrRepository.findByToken(token);
+    if (!qrCode) throw new AppError(ERROR_MESSAGES.QR_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    const service = await prisma.service.findFirst({
+      where: { id: qrCode.serviceId, deletedAt: null },
+    });
+    if (!service) throw new AppError(ERROR_MESSAGES.SERVICE_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    const originalPrice = Number(service.price);
+    const serviceDiscountPercent = Number(service.discountPercentage || 0);
+    const coresyDiscountPercent = Number(service.coresyDiscount || 0);
+    const combinedPercent =
+      overrides.discountPercent != null
+        ? Number(overrides.discountPercent)
+        : serviceDiscountPercent + coresyDiscountPercent;
+
+    const pricing = this._computePayable(
+      originalPrice,
+      combinedPercent,
+      overrides.discountAmount,
+    );
+
+    return {
+      qrId: qrCode.qrId,
+      token: qrCode.token,
+      bookingId: qrCode.bookingId,
+      bookingNumber: qrCode.bookingNumber,
+      businessId: qrCode.businessId,
+      branchId: qrCode.branchId,
+      serviceId: qrCode.serviceId,
+      serviceName: service.name,
+      originalPrice,
+      serviceDiscountPercent,
+      coresyDiscountPercent,
+      ...pricing,
+      currency: 'SYP',
+    };
+  }
+
+  /**
+   * Business creates a payment QR (with optional discount).
+   * Customer later pays via wallet + password.
+   */
+  async createPaymentQR(data, userId, user) {
+    const business = await prisma.business.findFirst({
+      where: { id: data.businessId, deletedAt: null },
+    });
+    if (!business) throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && business.ownerId !== user.id) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (data.branchId) {
+      const branch = await prisma.branch.findFirst({
+        where: { id: data.branchId, deletedAt: null },
+      });
+      if (!branch || branch.businessId !== data.businessId) {
+        throw new AppError(ERROR_MESSAGES.BRANCH_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
+      }
+    }
+
+    const pricing = this._computePayable(
+      data.amount,
+      data.discountPercent,
+      data.discountAmount,
+    );
+    if (pricing.payableAmount <= 0) {
+      throw new AppError(ERROR_MESSAGES.PAYMENT_INVALID_AMOUNT, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const qrId = `PQR-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    const token = generateToken();
+    const expiresAt = data.expiresInMinutes
+      ? new Date(Date.now() + Number(data.expiresInMinutes) * 60 * 1000)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const paymentQr = await paymentQRRepository.create({
+      qrId,
+      token,
+      businessId: data.businessId,
+      branchId: data.branchId || null,
+      bookingId: data.bookingId || null,
+      title: data.title || null,
+      description: data.description || null,
+      amount: pricing.amount,
+      discountPercent: data.discountPercent != null ? Number(data.discountPercent) : null,
+      discountAmount: pricing.discountAmount,
+      payableAmount: pricing.payableAmount,
+      currency: data.currency || 'SYP',
+      status: PAYMENT_QR_STATUS.ACTIVE,
+      expiresAt,
+      createdBy: userId,
+    });
+
+    await auditLogService.create({
+      userId,
+      action: 'PAYMENT_QR_CREATED',
+      module: 'QR',
+      payload: { qrId, payableAmount: pricing.payableAmount },
+    });
+
+    return { message: SUCCESS_MESSAGES.PAYMENT_QR_CREATED, paymentQr };
+  }
+
+  async getPaymentQR(token) {
+    const paymentQr = await paymentQRRepository.findByToken(token);
+    if (!paymentQr) throw new AppError(ERROR_MESSAGES.PAYMENT_QR_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    if (paymentQr.expiresAt && new Date() > new Date(paymentQr.expiresAt)) {
+      if (paymentQr.status === PAYMENT_QR_STATUS.ACTIVE) {
+        await paymentQRRepository.update(paymentQr.id, { status: PAYMENT_QR_STATUS.EXPIRED });
+      }
+      throw new AppError(ERROR_MESSAGES.QR_EXPIRED, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    return {
+      paymentQr: {
+        ...paymentQr,
+        amountToPay: Number(paymentQr.payableAmount),
+      },
+    };
+  }
+
+  async payPaymentQR(token, password, user, ipAddress, userAgent) {
+    const paymentQr = await paymentQRRepository.findByToken(token);
+    if (!paymentQr) throw new AppError(ERROR_MESSAGES.PAYMENT_QR_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    if (paymentQr.status === PAYMENT_QR_STATUS.PAID) {
+      throw new AppError(ERROR_MESSAGES.PAYMENT_QR_ALREADY_PAID, HTTP_STATUS.CONFLICT);
+    }
+    if (paymentQr.status !== PAYMENT_QR_STATUS.ACTIVE) {
+      throw new AppError(ERROR_MESSAGES.PAYMENT_QR_INACTIVE, HTTP_STATUS.BAD_REQUEST);
+    }
+    if (paymentQr.expiresAt && new Date() > new Date(paymentQr.expiresAt)) {
+      await paymentQRRepository.update(paymentQr.id, { status: PAYMENT_QR_STATUS.EXPIRED });
+      throw new AppError(ERROR_MESSAGES.QR_EXPIRED, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const dbUser = await prisma.user.findFirst({
+      where: { id: user.id, deletedAt: null },
+    });
+    if (!dbUser) throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    const valid = await comparePassword(password, dbUser.password);
+    if (!valid) throw new AppError(ERROR_MESSAGES.INVALID_PASSWORD, HTTP_STATUS.UNAUTHORIZED);
+
+    const paymentResult = await paymentService.createPayment(
+      {
+        customerId: user.id,
+        businessId: paymentQr.businessId,
+        branchId: paymentQr.branchId,
+        bookingId: paymentQr.bookingId || undefined,
+        paymentMethod: PAYMENT_METHOD_TYPE.WALLET,
+        paymentType: paymentQr.bookingId ? 'BOOKING' : 'OTHER',
+        subtotal: Number(paymentQr.amount),
+        discount: Number(paymentQr.discountAmount || 0),
+        grandTotal: Number(paymentQr.payableAmount),
+        platformFee: 0,
+      },
+      user.id,
+      ipAddress,
+      userAgent,
+      user,
+    );
+
+    if (paymentResult.payment?.status !== 'SUCCESSFUL') {
+      throw new AppError(
+        paymentResult.payment?.failureReason || ERROR_MESSAGES.WALLET_INSUFFICIENT_BALANCE,
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    const updated = await paymentQRRepository.update(paymentQr.id, {
+      status: PAYMENT_QR_STATUS.PAID,
+      paidById: user.id,
+      paidAt: new Date(),
+      paymentId: paymentResult.payment.paymentId,
+      updatedBy: user.id,
+    });
+
+    await auditLogService.create({
+      userId: user.id,
+      action: 'PAYMENT_QR_PAID',
+      module: 'QR',
+      ipAddress,
+      userAgent,
+      payload: {
+        qrId: paymentQr.qrId,
+        paymentId: paymentResult.payment.paymentId,
+        amount: paymentQr.payableAmount,
+      },
+    });
+
+    return {
+      message: SUCCESS_MESSAGES.PAYMENT_QR_PAID,
+      paymentQr: updated,
+      payment: paymentResult.payment,
+    };
+  }
+
+  async cancelPaymentQR(id, userId, user) {
+    const paymentQr = await paymentQRRepository.findById(id);
+    if (!paymentQr) throw new AppError(ERROR_MESSAGES.PAYMENT_QR_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && paymentQr.business.ownerId !== user.id) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+    if (paymentQr.status === PAYMENT_QR_STATUS.PAID) {
+      throw new AppError(ERROR_MESSAGES.PAYMENT_QR_ALREADY_PAID, HTTP_STATUS.CONFLICT);
+    }
+
+    const updated = await paymentQRRepository.update(id, {
+      status: PAYMENT_QR_STATUS.CANCELLED,
+      updatedBy: userId,
+    });
+
+    return { message: SUCCESS_MESSAGES.PAYMENT_QR_CANCELLED, paymentQr: updated };
+  }
+
+  async listPaymentQRs(query, user) {
+    const filters = { ...query };
+    if (user.roles.includes(ROLES.BUSINESS_OWNER) && !filters.businessId) {
+      const businesses = await prisma.business.findMany({
+        where: { ownerId: user.id, deletedAt: null },
+        select: { id: true },
+      });
+      if (businesses.length === 1) {
+        filters.businessId = businesses[0].id;
+      } else if (businesses.length > 1) {
+        const resultLists = await Promise.all(
+          businesses.map((b) => paymentQRRepository.findAll({ ...query, businessId: b.id })),
+        );
+        const merged = resultLists.flatMap((r) => r.paymentQrs);
+        return {
+          paymentQrs: merged,
+          pagination: { page: 1, limit: merged.length, total: merged.length, pages: 1 },
+        };
+      }
+    }
+    return paymentQRRepository.findAll(filters);
   }
 }
 

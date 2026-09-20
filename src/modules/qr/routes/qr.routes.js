@@ -15,14 +15,31 @@ const {
   getCustomerDashboard,
   getBusinessDashboard,
   getCashierDashboard,
+  getBookingQRPricing,
+  createPaymentQR,
+  getPaymentQR,
+  payPaymentQR,
+  cancelPaymentQR,
+  listPaymentQRs,
 } = require('../controllers/qr.controller');
 const {
   scanQRSchema,
   validateQRSchema,
   listQRsSchema,
+  bookingPricingSchema,
+  createPaymentQRSchema,
+  payPaymentQRSchema,
+  listPaymentQRsSchema,
 } = require('../validators/qr.validator');
 
 router.use(authenticate);
+
+router.get('/payment', validate({ query: listPaymentQRsSchema }), listPaymentQRs);
+router.post('/payment', validate({ body: createPaymentQRSchema }), createPaymentQR);
+router.get('/payment/:token', getPaymentQR);
+router.post('/payment/:token/pay', validate({ body: payPaymentQRSchema }), payPaymentQR);
+router.patch('/payment/:id/cancel', cancelPaymentQR);
+router.post('/pricing', validate({ body: bookingPricingSchema }), getBookingQRPricing);
 
 /**
  * @swagger
