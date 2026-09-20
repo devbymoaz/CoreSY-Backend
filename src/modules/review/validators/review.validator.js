@@ -11,15 +11,21 @@ const ratingField = z
 
 const optionalRating = ratingField.optional().nullable();
 
+/** Empty string / undefined → null so Flutter can omit orderId for booking reviews */
+const optionalUuid = z.preprocess(
+  (value) => (value === '' || value === undefined ? null : value),
+  z.string().uuid().nullable().optional(),
+);
+
 const createReviewSchema = z
   .object({
-    bookingId: z.string().uuid().optional().nullable(),
-    orderId: z.string().uuid().optional().nullable(),
-    businessId: z.string().uuid().optional().nullable(),
-    branchId: z.string().uuid().optional().nullable(),
-    serviceId: z.string().uuid().optional().nullable(),
-    productId: z.string().uuid().optional().nullable(),
-    driverId: z.string().uuid().optional().nullable(),
+    bookingId: optionalUuid,
+    orderId: optionalUuid,
+    businessId: optionalUuid,
+    branchId: optionalUuid,
+    serviceId: optionalUuid,
+    productId: optionalUuid,
+    driverId: optionalUuid,
     overallRating: ratingField,
     serviceRating: optionalRating,
     qualityRating: optionalRating,
@@ -34,8 +40,10 @@ const createReviewSchema = z
       .optional()
       .default([]),
   })
-  .refine((data) => data.bookingId || data.orderId, {
-    message: 'bookingId or orderId is required',
+  .refine((data) => Boolean(data.bookingId || data.orderId), {
+    message:
+      'For Care/Pass booking reviews send bookingId. For Go order reviews send orderId. Do not send empty orderId.',
+    path: ['bookingId'],
   });
 
 const updateReviewSchema = z

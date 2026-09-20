@@ -142,12 +142,13 @@ router.get('/', validate({ query: listReviewsSchema }), getReviews);
  *                 items:
  *                   type: string
  *           example:
- *             orderId: a7f11770-5f94-445d-bd33-307cdba8f600
+ *             bookingId: a7f11770-5f94-445d-bd33-307cdba8f600
  *             overallRating: 5
+ *             serviceRating: 5
  *             qualityRating: 5
- *             deliveryRating: 4
- *             title: Great service
- *             description: Food was excellent and delivery was fast.
+ *             cleanlinessRating: 4
+ *             title: Great visit
+ *             description: Branch service was excellent.
  *     responses:
  *       201:
  *         description: Review created

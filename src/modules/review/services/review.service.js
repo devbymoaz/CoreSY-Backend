@@ -97,7 +97,10 @@ class ReviewService {
         throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
       }
       if (booking.status !== BOOKING_STATUS.COMPLETED) {
-        throw new AppError(ERROR_MESSAGES.REVIEW_NOT_ALLOWED, HTTP_STATUS.BAD_REQUEST);
+        throw new AppError(
+          'Review allowed only after booking is COMPLETED. Finish check-out first, then send bookingId.',
+          HTTP_STATUS.BAD_REQUEST,
+        );
       }
 
       businessId = booking.businessId;
