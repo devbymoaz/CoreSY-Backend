@@ -26,6 +26,16 @@ const getReviews = asyncHandler(async (req, res) => {
   return sendSuccess(res, result);
 });
 
+const getPublicBranchReviews = asyncHandler(async (req, res) => {
+  const result = await reviewService.getPublicBranchReviews(req.params.branchId, req.query);
+  return sendSuccess(res, result);
+});
+
+const getPublicBusinessReviews = asyncHandler(async (req, res) => {
+  const result = await reviewService.getPublicBusinessReviews(req.params.businessId, req.query);
+  return sendSuccess(res, result);
+});
+
 const getReviewById = asyncHandler(async (req, res) => {
   const review = await reviewService.getReviewById(req.params.id, req.user);
   return sendSuccess(res, { review });
@@ -140,6 +150,8 @@ const getDashboard = asyncHandler(async (req, res) => {
 module.exports = {
   createReview,
   getReviews,
+  getPublicBranchReviews,
+  getPublicBusinessReviews,
   getReviewById,
   updateReview,
   uploadReviewImages,

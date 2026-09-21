@@ -131,7 +131,9 @@ router.get('/transactions', validate({ query: listTransactionsSchema }), getTran
  *                 nullable: true
  *           example:
  *             amount: 100
- *             description: Monthly top-up
+ *             provider: CHAM_CASH
+ *             reference: CHAM-TXN-12345
+ *             description: Cham Cash top-up
  *     responses:
  *       200:
  *         description: Wallet topped up

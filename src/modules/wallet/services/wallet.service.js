@@ -255,24 +255,47 @@ class WalletService {
 
   async topUp(data, user, ipAddress, userAgent) {
     const amount = Number(data.amount);
+    const provider = data.provider || 'CHAM_CASH';
+    const reference = data.reference || null;
+    const descriptionParts = [
+      data.description || 'Wallet top-up',
+      `provider=${provider}`,
+      reference ? `ref=${reference}` : null,
+    ].filter(Boolean);
+
     const result = await this.creditWallet({
       customerId: user.id,
       amount,
       type: WALLET_TRANSACTION_TYPE.TOP_UP,
-      description: data.description || 'Wallet top-up',
+      description: descriptionParts.join(' | '),
       createdBy: user.id,
     });
 
-    await this._audit(user.id, 'WALLET_TOP_UP', { amount }, ipAddress, userAgent);
+    await this._audit(
+      user.id,
+      'WALLET_TOP_UP',
+      { amount, provider, reference },
+      ipAddress,
+      userAgent,
+    );
     await this._notify(
       user.id,
       'Wallet Credited',
-      `Your wallet was credited with ${amount} ${result.wallet.currency}.`,
+      `Your wallet was topped up with ${amount} ${result.wallet.currency} via ${provider}.`,
       'WALLET_CREDITED',
-      { amount },
+      { amount, provider, reference },
     );
 
-    return { message: SUCCESS_MESSAGES.WALLET_TOPPED_UP, ...result };
+    return {
+      message: SUCCESS_MESSAGES.WALLET_TOPPED_UP,
+      provider,
+      reference,
+      note:
+        provider === 'CHAM_CASH'
+          ? 'Top-up recorded for Cham Cash. No bank account linking is required in-app — pay via Cham Cash then confirm with amount (+ optional reference).'
+          : undefined,
+      ...result,
+    };
   }
 
   async withdraw(data, user, ipAddress, userAgent) {

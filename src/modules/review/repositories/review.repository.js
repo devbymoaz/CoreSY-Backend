@@ -126,9 +126,16 @@ class ReviewRepository {
   }
 
   async softDelete(id, updatedBy) {
+    // Clear bookingId/orderId so unique constraints allow a new review after delete
     return prisma.review.update({
       where: { id },
-      data: { status: REVIEW_STATUS.DELETED, deletedAt: new Date(), updatedBy },
+      data: {
+        status: REVIEW_STATUS.DELETED,
+        deletedAt: new Date(),
+        bookingId: null,
+        orderId: null,
+        updatedBy,
+      },
       include: REVIEW_INCLUDE,
     });
   }

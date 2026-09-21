@@ -9,6 +9,8 @@ const validate = require('../../../middlewares/zod-validate.middleware');
 const {
   createReview,
   getReviews,
+  getPublicBranchReviews,
+  getPublicBusinessReviews,
   getReviewById,
   updateReview,
   uploadReviewImages,
@@ -31,14 +33,32 @@ const {
   validateUploadedFileSignatures,
 } = require('../../../middlewares/upload.middleware');
 
-router.use(authenticate);
-
 /**
  * @swagger
  * tags:
  *   - name: Reviews
  *     description: Customer ratings and reviews
  */
+
+/**
+ * Public branch reviews (no auth) — anyone can see published reviews for a branch
+ */
+router.get(
+  '/public/branch/:branchId',
+  validate({ query: listReviewsSchema }),
+  getPublicBranchReviews,
+);
+
+/**
+ * Public business reviews (no auth)
+ */
+router.get(
+  '/public/business/:businessId',
+  validate({ query: listReviewsSchema }),
+  getPublicBusinessReviews,
+);
+
+router.use(authenticate);
 
 /**
  * @swagger

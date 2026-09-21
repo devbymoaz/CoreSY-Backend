@@ -15,6 +15,14 @@ const amountSchema = z
 
 const topUpSchema = z.object({
   amount: amountSchema,
+  /**
+   * Provider used for funding. Cham Cash is the documented payment rail.
+   * Until Cham Cash gateway is fully integrated, amount is credited after
+   * the client confirms payment (sandbox/MVP: amount alone is enough).
+   */
+  provider: z.enum(['CHAM_CASH', 'MANUAL', 'CARD']).optional().default('CHAM_CASH'),
+  /** Cham Cash / external transaction reference (optional now, recommended in production) */
+  reference: z.string().max(255).optional().nullable(),
   description: z.string().max(255).optional().nullable(),
 });
 

@@ -181,12 +181,56 @@ class ReviewService {
       this._hasRole(user, [ROLES.USER]) &&
       !this._hasRole(user, ADMIN_ROLES.concat([ROLES.BUSINESS_OWNER]))
     ) {
-      filters.customerId = user.id;
+      // Personal feed: only own reviews unless filtering by branch/business (public catalog)
+      if (!filters.branchId && !filters.businessId && !filters.serviceId) {
+        filters.customerId = user.id;
+      }
     }
     if (!filters.status && !this._hasRole(user, ADMIN_ROLES)) {
       filters.status = REVIEW_STATUS.PUBLISHED;
     }
     return reviewRepository.findAll(filters);
+  }
+
+  /**
+   * Public branch reviews (no ownership filter) — for branch detail screens.
+   */
+  async getPublicBranchReviews(branchId, query = {}) {
+    const branch = await prisma.branch.findFirst({
+      where: { id: branchId, deletedAt: null },
+      select: { id: true, name: true, rating: true, reviewCount: true, businessId: true },
+    });
+    if (!branch) throw new AppError(ERROR_MESSAGES.BRANCH_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    const result = await reviewRepository.findAll({
+      ...query,
+      branchId,
+      status: REVIEW_STATUS.PUBLISHED,
+    });
+
+    return {
+      branch,
+      ...result,
+    };
+  }
+
+  async getPublicBusinessReviews(businessId, query = {}) {
+    const business = await prisma.business.findFirst({
+      where: { id: businessId, deletedAt: null },
+      select: { id: true, name: true },
+    });
+    if (!business) throw new AppError(ERROR_MESSAGES.BUSINESS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+    const result = await reviewRepository.findAll({
+      ...query,
+      businessId,
+      status: REVIEW_STATUS.PUBLISHED,
+    });
+
+    return {
+      business,
+      ...result,
+    };
   }
 
   async getReviewById(id, user) {
