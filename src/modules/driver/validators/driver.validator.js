@@ -122,14 +122,14 @@ const updateLocationSchema = z.object({
 });
 
 const listDriversSchema = z.object({
-  page: z.string().transform(Number).pipe(z.number().int().min(1)).optional(),
-  limit: z.string().transform(Number).pipe(z.number().int().min(1).max(100)).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
   search: z.string().optional(),
   status: z.nativeEnum(DRIVER_STATUS).optional(),
   availabilityStatus: z.nativeEnum(DRIVER_AVAILABILITY_STATUS).optional(),
   vehicleType: z.nativeEnum(VEHICLE_TYPE).optional(),
   governorateId: z.string().uuid().optional(),
-  minRating: z.string().transform(Number).pipe(z.number().min(0).max(5)).optional(),
+  minRating: z.coerce.number().min(0).max(5).optional(),
   sortBy: z
     .enum(['createdAt', 'updatedAt', 'fullName', 'rating', 'totalDeliveries', 'status'])
     .optional(),

@@ -23,9 +23,11 @@ const ALLOWED_FOLDERS = new Set([
   'driver-documents',
   'driver-profiles',
   'driver-vehicles',
+  'offers',
   'product-categories',
   'products',
   'reviews',
+  'rewards',
   'services',
   'users',
 ]);

@@ -131,7 +131,9 @@ class DriverRepository {
     sortBy = 'createdAt',
     sortOrder = 'desc',
   } = {}) {
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || PAGINATION.DEFAULT_PAGE);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || PAGINATION.DEFAULT_LIMIT));
+    const skip = (pageNum - 1) * limitNum;
     const where = { deletedAt: null };
 
     if (search) {
@@ -150,7 +152,7 @@ class DriverRepository {
     if (availabilityStatus) where.availabilityStatus = availabilityStatus;
     if (vehicleType) where.vehicleType = vehicleType;
     if (governorateId) where.governorateId = governorateId;
-    if (minRating !== undefined) where.rating = { gte: minRating };
+    if (minRating !== undefined) where.rating = { gte: Number(minRating) };
 
     const [drivers, total] = await Promise.all([
       prisma.driver.findMany({
@@ -158,7 +160,7 @@ class DriverRepository {
         select: DRIVER_SAFE_SELECT,
         orderBy: { [sortBy]: sortOrder },
         skip,
-        take: limit,
+        take: limitNum,
       }),
       prisma.driver.count({ where }),
     ]);
@@ -166,10 +168,10 @@ class DriverRepository {
     return {
       drivers,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit) || 1,
+        pages: Math.ceil(total / limitNum) || 1,
       },
     };
   }
