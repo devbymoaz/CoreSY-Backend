@@ -418,6 +418,7 @@ const swaggerDefinition = {
     { name: 'Product Categories', description: 'Product category management endpoints' },
     { name: 'Orders', description: 'CoreSY Go multi-vendor order management endpoints' },
     { name: 'Business Orders', description: 'Business-facing order management endpoints' },
+    { name: 'Driver Orders', description: 'Driver assigned delivery order endpoints' },
     { name: 'Drivers', description: 'CoreSY Go driver management endpoints' },
     { name: 'Payments', description: 'Customer payment management endpoints' },
     { name: 'Business Payments', description: 'Business payment and transaction endpoints' },

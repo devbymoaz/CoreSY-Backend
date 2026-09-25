@@ -103,10 +103,41 @@ const listBusinessOrdersSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });
 
+const assignDriverSchema = z.object({
+  driverId: z.string().uuid(),
+});
+
+const declineDriverOrderSchema = z.object({
+  reason: z.string().max(500).trim().optional().nullable(),
+});
+
+const listDriverOrdersSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  status: z.nativeEnum(ORDER_STATUS).optional(),
+  activeOnly: z
+    .union([z.boolean(), z.enum(['true', 'false']).transform((v) => v === 'true')])
+    .optional(),
+  historyOnly: z
+    .union([z.boolean(), z.enum(['true', 'false']).transform((v) => v === 'true')])
+    .optional(),
+  sortBy: z.enum(['createdAt', 'updatedAt', 'status', 'total']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
+const availableDriversSchema = z.object({
+  governorateId: z.string().uuid().optional(),
+  businessOrderId: z.string().uuid().optional(),
+});
+
 module.exports = {
   createOrderSchema,
   cancelOrderSchema,
   rejectOrderSchema,
   listOrdersSchema,
   listBusinessOrdersSchema,
+  assignDriverSchema,
+  declineDriverOrderSchema,
+  listDriverOrdersSchema,
+  availableDriversSchema,
 };

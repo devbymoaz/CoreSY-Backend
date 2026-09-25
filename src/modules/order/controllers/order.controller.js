@@ -147,6 +147,84 @@ const deliveredBusinessOrder = asyncHandler(async (req, res) => {
   return sendSuccess(res, result);
 });
 
+const getAvailableDrivers = asyncHandler(async (req, res) => {
+  const result = await orderService.getAvailableDrivers(req.query, req.user);
+  return sendSuccess(res, result);
+});
+
+const assignDriver = asyncHandler(async (req, res) => {
+  const result = await orderService.assignDriver(
+    req.params.id,
+    req.body.driverId,
+    req.user.id,
+    req.ip,
+    req.headers['user-agent'],
+    req.user,
+  );
+  return sendSuccess(res, result);
+});
+
+const getDriverOrders = asyncHandler(async (req, res) => {
+  const result = await orderService.getDriverOrders(req.query, req.driver);
+  return sendSuccess(res, result);
+});
+
+const getDriverOrderById = asyncHandler(async (req, res) => {
+  const businessOrder = await orderService.getDriverOrderById(req.params.id, req.driver);
+  return sendSuccess(res, { businessOrder });
+});
+
+const driverAcceptOrder = asyncHandler(async (req, res) => {
+  const result = await orderService.driverAcceptOrder(
+    req.params.id,
+    req.driver,
+    req.ip,
+    req.headers['user-agent'],
+  );
+  return sendSuccess(res, result);
+});
+
+const driverDeclineOrder = asyncHandler(async (req, res) => {
+  const result = await orderService.driverDeclineOrder(
+    req.params.id,
+    req.body.reason,
+    req.driver,
+    req.ip,
+    req.headers['user-agent'],
+  );
+  return sendSuccess(res, result);
+});
+
+const driverPickedUpOrder = asyncHandler(async (req, res) => {
+  const result = await orderService.driverPickedUpOrder(
+    req.params.id,
+    req.driver,
+    req.ip,
+    req.headers['user-agent'],
+  );
+  return sendSuccess(res, result);
+});
+
+const driverOnTheWayOrder = asyncHandler(async (req, res) => {
+  const result = await orderService.driverOnTheWayOrder(
+    req.params.id,
+    req.driver,
+    req.ip,
+    req.headers['user-agent'],
+  );
+  return sendSuccess(res, result);
+});
+
+const driverDeliveredOrder = asyncHandler(async (req, res) => {
+  const result = await orderService.driverDeliveredOrder(
+    req.params.id,
+    req.driver,
+    req.ip,
+    req.headers['user-agent'],
+  );
+  return sendSuccess(res, result);
+});
+
 module.exports = {
   createOrder,
   getOrders,
@@ -166,4 +244,13 @@ module.exports = {
   preparingBusinessOrder,
   readyBusinessOrder,
   deliveredBusinessOrder,
+  getAvailableDrivers,
+  assignDriver,
+  getDriverOrders,
+  getDriverOrderById,
+  driverAcceptOrder,
+  driverDeclineOrder,
+  driverPickedUpOrder,
+  driverOnTheWayOrder,
+  driverDeliveredOrder,
 };

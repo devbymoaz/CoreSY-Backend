@@ -4,7 +4,7 @@
  */
 
 const { prisma } = require('../../../prisma');
-const { PAGINATION, ORDER_STATUS } = require('../../../constants');
+const { PAGINATION, ORDER_STATUS, DRIVER_STATUS, DRIVER_AVAILABILITY_STATUS } = require('../../../constants');
 
 const ORDER_INCLUDE = {
   customer: {
@@ -17,6 +17,17 @@ const ORDER_INCLUDE = {
     include: {
       business: { select: { id: true, name: true, ownerId: true, type: true } },
       branch: { select: { id: true, name: true, code: true } },
+      driver: {
+        select: {
+          id: true,
+          driverId: true,
+          fullName: true,
+          phoneNumber: true,
+          rating: true,
+          vehicleType: true,
+          vehiclePlateNumber: true,
+        },
+      },
       items: {
         include: {
           product: {
@@ -47,7 +58,21 @@ const BUSINESS_ORDER_INCLUDE = {
     },
   },
   business: { select: { id: true, name: true, ownerId: true } },
-  branch: { select: { id: true, name: true, code: true } },
+  branch: { select: { id: true, name: true, code: true, latitude: true, longitude: true } },
+  driver: {
+    select: {
+      id: true,
+      driverId: true,
+      fullName: true,
+      phoneNumber: true,
+      rating: true,
+      vehicleType: true,
+      vehiclePlateNumber: true,
+      currentLatitude: true,
+      currentLongitude: true,
+      availabilityStatus: true,
+    },
+  },
   items: {
     include: {
       product: { select: { id: true, name: true, sku: true, images: true } },
@@ -262,6 +287,93 @@ class OrderRepository {
         pages: Math.ceil(total / limitNum) || 1,
       },
     };
+  }
+
+  async findDriverOrders({
+    driverId,
+    page = PAGINATION.DEFAULT_PAGE,
+    limit = PAGINATION.DEFAULT_LIMIT,
+    status,
+    historyOnly = false,
+    activeOnly = false,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = {}) {
+    const pageNum = Math.max(1, Number(page) || PAGINATION.DEFAULT_PAGE);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || PAGINATION.DEFAULT_LIMIT));
+    const skip = (pageNum - 1) * limitNum;
+    const where = { driverId };
+
+    if (status) {
+      where.status = status;
+    } else if (historyOnly) {
+      where.status = {
+        in: [ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED, ORDER_STATUS.REJECTED],
+      };
+    } else if (activeOnly) {
+      where.status = {
+        in: [
+          ORDER_STATUS.ASSIGNED,
+          ORDER_STATUS.PICKED_UP,
+          ORDER_STATUS.ON_THE_WAY,
+        ],
+      };
+    }
+
+    const [businessOrders, total] = await Promise.all([
+      prisma.businessOrder.findMany({
+        where,
+        include: BUSINESS_ORDER_INCLUDE,
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limitNum,
+      }),
+      prisma.businessOrder.count({ where }),
+    ]);
+
+    return {
+      businessOrders,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum) || 1,
+      },
+    };
+  }
+
+  async findAvailableDrivers({ governorateId, excludeDriverIds = [] } = {}) {
+    const where = {
+      deletedAt: null,
+      status: DRIVER_STATUS.ACTIVE,
+      availabilityStatus: DRIVER_AVAILABILITY_STATUS.ONLINE,
+      isOnline: true,
+    };
+    if (governorateId) where.governorateId = governorateId;
+    if (excludeDriverIds.length) where.id = { notIn: excludeDriverIds };
+
+    return prisma.driver.findMany({
+      where,
+      select: {
+        id: true,
+        driverId: true,
+        fullName: true,
+        phoneNumber: true,
+        rating: true,
+        vehicleType: true,
+        vehiclePlateNumber: true,
+        vehicleBrand: true,
+        vehicleModel: true,
+        currentLatitude: true,
+        currentLongitude: true,
+        governorateId: true,
+        availabilityStatus: true,
+        totalDeliveries: true,
+        completedDeliveries: true,
+      },
+      orderBy: [{ rating: 'desc' }, { completedDeliveries: 'desc' }],
+      take: 50,
+    });
   }
 
   async update(id, data) {

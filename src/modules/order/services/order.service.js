@@ -19,6 +19,8 @@ const {
   PAYMENT_STATUS,
   PERMISSION_MODULES,
   SUBSCRIPTION_TIERS,
+  DRIVER_STATUS,
+  DRIVER_AVAILABILITY_STATUS,
 } = require('../../../constants');
 
 const ADMIN_ROLES = [ROLES.SUPER_ADMIN, ROLES.SUPPORT_ADMIN, ROLES.FINANCE_ADMIN];
@@ -984,6 +986,402 @@ class OrderService {
       ipAddress,
       userAgent,
       user,
+    );
+  }
+
+  async getAvailableDrivers(query, user) {
+    if (
+      !this._hasRole(user, ADMIN_ROLES.concat(BUSINESS_ROLES).concat([ROLES.BUSINESS_MANAGER]))
+    ) {
+      throw new AppError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN);
+    }
+
+    let governorateId = query.governorateId || null;
+
+    if (query.businessOrderId) {
+      const businessOrder = await orderRepository.findBusinessOrderById(query.businessOrderId);
+      if (!businessOrder) {
+        throw new AppError(ERROR_MESSAGES.BUSINESS_ORDER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+      }
+      await this._assertBusinessOrderAccess(businessOrder, user);
+      governorateId =
+        governorateId || businessOrder.order?.deliveryAddress?.governorateId || null;
+    }
+
+    const drivers = await orderRepository.findAvailableDrivers({ governorateId });
+    return { drivers, count: drivers.length };
+  }
+
+  async assignDriver(businessOrderId, driverId, userId, ipAddress, userAgent, user) {
+    const businessOrder = await orderRepository.findBusinessOrderById(businessOrderId);
+    if (!businessOrder) {
+      throw new AppError(ERROR_MESSAGES.BUSINESS_ORDER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    await this._assertBusinessOrderAccess(businessOrder, user);
+
+    if (businessOrder.order?.fulfillmentType === ORDER_FULFILLMENT_TYPE.PICKUP) {
+      throw new AppError(ERROR_MESSAGES.ORDER_NOT_DELIVERY, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const assignableStatuses = [
+      ORDER_STATUS.ACCEPTED,
+      ORDER_STATUS.PREPARING,
+      ORDER_STATUS.READY,
+    ];
+    if (!assignableStatuses.includes(businessOrder.status)) {
+      throw new AppError(ERROR_MESSAGES.ORDER_CANNOT_ASSIGN_DRIVER, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (
+      businessOrder.driverId &&
+      businessOrder.status === ORDER_STATUS.ASSIGNED &&
+      businessOrder.driverAcceptedAt
+    ) {
+      throw new AppError(ERROR_MESSAGES.ORDER_DRIVER_ALREADY_ASSIGNED, HTTP_STATUS.CONFLICT);
+    }
+
+    const driver = await prisma.driver.findFirst({
+      where: { id: driverId, deletedAt: null },
+    });
+    if (!driver) {
+      throw new AppError(ERROR_MESSAGES.DRIVER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+    if (driver.status !== DRIVER_STATUS.ACTIVE) {
+      throw new AppError(ERROR_MESSAGES.DRIVER_NOT_ACTIVE, HTTP_STATUS.BAD_REQUEST);
+    }
+    if (
+      ![DRIVER_AVAILABILITY_STATUS.ONLINE, DRIVER_AVAILABILITY_STATUS.BUSY].includes(
+        driver.availabilityStatus,
+      )
+    ) {
+      throw new AppError(ERROR_MESSAGES.ORDER_DRIVER_NOT_AVAILABLE, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const updatedBusinessOrder = await orderRepository.updateBusinessOrder(businessOrderId, {
+      driverId: driver.id,
+      status: ORDER_STATUS.ASSIGNED,
+      driverAssignedAt: new Date(),
+      driverAcceptedAt: null,
+      driverDeclinedAt: null,
+      driverDeclineReason: null,
+    });
+
+    await prisma.driver.update({
+      where: { id: driver.id },
+      data: {
+        availabilityStatus: DRIVER_AVAILABILITY_STATUS.BUSY,
+        isOnline: true,
+      },
+    });
+
+    const master = await orderRepository.findById(businessOrder.orderId);
+    const masterStatus = this._deriveMasterStatus(
+      master.businessOrders.map((bo) =>
+        bo.id === businessOrderId ? { ...bo, status: ORDER_STATUS.ASSIGNED } : bo,
+      ),
+    );
+
+    const updatedOrder = await orderRepository.update(businessOrder.orderId, {
+      status: masterStatus,
+      updatedBy: userId,
+    });
+
+    await this._audit(
+      userId,
+      'ORDER_DRIVER_ASSIGNED',
+      { orderId: businessOrder.orderId, businessOrderId, driverId: driver.id },
+      ipAddress,
+      userAgent,
+    );
+
+    await this._notify(
+      master.customerId,
+      'Driver Assigned',
+      `A driver has been assigned to order ${master.orderNumber}.`,
+      'ORDER_ASSIGNED',
+      { orderId: master.id, businessOrderId, driverId: driver.id },
+    );
+
+    if (businessOrder.business?.ownerId) {
+      await this._notify(
+        businessOrder.business.ownerId,
+        'Driver Assigned',
+        `Driver ${driver.fullName} assigned to ${businessOrder.businessOrderNumber}.`,
+        'ORDER_ASSIGNED',
+        { orderId: master.id, businessOrderId, driverId: driver.id },
+      );
+    }
+
+    return {
+      message: SUCCESS_MESSAGES.ORDER_ASSIGNED,
+      businessOrder: updatedBusinessOrder,
+      order: updatedOrder,
+    };
+  }
+
+  async getDriverOrders(query, driver) {
+    return orderRepository.findDriverOrders({
+      ...query,
+      driverId: driver.id,
+      activeOnly: query.activeOnly === true || query.activeOnly === 'true',
+      historyOnly: query.historyOnly === true || query.historyOnly === 'true',
+    });
+  }
+
+  async getDriverOrderById(businessOrderId, driver) {
+    const businessOrder = await orderRepository.findBusinessOrderById(businessOrderId);
+    if (!businessOrder) {
+      throw new AppError(ERROR_MESSAGES.BUSINESS_ORDER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+    if (businessOrder.driverId !== driver.id) {
+      throw new AppError(ERROR_MESSAGES.ORDER_DRIVER_NOT_YOURS, HTTP_STATUS.FORBIDDEN);
+    }
+    return businessOrder;
+  }
+
+  async driverAcceptOrder(businessOrderId, driver, ipAddress, userAgent) {
+    const businessOrder = await this.getDriverOrderById(businessOrderId, driver);
+
+    if (businessOrder.status !== ORDER_STATUS.ASSIGNED) {
+      throw new AppError(ERROR_MESSAGES.ORDER_INVALID_STATUS_TRANSITION, HTTP_STATUS.BAD_REQUEST);
+    }
+    if (businessOrder.driverAcceptedAt) {
+      throw new AppError(ERROR_MESSAGES.ORDER_INVALID_STATUS_TRANSITION, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const updatedBusinessOrder = await orderRepository.updateBusinessOrder(businessOrderId, {
+      driverAcceptedAt: new Date(),
+    });
+
+    await prisma.driver.update({
+      where: { id: driver.id },
+      data: {
+        availabilityStatus: DRIVER_AVAILABILITY_STATUS.ON_DELIVERY,
+        isOnline: true,
+        totalDeliveries: { increment: 1 },
+      },
+    });
+
+    const master = await orderRepository.findById(businessOrder.orderId);
+
+    await this._audit(
+      driver.id,
+      'ORDER_DRIVER_ACCEPTED',
+      { orderId: businessOrder.orderId, businessOrderId },
+      ipAddress,
+      userAgent,
+    );
+
+    await this._notify(
+      master.customerId,
+      'Driver Accepted',
+      `Driver accepted order ${master.orderNumber} and is on the way to the branch.`,
+      'ORDER_DRIVER_ACCEPTED',
+      { orderId: master.id, businessOrderId, driverId: driver.id },
+    );
+
+    if (businessOrder.business?.ownerId) {
+      await this._notify(
+        businessOrder.business.ownerId,
+        'Driver Accepted',
+        `Driver accepted ${businessOrder.businessOrderNumber}.`,
+        'ORDER_DRIVER_ACCEPTED',
+        { orderId: master.id, businessOrderId, driverId: driver.id },
+      );
+    }
+
+    return {
+      message: SUCCESS_MESSAGES.ORDER_DRIVER_ACCEPTED,
+      businessOrder: updatedBusinessOrder,
+    };
+  }
+
+  async driverDeclineOrder(businessOrderId, reason, driver, ipAddress, userAgent) {
+    const businessOrder = await this.getDriverOrderById(businessOrderId, driver);
+
+    if (businessOrder.status !== ORDER_STATUS.ASSIGNED || businessOrder.driverAcceptedAt) {
+      throw new AppError(ERROR_MESSAGES.ORDER_INVALID_STATUS_TRANSITION, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const fallbackStatus = businessOrder.readyAt
+      ? ORDER_STATUS.READY
+      : businessOrder.preparingAt
+        ? ORDER_STATUS.PREPARING
+        : ORDER_STATUS.ACCEPTED;
+
+    const updatedBusinessOrder = await orderRepository.updateBusinessOrder(businessOrderId, {
+      driverId: null,
+      status: fallbackStatus,
+      driverAssignedAt: null,
+      driverAcceptedAt: null,
+      driverDeclinedAt: new Date(),
+      driverDeclineReason: reason || null,
+    });
+
+    await prisma.driver.update({
+      where: { id: driver.id },
+      data: {
+        availabilityStatus: DRIVER_AVAILABILITY_STATUS.ONLINE,
+        isOnline: true,
+        cancelledDeliveries: { increment: 1 },
+      },
+    });
+
+    const master = await orderRepository.findById(businessOrder.orderId);
+    const masterStatus = this._deriveMasterStatus(
+      master.businessOrders.map((bo) =>
+        bo.id === businessOrderId ? { ...bo, status: fallbackStatus, driverId: null } : bo,
+      ),
+    );
+
+    const updatedOrder = await orderRepository.update(businessOrder.orderId, {
+      status: masterStatus,
+    });
+
+    await this._audit(
+      driver.id,
+      'ORDER_DRIVER_DECLINED',
+      { orderId: businessOrder.orderId, businessOrderId, reason },
+      ipAddress,
+      userAgent,
+    );
+
+    if (businessOrder.business?.ownerId) {
+      await this._notify(
+        businessOrder.business.ownerId,
+        'Driver Declined',
+        `Driver declined ${businessOrder.businessOrderNumber}. Please assign another driver.`,
+        'ORDER_DRIVER_DECLINED',
+        { orderId: master.id, businessOrderId, reason },
+      );
+    }
+
+    return {
+      message: SUCCESS_MESSAGES.ORDER_DRIVER_DECLINED,
+      businessOrder: updatedBusinessOrder,
+      order: updatedOrder,
+    };
+  }
+
+  async _driverUpdateStatus(businessOrderId, nextStatus, driver, ipAddress, userAgent, extra = {}) {
+    const businessOrder = await this.getDriverOrderById(businessOrderId, driver);
+
+    if (!businessOrder.driverAcceptedAt && nextStatus !== ORDER_STATUS.ASSIGNED) {
+      throw new AppError(
+        'Accept the order before updating delivery status.',
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    const transitions = {
+      [ORDER_STATUS.PICKED_UP]: [ORDER_STATUS.ASSIGNED],
+      [ORDER_STATUS.ON_THE_WAY]: [ORDER_STATUS.PICKED_UP],
+      [ORDER_STATUS.DELIVERED]: [ORDER_STATUS.ON_THE_WAY, ORDER_STATUS.PICKED_UP],
+    };
+
+    const allowedFrom = transitions[nextStatus] || [];
+    if (!allowedFrom.includes(businessOrder.status)) {
+      throw new AppError(ERROR_MESSAGES.ORDER_INVALID_STATUS_TRANSITION, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const timestamps = {};
+    if (nextStatus === ORDER_STATUS.PICKED_UP) timestamps.pickedUpAt = new Date();
+    if (nextStatus === ORDER_STATUS.ON_THE_WAY) timestamps.onTheWayAt = new Date();
+    if (nextStatus === ORDER_STATUS.DELIVERED) timestamps.deliveredAt = new Date();
+
+    const updatedBusinessOrder = await orderRepository.updateBusinessOrder(businessOrderId, {
+      status: nextStatus,
+      ...timestamps,
+      ...extra,
+    });
+
+    if (nextStatus === ORDER_STATUS.DELIVERED) {
+      await prisma.driver.update({
+        where: { id: driver.id },
+        data: {
+          availabilityStatus: DRIVER_AVAILABILITY_STATUS.ONLINE,
+          isOnline: true,
+          completedDeliveries: { increment: 1 },
+        },
+      });
+    }
+
+    const master = await orderRepository.findById(businessOrder.orderId);
+    const masterStatus = this._deriveMasterStatus(
+      master.businessOrders.map((bo) =>
+        bo.id === businessOrderId ? { ...bo, status: nextStatus } : bo,
+      ),
+    );
+
+    const updatedOrder = await orderRepository.update(businessOrder.orderId, {
+      status: masterStatus,
+    });
+
+    await this._audit(
+      driver.id,
+      'ORDER_STATUS_CHANGED',
+      {
+        orderId: businessOrder.orderId,
+        businessOrderId,
+        previousStatus: businessOrder.status,
+        status: nextStatus,
+        by: 'driver',
+      },
+      ipAddress,
+      userAgent,
+    );
+
+    const titles = {
+      [ORDER_STATUS.PICKED_UP]: 'Order Picked Up',
+      [ORDER_STATUS.ON_THE_WAY]: 'Order On The Way',
+      [ORDER_STATUS.DELIVERED]: 'Order Delivered',
+    };
+
+    if (titles[nextStatus]) {
+      await this._notify(
+        master.customerId,
+        titles[nextStatus],
+        `Order ${master.orderNumber} is now ${nextStatus.toLowerCase().replaceAll('_', ' ')}.`,
+        `ORDER_${nextStatus}`,
+        { orderId: master.id, businessOrderId, driverId: driver.id },
+      );
+    }
+
+    return {
+      message: SUCCESS_MESSAGES[`ORDER_${nextStatus}`] || SUCCESS_MESSAGES.ORDER_STATUS_UPDATED,
+      businessOrder: updatedBusinessOrder,
+      order: updatedOrder,
+    };
+  }
+
+  async driverPickedUpOrder(businessOrderId, driver, ipAddress, userAgent) {
+    return this._driverUpdateStatus(
+      businessOrderId,
+      ORDER_STATUS.PICKED_UP,
+      driver,
+      ipAddress,
+      userAgent,
+    );
+  }
+
+  async driverOnTheWayOrder(businessOrderId, driver, ipAddress, userAgent) {
+    return this._driverUpdateStatus(
+      businessOrderId,
+      ORDER_STATUS.ON_THE_WAY,
+      driver,
+      ipAddress,
+      userAgent,
+    );
+  }
+
+  async driverDeliveredOrder(businessOrderId, driver, ipAddress, userAgent) {
+    return this._driverUpdateStatus(
+      businessOrderId,
+      ORDER_STATUS.DELIVERED,
+      driver,
+      ipAddress,
+      userAgent,
     );
   }
 

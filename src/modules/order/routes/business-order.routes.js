@@ -17,8 +17,15 @@ const {
   preparingBusinessOrder,
   readyBusinessOrder,
   deliveredBusinessOrder,
+  getAvailableDrivers,
+  assignDriver,
 } = require('../controllers/order.controller');
-const { listBusinessOrdersSchema, rejectOrderSchema } = require('../validators/order.validator');
+const {
+  listBusinessOrdersSchema,
+  rejectOrderSchema,
+  assignDriverSchema,
+  availableDriversSchema,
+} = require('../validators/order.validator');
 const { ROLES } = require('../../../constants');
 
 const businessRoles = [
@@ -161,6 +168,75 @@ router.get(
   authorizeRoles(...businessRoles),
   validate({ query: listBusinessOrdersSchema }),
   getBusinessOrders,
+);
+
+/**
+ * @swagger
+ * /business/orders/available-drivers:
+ *   get:
+ *     summary: List online drivers available for assignment
+ *     tags: [Business Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: governorateId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: businessOrderId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Uses delivery address governorate from this order when set
+ *     responses:
+ *       200:
+ *         description: Available drivers
+ */
+router.get(
+  '/available-drivers',
+  authorizeRoles(...writeRoles),
+  validate({ query: availableDriversSchema }),
+  getAvailableDrivers,
+);
+
+/**
+ * @swagger
+ * /business/orders/{id}/assign-driver:
+ *   patch:
+ *     summary: Assign a driver to a DELIVERY business order
+ *     description: Call after business accepts (status ACCEPTED / PREPARING / READY). Driver then sees the order and can accept or decline.
+ *     tags: [Business Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [driverId]
+ *             properties:
+ *               driverId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Driver assigned; status becomes ASSIGNED
+ */
+router.patch(
+  '/:id/assign-driver',
+  authorizeRoles(...writeRoles),
+  validate({ body: assignDriverSchema }),
+  assignDriver,
 );
 
 /**
