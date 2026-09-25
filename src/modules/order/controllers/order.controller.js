@@ -71,6 +71,11 @@ const getCustomerDashboard = asyncHandler(async (req, res) => {
   return sendSuccess(res, { stats });
 });
 
+const getFulfillmentOptions = asyncHandler(async (req, res) => {
+  const result = orderService.getFulfillmentOptions();
+  return sendSuccess(res, result);
+});
+
 const getBusinessOrders = asyncHandler(async (req, res) => {
   const result = await orderService.getBusinessOrders(req.query, req.user);
   return sendSuccess(res, result);
@@ -131,6 +136,17 @@ const readyBusinessOrder = asyncHandler(async (req, res) => {
   return sendSuccess(res, result);
 });
 
+const deliveredBusinessOrder = asyncHandler(async (req, res) => {
+  const result = await orderService.deliveredBusinessOrder(
+    req.params.id,
+    req.user.id,
+    req.ip,
+    req.headers['user-agent'],
+    req.user,
+  );
+  return sendSuccess(res, result);
+});
+
 module.exports = {
   createOrder,
   getOrders,
@@ -141,6 +157,7 @@ module.exports = {
   cancelOrder,
   reorder,
   getCustomerDashboard,
+  getFulfillmentOptions,
   getBusinessOrders,
   getTodayBusinessOrders,
   getBusinessDashboard,
@@ -148,4 +165,5 @@ module.exports = {
   rejectBusinessOrder,
   preparingBusinessOrder,
   readyBusinessOrder,
+  deliveredBusinessOrder,
 };

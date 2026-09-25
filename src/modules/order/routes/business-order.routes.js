@@ -16,6 +16,7 @@ const {
   rejectBusinessOrder,
   preparingBusinessOrder,
   readyBusinessOrder,
+  deliveredBusinessOrder,
 } = require('../controllers/order.controller');
 const { listBusinessOrdersSchema, rejectOrderSchema } = require('../validators/order.validator');
 const { ROLES } = require('../../../constants');
@@ -146,6 +147,11 @@ router.get(
  *         name: status
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: fulfillmentType
+ *         schema:
+ *           type: string
+ *           enum: [DELIVERY, PICKUP]
  *     responses:
  *       200:
  *         description: Business orders retrieved
@@ -262,5 +268,27 @@ router.patch('/:id/preparing', authorizeRoles(...writeRoles), preparingBusinessO
  *         description: Order marked as ready
  */
 router.patch('/:id/ready', authorizeRoles(...writeRoles), readyBusinessOrder);
+
+/**
+ * @swagger
+ * /business/orders/{id}/delivered:
+ *   patch:
+ *     summary: Mark business order as delivered / collected (pickup)
+ *     description: For PICKUP orders use this after customer collects when status is READY. Also allowed from ON_THE_WAY / PICKED_UP for delivery.
+ *     tags: [Business Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Order marked as delivered / collected
+ */
+router.patch('/:id/delivered', authorizeRoles(...writeRoles), deliveredBusinessOrder);
 
 module.exports = router;

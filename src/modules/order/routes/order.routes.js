@@ -18,6 +18,7 @@ const {
   cancelOrder,
   reorder,
   getCustomerDashboard,
+  getFulfillmentOptions,
 } = require('../controllers/order.controller');
 const {
   createOrderSchema,
@@ -58,6 +59,34 @@ router.use(authenticate);
  *                   cancelledOrders: 2
  */
 router.get('/dashboard', getCustomerDashboard);
+
+/**
+ * @swagger
+ * /orders/fulfillment-types:
+ *   get:
+ *     summary: Get available order fulfillment options (Delivery / Pickup)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Fulfillment options
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: true
+ *               data:
+ *                 options:
+ *                   - type: DELIVERY
+ *                     label: Delivery
+ *                     requiresAddress: true
+ *                     deliveryFeeApplies: true
+ *                   - type: PICKUP
+ *                     label: Pickup
+ *                     requiresAddress: false
+ *                     deliveryFeeApplies: false
+ */
+router.get('/fulfillment-types', getFulfillmentOptions);
 
 /**
  * @swagger
@@ -119,6 +148,11 @@ router.get('/history', validate({ query: listOrdersSchema }), getOrderHistory);
  *           type: string
  *           enum: [PENDING, PAID, FAILED, REFUNDED, CASH, WALLET]
  *       - in: query
+ *         name: fulfillmentType
+ *         schema:
+ *           type: string
+ *           enum: [DELIVERY, PICKUP]
+ *       - in: query
  *         name: businessId
  *         schema:
  *           type: string
@@ -154,11 +188,16 @@ router.get('/', validate({ query: listOrdersSchema }), getOrders);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [deliveryAddress, items]
+ *             required: [items]
  *             properties:
  *               customerId:
  *                 type: string
  *                 format: uuid
+ *               fulfillmentType:
+ *                 type: string
+ *                 enum: [DELIVERY, PICKUP]
+ *                 default: DELIVERY
+ *                 description: DELIVERY requires deliveryAddress. PICKUP does not; deliveryFee is 0.
  *               paymentMethod:
  *                 type: string
  *                 enum: [CASH, WALLET, CARD, ONLINE]
@@ -166,12 +205,19 @@ router.get('/', validate({ query: listOrdersSchema }), getOrders);
  *               deliveryFee:
  *                 type: number
  *                 minimum: 0
+ *                 description: Ignored for PICKUP (always 0)
  *               deliveryNotes:
  *                 type: string
  *                 maxLength: 1000
  *                 nullable: true
+ *               pickupNotes:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 nullable: true
+ *                 description: Optional notes for pickup orders
  *               deliveryAddress:
  *                 type: object
+ *                 description: Required when fulfillmentType is DELIVERY
  *                 required: [customerName, phone, governorateId, area, street]
  *                 properties:
  *                   customerName:

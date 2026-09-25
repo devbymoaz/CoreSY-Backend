@@ -14,6 +14,7 @@ const {
   SUCCESS_MESSAGES,
   ROLES,
   ORDER_STATUS,
+  ORDER_FULFILLMENT_TYPE,
   PRODUCT_STATUS,
   PAYMENT_STATUS,
   PERMISSION_MODULES,
@@ -190,11 +191,22 @@ class OrderService {
     });
     if (!customer) throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
-    const governorate = await prisma.governorate.findUnique({
-      where: { id: data.deliveryAddress.governorateId },
-    });
-    if (!governorate) {
-      throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
+    const fulfillmentType = data.fulfillmentType || ORDER_FULFILLMENT_TYPE.DELIVERY;
+    const isPickup = fulfillmentType === ORDER_FULFILLMENT_TYPE.PICKUP;
+
+    if (!isPickup) {
+      if (!data.deliveryAddress) {
+        throw new AppError(
+          'deliveryAddress is required for DELIVERY orders.',
+          HTTP_STATUS.BAD_REQUEST,
+        );
+      }
+      const governorate = await prisma.governorate.findUnique({
+        where: { id: data.deliveryAddress.governorateId },
+      });
+      if (!governorate) {
+        throw new AppError(ERROR_MESSAGES.GOVERNORATE_NOT_FOUND, HTTP_STATUS.BAD_REQUEST);
+      }
     }
 
     const productIds = data.items.map((item) => item.productId);
@@ -276,8 +288,12 @@ class OrderService {
       : 0;
     const itemsSubtotal = [...grouped.values()].reduce((sum, g) => sum + g.subtotal, 0);
     const platformFee = Number((itemsSubtotal * PLATFORM_FEE_RATE).toFixed(2));
-    const deliveryFee =
-      data.deliveryFee != null ? Number(data.deliveryFee) : DEFAULT_DELIVERY_FEE * grouped.size;
+    // Pickup: no delivery fee. Delivery: use provided fee or default per vendor group.
+    const deliveryFee = isPickup
+      ? 0
+      : data.deliveryFee != null
+        ? Number(data.deliveryFee)
+        : DEFAULT_DELIVERY_FEE * grouped.size;
     const tax = Number(((itemsSubtotal + platformFee + deliveryFee) * TAX_RATE).toFixed(2));
     const grandTotal = Number(
       (itemsSubtotal - subscriberDiscount + platformFee + deliveryFee + tax).toFixed(2),
@@ -285,7 +301,9 @@ class OrderService {
 
     const orderNumber = await this._generateOrderNumber();
     const invoiceNumber = `INV-${orderNumber.replace('ORD-', '')}`;
-    const estimatedDeliveryTime = new Date(Date.now() + 60 * 60 * 1000);
+    const estimatedDeliveryTime = new Date(
+      Date.now() + (isPickup ? 30 : 60) * 60 * 1000,
+    );
     const paymentStatus =
       data.paymentMethod === 'CASH'
         ? PAYMENT_STATUS.CASH
@@ -335,40 +353,49 @@ class OrderService {
         }
       }
 
-      const createdOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          customerId,
-          paymentMethod: data.paymentMethod,
-          paymentStatus,
-          status: ORDER_STATUS.PENDING,
-          totalAmount,
-          discount,
-          subscriberDiscount,
-          platformFee,
-          deliveryFee,
-          tax,
-          grandTotal,
-          estimatedDeliveryTime,
-          deliveryNotes: data.deliveryNotes || data.deliveryAddress.deliveryNotes || null,
-          invoiceNumber,
-          createdBy: userId,
-          deliveryAddress: {
-            create: {
-              customerName: data.deliveryAddress.customerName,
-              phone: data.deliveryAddress.phone,
-              governorateId: data.deliveryAddress.governorateId,
-              area: data.deliveryAddress.area,
-              street: data.deliveryAddress.street,
-              building: data.deliveryAddress.building || null,
-              floor: data.deliveryAddress.floor || null,
-              apartment: data.deliveryAddress.apartment || null,
-              latitude: data.deliveryAddress.latitude ?? null,
-              longitude: data.deliveryAddress.longitude ?? null,
-              deliveryNotes: data.deliveryAddress.deliveryNotes || null,
-            },
+      const orderData = {
+        orderNumber,
+        customerId,
+        fulfillmentType,
+        paymentMethod: data.paymentMethod,
+        paymentStatus,
+        status: ORDER_STATUS.PENDING,
+        totalAmount,
+        discount,
+        subscriberDiscount,
+        platformFee,
+        deliveryFee,
+        tax,
+        grandTotal,
+        estimatedDeliveryTime,
+        deliveryNotes: isPickup
+          ? null
+          : data.deliveryNotes || data.deliveryAddress?.deliveryNotes || null,
+        pickupNotes: isPickup ? data.pickupNotes || data.deliveryNotes || null : null,
+        invoiceNumber,
+        createdBy: userId,
+      };
+
+      if (!isPickup && data.deliveryAddress) {
+        orderData.deliveryAddress = {
+          create: {
+            customerName: data.deliveryAddress.customerName,
+            phone: data.deliveryAddress.phone,
+            governorateId: data.deliveryAddress.governorateId,
+            area: data.deliveryAddress.area,
+            street: data.deliveryAddress.street,
+            building: data.deliveryAddress.building || null,
+            floor: data.deliveryAddress.floor || null,
+            apartment: data.deliveryAddress.apartment || null,
+            latitude: data.deliveryAddress.latitude ?? null,
+            longitude: data.deliveryAddress.longitude ?? null,
+            deliveryNotes: data.deliveryAddress.deliveryNotes || null,
           },
-        },
+        };
+      }
+
+      const createdOrder = await tx.order.create({
+        data: orderData,
       });
 
       let businessIndex = 1;
@@ -672,21 +699,29 @@ class OrderService {
     }
 
     const payload = {
+      fulfillmentType: order.fulfillmentType || ORDER_FULFILLMENT_TYPE.DELIVERY,
       paymentMethod: order.paymentMethod,
       deliveryNotes: order.deliveryNotes,
-      deliveryAddress: {
-        customerName: order.deliveryAddress.customerName,
-        phone: order.deliveryAddress.phone,
-        governorateId: order.deliveryAddress.governorateId,
-        area: order.deliveryAddress.area,
-        street: order.deliveryAddress.street,
-        building: order.deliveryAddress.building,
-        floor: order.deliveryAddress.floor,
-        apartment: order.deliveryAddress.apartment,
-        latitude: order.deliveryAddress.latitude ? Number(order.deliveryAddress.latitude) : null,
-        longitude: order.deliveryAddress.longitude ? Number(order.deliveryAddress.longitude) : null,
-        deliveryNotes: order.deliveryAddress.deliveryNotes,
-      },
+      pickupNotes: order.pickupNotes,
+      deliveryAddress: order.deliveryAddress
+        ? {
+            customerName: order.deliveryAddress.customerName,
+            phone: order.deliveryAddress.phone,
+            governorateId: order.deliveryAddress.governorateId,
+            area: order.deliveryAddress.area,
+            street: order.deliveryAddress.street,
+            building: order.deliveryAddress.building,
+            floor: order.deliveryAddress.floor,
+            apartment: order.deliveryAddress.apartment,
+            latitude: order.deliveryAddress.latitude
+              ? Number(order.deliveryAddress.latitude)
+              : null,
+            longitude: order.deliveryAddress.longitude
+              ? Number(order.deliveryAddress.longitude)
+              : null,
+            deliveryNotes: order.deliveryAddress.deliveryNotes,
+          }
+        : null,
       items: order.items.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -695,6 +730,26 @@ class OrderService {
 
     const result = await this.createOrder(payload, userId, ipAddress, userAgent, user);
     return { message: SUCCESS_MESSAGES.ORDER_REORDERED, order: result.order };
+  }
+
+  getFulfillmentOptions() {
+    return {
+      options: [
+        {
+          type: ORDER_FULFILLMENT_TYPE.DELIVERY,
+          label: 'Delivery',
+          requiresAddress: true,
+          deliveryFeeApplies: true,
+        },
+        {
+          type: ORDER_FULFILLMENT_TYPE.PICKUP,
+          label: 'Pickup',
+          requiresAddress: false,
+          deliveryFeeApplies: false,
+          note: 'Customer collects order from the branch when status is READY.',
+        },
+      ],
+    };
   }
 
   async getBusinessOrders(query, user) {
@@ -747,6 +802,7 @@ class OrderService {
       [ORDER_STATUS.REJECTED]: [ORDER_STATUS.PENDING],
       [ORDER_STATUS.PREPARING]: [ORDER_STATUS.ACCEPTED],
       [ORDER_STATUS.READY]: [ORDER_STATUS.PREPARING],
+      [ORDER_STATUS.DELIVERED]: [ORDER_STATUS.READY, ORDER_STATUS.ON_THE_WAY, ORDER_STATUS.PICKED_UP],
     };
 
     const allowedFrom = transitions[nextStatus] || [];
@@ -758,6 +814,7 @@ class OrderService {
     if (nextStatus === ORDER_STATUS.ACCEPTED) timestamps.acceptedAt = new Date();
     if (nextStatus === ORDER_STATUS.PREPARING) timestamps.preparingAt = new Date();
     if (nextStatus === ORDER_STATUS.READY) timestamps.readyAt = new Date();
+    if (nextStatus === ORDER_STATUS.DELIVERED) timestamps.deliveredAt = new Date();
     if (nextStatus === ORDER_STATUS.REJECTED) timestamps.cancelledAt = new Date();
 
     const updatedBusinessOrder = await orderRepository.updateBusinessOrder(businessOrderId, {
@@ -801,17 +858,33 @@ class OrderService {
     const customerMessages = {
       [ORDER_STATUS.ACCEPTED]: 'Order Accepted',
       [ORDER_STATUS.PREPARING]: 'Order Preparing',
-      [ORDER_STATUS.READY]: 'Order Ready',
+      [ORDER_STATUS.READY]:
+        master.fulfillmentType === ORDER_FULFILLMENT_TYPE.PICKUP
+          ? 'Order Ready for Pickup'
+          : 'Order Ready',
+      [ORDER_STATUS.DELIVERED]:
+        master.fulfillmentType === ORDER_FULFILLMENT_TYPE.PICKUP
+          ? 'Order Picked Up'
+          : 'Order Delivered',
       [ORDER_STATUS.REJECTED]: 'Order Rejected',
     };
 
     if (customerMessages[nextStatus]) {
+      const body =
+        nextStatus === ORDER_STATUS.READY &&
+        master.fulfillmentType === ORDER_FULFILLMENT_TYPE.PICKUP
+          ? `Order ${master.orderNumber} is ready for pickup at the branch.`
+          : nextStatus === ORDER_STATUS.DELIVERED &&
+              master.fulfillmentType === ORDER_FULFILLMENT_TYPE.PICKUP
+            ? `Order ${master.orderNumber} has been collected.`
+            : `Order ${master.orderNumber} is now ${nextStatus.toLowerCase().replaceAll('_', ' ')}.`;
+
       await this._notify(
         master.customerId,
         customerMessages[nextStatus],
-        `Order ${master.orderNumber} is now ${nextStatus.toLowerCase().replaceAll('_', ' ')}.`,
+        body,
         `ORDER_${nextStatus}`,
-        { orderId: master.id, businessOrderId },
+        { orderId: master.id, businessOrderId, fulfillmentType: master.fulfillmentType },
       );
     }
 
@@ -896,6 +969,17 @@ class OrderService {
     return this._updateBusinessOrderStatus(
       id,
       ORDER_STATUS.READY,
+      userId,
+      ipAddress,
+      userAgent,
+      user,
+    );
+  }
+
+  async deliveredBusinessOrder(id, userId, ipAddress, userAgent, user) {
+    return this._updateBusinessOrderStatus(
+      id,
+      ORDER_STATUS.DELIVERED,
       userId,
       ipAddress,
       userAgent,

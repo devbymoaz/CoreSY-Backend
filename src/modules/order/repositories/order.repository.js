@@ -101,6 +101,7 @@ class OrderRepository {
     businessIds,
     status,
     paymentStatus,
+    fulfillmentType,
     startDate,
     endDate,
     historyOnly = false,
@@ -108,7 +109,9 @@ class OrderRepository {
     sortBy = 'createdAt',
     sortOrder = 'desc',
   } = {}) {
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || PAGINATION.DEFAULT_PAGE);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || PAGINATION.DEFAULT_LIMIT));
+    const skip = (pageNum - 1) * limitNum;
     const where = { deletedAt: null };
 
     if (customerId) where.customerId = customerId;
@@ -123,6 +126,7 @@ class OrderRepository {
 
     if (status) where.status = status;
     if (paymentStatus) where.paymentStatus = paymentStatus;
+    if (fulfillmentType) where.fulfillmentType = fulfillmentType;
 
     if (historyOnly) {
       where.status = {
@@ -182,7 +186,7 @@ class OrderRepository {
         include: ORDER_INCLUDE,
         orderBy: { [sortBy]: sortOrder },
         skip,
-        take: limit,
+        take: limitNum,
       }),
       prisma.order.count({ where }),
     ]);
@@ -190,10 +194,10 @@ class OrderRepository {
     return {
       orders,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit) || 1,
+        pages: Math.ceil(total / limitNum) || 1,
       },
     };
   }
@@ -205,18 +209,22 @@ class OrderRepository {
     businessIds,
     branchId,
     status,
+    fulfillmentType,
     todayOnly = false,
     search,
     sortBy = 'createdAt',
     sortOrder = 'desc',
   } = {}) {
-    const skip = (page - 1) * limit;
+    const pageNum = Math.max(1, Number(page) || PAGINATION.DEFAULT_PAGE);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || PAGINATION.DEFAULT_LIMIT));
+    const skip = (pageNum - 1) * limitNum;
     const where = {};
 
     if (businessId) where.businessId = businessId;
     if (businessIds) where.businessId = { in: businessIds };
     if (branchId) where.branchId = branchId;
     if (status) where.status = status;
+    if (fulfillmentType) where.order = { ...(where.order || {}), fulfillmentType };
 
     if (todayOnly) {
       const start = new Date();
@@ -240,7 +248,7 @@ class OrderRepository {
         include: BUSINESS_ORDER_INCLUDE,
         orderBy: { [sortBy]: sortOrder },
         skip,
-        take: limit,
+        take: limitNum,
       }),
       prisma.businessOrder.count({ where }),
     ]);
@@ -248,10 +256,10 @@ class OrderRepository {
     return {
       businessOrders,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit) || 1,
+        pages: Math.ceil(total / limitNum) || 1,
       },
     };
   }
