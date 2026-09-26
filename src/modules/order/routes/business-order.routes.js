@@ -21,11 +21,16 @@ const {
   assignDriver,
 } = require('../controllers/order.controller');
 const {
+  getBusinessOrderQRs,
+  scanOrderQR,
+} = require('../controllers/order-qr.controller');
+const {
   listBusinessOrdersSchema,
   rejectOrderSchema,
   assignDriverSchema,
   availableDriversSchema,
 } = require('../validators/order.validator');
+const { scanOrderQRSchema } = require('../validators/order-qr.validator');
 const { ROLES } = require('../../../constants');
 
 const businessRoles = [
@@ -203,6 +208,20 @@ router.get(
 
 /**
  * @swagger
+ * /business/orders/scan-qr:
+ *   post:
+ *     summary: Business scans pickup handover QR
+ *     tags: [Business Orders]
+ */
+router.post(
+  '/scan-qr',
+  authorizeRoles(...writeRoles),
+  validate({ body: scanOrderQRSchema }),
+  scanOrderQR,
+);
+
+/**
+ * @swagger
  * /business/orders/{id}/assign-driver:
  *   patch:
  *     summary: Assign a driver to a DELIVERY business order
@@ -238,6 +257,15 @@ router.patch(
   validate({ body: assignDriverSchema }),
   assignDriver,
 );
+
+/**
+ * @swagger
+ * /business/orders/{id}/qrs:
+ *   get:
+ *     summary: List order QRs for a business order (includes driver pickup QR)
+ *     tags: [Business Orders]
+ */
+router.get('/:id/qrs', authorizeRoles(...businessRoles), getBusinessOrderQRs);
 
 /**
  * @swagger

@@ -407,6 +407,8 @@ const swaggerDefinition = {
     { name: 'User Roles', description: 'User role assignment endpoints' },
     { name: 'Users', description: 'User management endpoints' },
     { name: 'Admins', description: 'Admin management endpoints' },
+    { name: 'Admin Users', description: 'Admin end-user management endpoints' },
+    { name: 'Order QR', description: 'Order pickup/delivery QR and payment endpoints' },
     { name: 'Businesses', description: 'Business management endpoints' },
     { name: 'Branches', description: 'Branch management endpoints' },
     { name: 'Services', description: 'Business service management endpoints' },

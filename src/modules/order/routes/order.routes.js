@@ -21,10 +21,16 @@ const {
   getFulfillmentOptions,
 } = require('../controllers/order.controller');
 const {
+  getOrderQRs,
+  getOrderQRByToken,
+  payOrderQR,
+} = require('../controllers/order-qr.controller');
+const {
   createOrderSchema,
   cancelOrderSchema,
   listOrdersSchema,
 } = require('../validators/order.validator');
+const { payOrderQRSchema } = require('../validators/order-qr.validator');
 const { ROLES } = require('../../../constants');
 
 router.use(authenticate);
@@ -87,6 +93,28 @@ router.get('/dashboard', getCustomerDashboard);
  *                     deliveryFeeApplies: false
  */
 router.get('/fulfillment-types', getFulfillmentOptions);
+
+/**
+ * @swagger
+ * /orders/qr/token/{token}:
+ *   get:
+ *     summary: Get order QR by token
+ *     tags: [Order QR]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/qr/token/:token', getOrderQRByToken);
+
+/**
+ * @swagger
+ * /orders/qr/token/{token}/pay:
+ *   post:
+ *     summary: Pay order via QR (CASH or WALLET+password)
+ *     tags: [Order QR]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/qr/token/:token/pay', validate({ body: payOrderQRSchema }), payOrderQR);
 
 /**
  * @swagger
@@ -404,6 +432,17 @@ router.patch('/:id/cancel', validate({ body: cancelOrderSchema }), cancelOrder);
  *         description: New order created from previous order
  */
 router.post('/:id/reorder', authorizeRoles(ROLES.USER, ROLES.SUPER_ADMIN), reorder);
+
+/**
+ * @swagger
+ * /orders/{orderId}/qrs:
+ *   get:
+ *     summary: List order QR codes (pickup/delivery)
+ *     tags: [Order QR]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:orderId/qrs', getOrderQRs);
 
 /**
  * @swagger

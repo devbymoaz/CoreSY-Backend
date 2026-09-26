@@ -4,6 +4,7 @@
  */
 
 const orderRepository = require('../repositories/order.repository');
+const orderQRService = require('./order-qr.service');
 const auditLogService = require('../../rbac/services/audit-log.service');
 const AppError = require('../../../utils/AppError');
 const logger = require('../../../utils/logger');
@@ -524,7 +525,12 @@ class OrderService {
       }
     }
 
-    return { message: SUCCESS_MESSAGES.ORDER_CREATED, order };
+    let orderQrs = [];
+    if (order.fulfillmentType === ORDER_FULFILLMENT_TYPE.PICKUP) {
+      orderQrs = await orderQRService.createPickupQRsForOrder(order, userId);
+    }
+
+    return { message: SUCCESS_MESSAGES.ORDER_CREATED, order, orderQrs };
   }
 
   async getOrders(query, user) {
@@ -1113,10 +1119,20 @@ class OrderService {
       );
     }
 
+    const pickupQr = await orderQRService.createDriverPickupQR(
+      {
+        ...updatedBusinessOrder,
+        order: master,
+        driverId: driver.id,
+      },
+      userId,
+    );
+
     return {
       message: SUCCESS_MESSAGES.ORDER_ASSIGNED,
       businessOrder: updatedBusinessOrder,
       order: updatedOrder,
+      pickupQr,
     };
   }
 
@@ -1366,13 +1382,18 @@ class OrderService {
   }
 
   async driverOnTheWayOrder(businessOrderId, driver, ipAddress, userAgent) {
-    return this._driverUpdateStatus(
+    const result = await this._driverUpdateStatus(
       businessOrderId,
       ORDER_STATUS.ON_THE_WAY,
       driver,
       ipAddress,
       userAgent,
     );
+
+    const businessOrder = await orderRepository.findBusinessOrderById(businessOrderId);
+    const paymentQr = await orderQRService.createDeliveryPaymentQR(businessOrder, driver.id);
+
+    return { ...result, paymentQr };
   }
 
   async driverDeliveredOrder(businessOrderId, driver, ipAddress, userAgent) {

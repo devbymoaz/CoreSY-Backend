@@ -318,7 +318,25 @@ class AuthService {
     }
 
     if (user.status === USER_STATUS.SUSPENDED) {
-      throw new AppError(ERROR_MESSAGES.ACCOUNT_SUSPENDED, HTTP_STATUS.FORBIDDEN);
+      if (user.banType === 'TEMPORARY' && user.bannedUntil && new Date(user.bannedUntil) <= new Date()) {
+        await userRepository.update(user.id, {
+          status: USER_STATUS.ACTIVE,
+          banType: null,
+          bannedUntil: null,
+          banReason: null,
+          bannedAt: null,
+          bannedBy: null,
+        });
+      } else if (user.banType === 'PERMANENT') {
+        throw new AppError(ERROR_MESSAGES.ACCOUNT_BANNED, HTTP_STATUS.FORBIDDEN);
+      } else if (user.banType === 'TEMPORARY') {
+        throw new AppError(
+          `${ERROR_MESSAGES.ACCOUNT_TEMP_BANNED}${user.bannedUntil ? ` Until ${new Date(user.bannedUntil).toISOString()}` : ''}`,
+          HTTP_STATUS.FORBIDDEN,
+        );
+      } else {
+        throw new AppError(ERROR_MESSAGES.ACCOUNT_SUSPENDED, HTTP_STATUS.FORBIDDEN);
+      }
     }
 
     if (user.status !== USER_STATUS.ACTIVE) {

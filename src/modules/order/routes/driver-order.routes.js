@@ -17,9 +17,15 @@ const {
   driverDeliveredOrder,
 } = require('../controllers/order.controller');
 const {
+  getBusinessOrderQRs,
+  scanOrderQR,
+  createDeliveryPaymentQR,
+} = require('../controllers/order-qr.controller');
+const {
   listDriverOrdersSchema,
   declineDriverOrderSchema,
 } = require('../validators/order.validator');
+const { scanOrderQRSchema } = require('../validators/order-qr.validator');
 
 router.use(driverAuthenticate);
 
@@ -69,6 +75,17 @@ router.get('/', validate({ query: listDriverOrdersSchema }), getDriverOrders);
 
 /**
  * @swagger
+ * /drivers/orders/scan-qr:
+ *   post:
+ *     summary: Driver scans business pickup QR → status PICKED_UP + payment QR
+ *     tags: [Driver Orders]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/scan-qr', validate({ body: scanOrderQRSchema }), scanOrderQR);
+
+/**
+ * @swagger
  * /drivers/orders/{id}:
  *   get:
  *     summary: Get assigned business order details
@@ -87,6 +104,24 @@ router.get('/', validate({ query: listDriverOrdersSchema }), getDriverOrders);
  *         description: Business order details
  */
 router.get('/:id', getDriverOrderById);
+
+/**
+ * @swagger
+ * /drivers/orders/{id}/qrs:
+ *   get:
+ *     summary: List QRs for assigned business order
+ *     tags: [Driver Orders]
+ */
+router.get('/:id/qrs', getBusinessOrderQRs);
+
+/**
+ * @swagger
+ * /drivers/orders/{id}/payment-qr:
+ *   post:
+ *     summary: Get/create delivery payment QR for customer to scan
+ *     tags: [Driver Orders]
+ */
+router.post('/:id/payment-qr', createDeliveryPaymentQR);
 
 /**
  * @swagger

@@ -25,6 +25,11 @@ const USER_STATUS = {
   DEACTIVATED: 'DEACTIVATED',
 };
 
+const BAN_TYPE = {
+  TEMPORARY: 'TEMPORARY',
+  PERMANENT: 'PERMANENT',
+};
+
 const ROLES = {
   SUPER_ADMIN: 'SUPER_ADMIN',
   FINANCE_ADMIN: 'FINANCE_ADMIN',
@@ -223,6 +228,22 @@ const QR_STATUS = {
 const PAYMENT_QR_STATUS = {
   ACTIVE: 'ACTIVE',
   PAID: 'PAID',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+};
+
+const ORDER_QR_PURPOSE = {
+  DRIVER_PICKUP: 'DRIVER_PICKUP',
+  DELIVERY_PAYMENT: 'DELIVERY_PAYMENT',
+  PICKUP_HANDOVER: 'PICKUP_HANDOVER',
+  PICKUP_PAYMENT: 'PICKUP_PAYMENT',
+};
+
+const ORDER_QR_STATUS = {
+  ACTIVE: 'ACTIVE',
+  SCANNED: 'SCANNED',
+  PAID: 'PAID',
+  COMPLETED: 'COMPLETED',
   EXPIRED: 'EXPIRED',
   CANCELLED: 'CANCELLED',
 };
@@ -496,6 +517,21 @@ const ERROR_MESSAGES = {
   EMAIL_NOT_VERIFIED: 'Please verify your email before logging in.',
   ACCOUNT_NOT_ACTIVE: 'Your account is not active. Please contact support.',
   ACCOUNT_SUSPENDED: 'Your account has been suspended.',
+  ACCOUNT_BANNED: 'Your account has been banned.',
+  ACCOUNT_TEMP_BANNED: 'Your account is temporarily banned.',
+  ORDER_QR_NOT_FOUND: 'Order QR code not found.',
+  ORDER_QR_EXPIRED: 'Order QR code has expired.',
+  ORDER_QR_INACTIVE: 'Order QR code is not active.',
+  ORDER_QR_ALREADY_USED: 'Order QR code has already been used.',
+  ORDER_QR_INVALID_PURPOSE: 'Invalid QR purpose for this action.',
+  ORDER_QR_PAYMENT_REQUIRED_PASSWORD: 'Password is required for e-wallet payment.',
+  ORDER_ALREADY_PAID: 'Order is already paid.',
+  USER_ALREADY_ACTIVE: 'User is already active.',
+  USER_ALREADY_DEACTIVATED: 'User is already deactivated.',
+  USER_ALREADY_BANNED: 'User is already banned.',
+  USER_NOT_BANNED: 'User is not banned.',
+  USER_NOT_PENDING: 'User is not pending verification.',
+  TEMP_BAN_REQUIRES_UNTIL: 'Temporary ban requires bannedUntil date.',
   GOVERNORATE_NOT_FOUND: 'The selected governorate does not exist.',
   INVALID_OTP: 'Invalid or expired verification code.',
   INVALID_RESET_TOKEN: 'Invalid or expired password reset token. Please verify OTP again.',
@@ -709,6 +745,15 @@ const SUCCESS_MESSAGES = {
   PAYMENT_QR_CREATED: 'Payment QR created successfully.',
   PAYMENT_QR_PAID: 'Payment completed successfully from wallet.',
   PAYMENT_QR_CANCELLED: 'Payment QR cancelled successfully.',
+  ORDER_QR_GENERATED: 'Order QR generated successfully.',
+  ORDER_QR_SCANNED: 'Order QR scanned successfully.',
+  ORDER_QR_PAID: 'Order payment completed successfully.',
+  USER_ACTIVATED: 'User activated successfully.',
+  USER_DEACTIVATED: 'User deactivated successfully.',
+  USER_UPDATED: 'User updated successfully.',
+  USER_BANNED: 'User banned successfully.',
+  USER_UNBANNED: 'User unbanned successfully.',
+  USER_ACTIVATION_RESENT: 'Activation link/OTP resent successfully.',
   OFFER_CREATED: 'Special offer created successfully.',
   OFFER_UPDATED: 'Special offer updated successfully.',
   OFFER_DELETED: 'Special offer deleted successfully.',
@@ -804,6 +849,7 @@ const PAGINATION = {
 module.exports = {
   HTTP_STATUS,
   USER_STATUS,
+  BAN_TYPE,
   ROLES,
   ROLE_PRIORITIES,
   ROLE_STATUS,
@@ -826,6 +872,8 @@ module.exports = {
   BOOKING_SOURCE,
   QR_STATUS,
   PAYMENT_QR_STATUS,
+  ORDER_QR_PURPOSE,
+  ORDER_QR_STATUS,
   OFFER_STATUS,
   REWARD_STATUS,
   PRODUCT_STATUS,
