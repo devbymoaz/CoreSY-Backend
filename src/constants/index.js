@@ -543,6 +543,7 @@ const ERROR_MESSAGES = {
   INVALID_REFRESH_TOKEN: 'Invalid or expired refresh token.',
   CURRENT_PASSWORD_INCORRECT: 'Current password is incorrect.',
   RESEND_RATE_LIMIT: 'Please wait before requesting another verification code.',
+  ACTIVATION_EMAIL_FAILED: 'Failed to send activation email. Please try again.',
   CANNOT_DELETE_SYSTEM_ROLE: 'System roles cannot be deleted.',
   CANNOT_MODIFY_SYSTEM_ROLE: 'System roles cannot be modified.',
   BUSINESS_NOT_FOUND: 'Business not found.',

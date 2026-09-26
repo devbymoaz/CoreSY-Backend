@@ -156,7 +156,8 @@ class AdminUserService {
       throw new AppError(ERROR_MESSAGES.USER_ALREADY_ACTIVE, HTTP_STATUS.BAD_REQUEST);
     }
 
-    await authService.resendEmailVerification({ email: user.email });
+    // Force-send OTP email (public resend silently skips already-verified users)
+    const result = await authService.adminResendActivation(user);
 
     await auditLogService.create({
       userId: adminId,
@@ -164,10 +165,10 @@ class AdminUserService {
       module: PERMISSION_MODULES.USERS || 'Users',
       ipAddress,
       userAgent,
-      payload: { targetUserId: id, email: user.email },
+      payload: { targetUserId: id, email: user.email, emailSent: result.emailSent },
     });
 
-    return { message: SUCCESS_MESSAGES.USER_ACTIVATION_RESENT };
+    return result;
   }
 
   async banUser(id, data, adminId, ipAddress, userAgent) {

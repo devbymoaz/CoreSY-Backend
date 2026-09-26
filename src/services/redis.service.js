@@ -275,6 +275,13 @@ const checkResendRateLimit = async (email) => {
       logger.warn('Rate limit would be enforced, but skipping in development');
       return;
     }
+    const AppError = require('../utils/AppError');
+    const { HTTP_STATUS, ERROR_MESSAGES } = require('../constants');
+    throw new AppError(
+      ERROR_MESSAGES.RESEND_RATE_LIMIT ||
+        'Please wait before requesting another verification email.',
+      HTTP_STATUS.TOO_MANY_REQUESTS || 429,
+    );
   }
   await client.setex(key, config.auth.resendCooldownSeconds, '1');
 };

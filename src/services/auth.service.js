@@ -233,6 +233,7 @@ class AuthService {
 
   /**
    * Resend email verification OTP.
+   * Public endpoint — never reveals whether the email exists.
    * @param {Object} data - Email
    * @returns {Promise<Object>}
    */
@@ -263,19 +264,66 @@ class AuthService {
       const otp = generateOtp();
       await redisService.storeEmailOtp(pending.id, otp);
       await emailService.sendOtp(email, otp, OTP_PURPOSES.EMAIL_VERIFICATION);
-      return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT };
+      return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT, emailSent: true };
     }
 
     const user = await userRepository.findByEmail(email);
     if (!user || user.emailVerified) {
-      return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT };
+      // Silent success for public API (do not leak account state)
+      return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT, emailSent: false };
     }
 
     const otp = generateOtp();
     await redisService.storeEmailOtp(user.id, otp);
     await emailService.sendOtp(email, otp, OTP_PURPOSES.EMAIL_VERIFICATION);
 
-    return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT };
+    return { message: SUCCESS_MESSAGES.VERIFICATION_EMAIL_SENT, emailSent: true };
+  }
+
+  /**
+   * Admin force-resend activation OTP.
+   * Always sends email (unlike public resend which silently skips verified users).
+   * @param {Object} user - User row
+   * @returns {Promise<Object>}
+   */
+  async adminResendActivation(user) {
+    if (!user?.email) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (user.status === USER_STATUS.ACTIVE && user.emailVerified) {
+      throw new AppError(ERROR_MESSAGES.USER_ALREADY_ACTIVE, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // Ensure verify-email OTP path works (DEACTIVATED / stale verified flags)
+    if (user.emailVerified || user.status === USER_STATUS.DEACTIVATED) {
+      await userRepository.update(user.id, {
+        emailVerified: false,
+        status: USER_STATUS.PENDING_VERIFICATION,
+      });
+    }
+
+    const otp = generateOtp();
+    await redisService.storeEmailOtp(user.id, otp);
+
+    const sent = await emailService.sendOtp(
+      user.email,
+      otp,
+      OTP_PURPOSES.EMAIL_VERIFICATION,
+    );
+
+    if (!sent && config.env === 'production') {
+      throw new AppError(ERROR_MESSAGES.ACTIVATION_EMAIL_FAILED, HTTP_STATUS.SERVICE_UNAVAILABLE);
+    }
+
+    return {
+      message: SUCCESS_MESSAGES.USER_ACTIVATION_RESENT,
+      emailSent: true,
+      email: user.email,
+      expiresInSeconds: config.auth.otpExpirySeconds,
+      verifyEndpoint: 'POST /api/v1/auth/verify-email',
+      note: 'User must enter the OTP from email in verify-email to activate the account.',
+    };
   }
 
   /**

@@ -46,8 +46,8 @@ class EmailService {
     switch (purpose) {
       case OTP_PURPOSES.EMAIL_VERIFICATION:
         return {
-          subject: `${config.appName} email verification code`,
-          text: `Your ${config.appName} verification code is ${otp}. It expires in ${Math.floor(config.auth.otpExpirySeconds / 60)} minutes.`,
+          subject: `${config.appName} account activation code`,
+          text: `Your ${config.appName} activation / email verification code is ${otp}. It expires in ${Math.floor(config.auth.otpExpirySeconds / 60)} minutes. Enter this code in the app to activate your account.`,
         };
       case OTP_PURPOSES.PASSWORD_RESET:
         return {
