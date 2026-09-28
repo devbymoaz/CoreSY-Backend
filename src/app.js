@@ -31,12 +31,12 @@ app.use(
   }),
 );
 
-// CORS configuration - supports localhost with any port
+// CORS configuration - Flutter web + localhost first
 app.use(
   cors({
     origin: createCorsOriginValidator(config.cors.origin),
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );

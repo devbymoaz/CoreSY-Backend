@@ -51,11 +51,13 @@ const config = {
     origin: process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
       : [
+          'http://localhost:52470',
+          'http://localhost:8080',
+          'http://localhost:3000',
           'http://localhost',
           'http://localhost:',
           'http://127.0.0.1',
           'http://127.0.0.1:',
-          'http://localhost:3000',
           'http://localhost:5173',
         ],
   },
